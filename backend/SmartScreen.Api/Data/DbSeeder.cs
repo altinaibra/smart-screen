@@ -9,6 +9,7 @@ public static class DbSeeder
     public static async Task SeedAsync(AppDbContext db, IConfiguration config, IPasswordHasher<AppUser> hasher)
     {
         await db.Database.EnsureCreatedAsync();
+        await UpgradeSchemaAsync(db);
 
         if (!await db.Users.AnyAsync())
         {
@@ -78,5 +79,43 @@ public static class DbSeeder
         }
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// EnsureCreated krijon tabelat vetëm në një databazë bosh. Tabelat e shtuara më vonë
+    /// krijohen këtu në databazat ekzistuese.
+    /// </summary>
+    private static async Task UpgradeSchemaAsync(AppDbContext db)
+    {
+        if (db.Database.IsSqlServer())
+        {
+            await db.Database.ExecuteSqlRawAsync("""
+                IF OBJECT_ID(N'[MediaChunks]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [MediaChunks] (
+                        [Id] bigint NOT NULL IDENTITY,
+                        [MediaAssetId] int NOT NULL,
+                        [Index] int NOT NULL,
+                        [Data] varbinary(max) NOT NULL,
+                        CONSTRAINT [PK_MediaChunks] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_MediaChunks_MediaAssets_MediaAssetId] FOREIGN KEY ([MediaAssetId]) REFERENCES [MediaAssets] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE UNIQUE INDEX [IX_MediaChunks_MediaAssetId_Index] ON [MediaChunks] ([MediaAssetId], [Index]);
+                END
+                """);
+        }
+        else if (db.Database.IsSqlite())
+        {
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "MediaChunks" (
+                    "Id" INTEGER NOT NULL CONSTRAINT "PK_MediaChunks" PRIMARY KEY AUTOINCREMENT,
+                    "MediaAssetId" INTEGER NOT NULL,
+                    "Index" INTEGER NOT NULL,
+                    "Data" BLOB NOT NULL,
+                    CONSTRAINT "FK_MediaChunks_MediaAssets_MediaAssetId" FOREIGN KEY ("MediaAssetId") REFERENCES "MediaAssets" ("Id") ON DELETE CASCADE
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS "IX_MediaChunks_MediaAssetId_Index" ON "MediaChunks" ("MediaAssetId", "Index");
+                """);
+        }
     }
 }

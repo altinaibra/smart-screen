@@ -11,7 +11,7 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/media")]
 [Authorize]
-public class MediaController(AppDbContext db, UploadStorage storage) : ControllerBase
+public class MediaController(AppDbContext db) : ControllerBase
 {
     private const long MaxUploadBytes = 1L * 1024 * 1024 * 1024; // 1 GB
 
@@ -50,9 +50,6 @@ public class MediaController(AppDbContext db, UploadStorage storage) : Controlle
             return BadRequest(new { message = $"Formati '{ext}' nuk mbështetet. Lejohen: {string.Join(", ", Allowed.Keys)}" });
 
         var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
-        await using (var stream = System.IO.File.Create(storage.PathFor(fileName)))
-            await file.CopyToAsync(stream);
-
         var asset = new MediaAsset
         {
             Name = string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(file.FileName) : name.Trim(),
@@ -61,8 +58,16 @@ public class MediaController(AppDbContext db, UploadStorage storage) : Controlle
             ContentType = info.ContentType,
             SizeBytes = file.Length,
         };
+
+        // Të dhënat e skedarit ruhen në databazë (MediaChunks). Transaksioni siguron që një ngarkim
+        // i ndërprerë të mos lërë media gjysmë të ruajtur.
+        await using var tx = await db.Database.BeginTransactionAsync(HttpContext.RequestAborted);
         db.MediaAssets.Add(asset);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(HttpContext.RequestAborted);
+        await using (var stream = file.OpenReadStream())
+            await MediaStore.WriteAsync(db, asset.Id, stream, HttpContext.RequestAborted);
+        await tx.CommitAsync(HttpContext.RequestAborted);
+
         return CreatedAtAction(nameof(GetAll), null, asset.ToDto());
     }
 
@@ -82,9 +87,9 @@ public class MediaController(AppDbContext db, UploadStorage storage) : Controlle
         var asset = await db.MediaAssets.FindAsync(id);
         if (asset is null) return NotFound();
 
+        // Copat në MediaChunks fshihen automatikisht (ON DELETE CASCADE).
         db.MediaAssets.Remove(asset);
         await db.SaveChangesAsync();
-        storage.Delete(asset.FileName);
         return NoContent();
     }
 }

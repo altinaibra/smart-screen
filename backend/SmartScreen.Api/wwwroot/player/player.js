@@ -8,12 +8,17 @@
  *  2. GET  /api/player/{key}/content çdo 15s -> nëse ndryshon "version", playlist-a e re
  *     aplikohet në fund të slide-it aktual. Përmbajtja ruhet lokalisht për punë offline.
  *
+ * Pa rrjet: përmbajtja (me oraret dhe të gjitha playlist-at e ekranit) merret nga localStorage,
+ * playlist-a sipas orarit zgjidhet këtu me orën e pajisjes, dhe foto/videot vijnë nga cache-i
+ * i pajisjes (Service Worker sw.js në shfletues/PC, ose cache-i në disk i aplikacionit Android).
+ *
  * Parametra opsionalë në URL: ?server=http://ip:5080  ?device=<key>  ?preview=1
  */
 (function () {
   'use strict';
 
   var POLL_MS = 15000;
+  var OFFLINE_CHECK_MS = 30000; // sa shpesh kontrollohen oraret kur s'ka rrjet
   var RETRY_MS = 10000;
   var FADE_MS = 800;
   var MAX_VIDEO_MS = 10 * 60 * 1000; // mbrojtje nëse video "ngec" dhe nuk mbaron kurrë
@@ -44,6 +49,8 @@
 
   function boot() {
     startClock();
+    if (!isPreview) registerServiceWorker();
+    setInterval(function () { if (!state.online) applyOfflineSchedule(); }, OFFLINE_CHECK_MS);
     window.onresize = function () { if (state.content) applyOrientation(state.content); };
 
     if (isPreview) {
@@ -120,6 +127,7 @@
 
     if (c.version === state.version && state.content) return;
     store('ss_content', JSON.stringify(c));
+    cacheMedia(c);
 
     if (!state.content) start(c);
     else state.pending = c;
@@ -444,8 +452,111 @@
   function hideOverlay() { overlay.className = 'hidden'; }
 
   function setOnline(online) {
+    var wasOnline = state.online;
     state.online = online;
     $('netStatus').className = online ? 'hidden' : '';
+    if (wasOnline && !online) applyOfflineSchedule();
+  }
+
+  // ------------------------------------------------------------------ puna pa rrjet
+
+  function registerServiceWorker() {
+    try {
+      // Vetëm në "secure context" (HTTPS, localhost ose PC me Player-in për Windows).
+      if (!('serviceWorker' in navigator) || window.isSecureContext === false) return;
+      navigator.serviceWorker.register('sw.js').then(function () {
+        var cached = state.content || parseJson(store('ss_content'));
+        if (cached) cacheMedia(cached);
+      }, function () { /* pa Service Worker: përdoret cache-i i zakonshëm i shfletuesit */ });
+    } catch (e) { /* shfletues i vjetër */ }
+  }
+
+  // I thotë pajisjes cilat foto/video duhen ruajtur (dhe cilat mund të fshihen).
+  function cacheMedia(c) {
+    var urls = mediaUrls(c);
+    try {
+      if (window.SmartScreenNative && window.SmartScreenNative.cacheMedia) {
+        window.SmartScreenNative.cacheMedia(JSON.stringify(urls));
+      }
+    } catch (e) { /* ignore */ }
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(function (reg) {
+          if (reg.active) reg.active.postMessage({ type: 'cache-media', urls: urls });
+        });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function mediaUrls(c) {
+    var seen = {};
+    var out = [];
+    var add = function (u) { if (u && !seen[u]) { seen[u] = true; out.push(abs(u)); } };
+    var lists = (c.offline && c.offline.playlists) || (c.playlist ? [c.playlist] : []);
+    if (c.settings) add(c.settings.logoUrl);
+    for (var i = 0; i < lists.length; i++) {
+      var slides = lists[i].slides || [];
+      for (var j = 0; j < slides.length; j++) {
+        add(slides[j].mediaUrl);
+        if (slides[j].menu) {
+          for (var k = 0; k < slides[j].menu.products.length; k++) add(slides[j].menu.products[k].imageUrl);
+        }
+      }
+    }
+    return out;
+  }
+
+  // Pa rrjet, zgjidh playlist-ën sipas orareve me orën e pajisjes (si serveri).
+  function applyOfflineSchedule() {
+    var base = state.pending || state.content;
+    if (!base || !base.offline || isPreview) return;
+    var wantedId = resolveOfflinePlaylistId(base.offline, new Date());
+    var currentId = base.playlist ? base.playlist.id : null;
+    if (wantedId === currentId) return;
+
+    var playlist = null;
+    for (var i = 0; i < base.offline.playlists.length; i++) {
+      if (base.offline.playlists[i].id === wantedId) playlist = base.offline.playlists[i];
+    }
+    var c = {};
+    for (var key in base) if (base.hasOwnProperty(key)) c[key] = base[key];
+    c.playlist = playlist;
+    // Version tjetër, që kur kthehet rrjeti të aplikohet sërish përmbajtja e serverit.
+    c.version = String(base.version).split(':')[0] + ':offline:' + wantedId;
+    if (state.content) state.pending = c; else start(c);
+  }
+
+  function resolveOfflinePlaylistId(offline, now) {
+    var best = null;
+    var schedules = offline.schedules || [];
+    for (var i = 0; i < schedules.length; i++) {
+      var s = schedules[i];
+      if (!isScheduleActive(s, now)) continue;
+      if (!best || s.priority > best.priority || (s.priority === best.priority && s.startTime > best.startTime)) best = s;
+    }
+    return best ? best.playlistId : (offline.defaultPlaylistId === undefined ? null : offline.defaultPlaylistId);
+  }
+
+  function isScheduleActive(s, now) {
+    var t = now.getHours() * 60 + now.getMinutes();
+    var start = toMinutes(s.startTime);
+    var end = toMinutes(s.endTime);
+    var dayOn = function (d) { return (s.daysOfWeek & (1 << d)) !== 0; };
+    var today = now.getDay();
+    if (start <= end) return dayOn(today) && t >= start && t < end;
+    // Kalon mesnatën (p.sh. 22:00–02:00): pjesa pas mesnate i përket ditës së mëparshme.
+    if (t >= start) return dayOn(today);
+    if (t < end) return dayOn((today + 6) % 7);
+    return false;
+  }
+
+  function toMinutes(hhmm) {
+    var parts = String(hhmm || '0:0').split(':');
+    return Number(parts[0]) * 60 + Number(parts[1] || 0);
+  }
+
+  function parseJson(text) {
+    try { return text ? JSON.parse(text) : null; } catch (e) { return null; }
   }
 
   // ------------------------------------------------------------------ ndihmëse
