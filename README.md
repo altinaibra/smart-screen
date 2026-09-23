@@ -88,6 +88,28 @@ Në të gjitha, ndryshoni `SERVER_URL` me IP-në e serverit.
 - Burimi: `frontend/public/logo.svg` (vektor, shkallëzohet pa humbur cilësi).
 - Ngjyrat: e kuqe `#c8102e`, e verdhë `#ffc72c`, sfond i errët `#121419`.
 
+## Publikimi (Publish)
+Backend-i dhe frontend-i publikohen **bashkë si një aplikacion**: gjatë publish ndërtohet automatikisht React-i
+dhe vendoset në `wwwroot/app`.
+
+```powershell
+.\publish.ps1                    # -> .\publish  (serveri duhet të ketë ASP.NET Core 9 Runtime)
+.\publish.ps1 -SelfContained     # përfshin .NET brenda (s'ka nevojë për instalim)
+```
+Ose në Visual Studio: klik i djathtë te **SmartScreen.Api → Publish → Folder**.
+
+**Në IIS (Windows Server):**
+1. Instaloni [ASP.NET Core 9 Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/9.0) dhe rinisni IIS (`iisreset`).
+2. Kopjoni dosjen `publish` në server (p.sh. `C:\inetpub\SmartScreen`).
+3. IIS Manager → Add Website → Physical path = dosja, Port = 5080. Application Pool: **No Managed Code**.
+4. I jepni Application Pool-it (`IIS AppPool\SmartScreen`) leje **Modify** mbi dosjen (për `smartscreen.db` dhe `uploads`).
+5. Hapni portin në Firewall.
+
+**Pa IIS:** në dosjen `publish` nisni `SmartScreen.Api.exe` (dëgjon në `http://0.0.0.0:5080`).
+
+**Përditësimet:** kur publikoni sërish në të njëjtën dosje, `smartscreen.db` dhe `uploads/` nuk preken. Mos zgjidhni
+"Delete all existing files" në Visual Studio, ose ruani një kopje të tyre para publikimit.
+
 ## Siguria në prodhim
 - Ndryshoni `Jwt:Key` dhe fjalëkalimin e adminit te `appsettings.json`.
 - Përdorni HTTPS (p.sh. pas IIS ose Nginx).

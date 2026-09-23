@@ -15,9 +15,33 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <FrontendDir>$(MSBuildProjectDirectory)\..\..\frontend</FrontendDir>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Remove="uploads\**" />
     <None Remove="uploads\**" />
+    <!-- Build-i i React shtohet në publish nga target-i BuildFrontend më poshtë -->
+    <Content Remove="wwwroot\app\**" />
+    <None Remove="wwwroot\app\**" />
   </ItemGroup>
+
+  <!--
+    Gjatë publish (dotnet publish ose Visual Studio → Publish) ndërtohet automatikisht frontend-i
+    React dhe kopjohet në wwwroot/app. Për ta kapërcyer: -p:SkipFrontend=true
+  -->
+  <Target Name="BuildFrontend" BeforeTargets="ComputeResolvedFilesToPublishList" Condition="'$(SkipFrontend)' != 'true'">
+    <Exec WorkingDirectory="$(FrontendDir)" Command="npm ci" Condition="!Exists('$(FrontendDir)\node_modules')" />
+    <Exec WorkingDirectory="$(FrontendDir)" Command="npm run build" />
+    <ItemGroup>
+      <FrontendFiles Include="wwwroot\app\**" />
+      <ResolvedFileToPublish Include="@(FrontendFiles->'%(FullPath)')">
+        <RelativePath>%(FrontendFiles.Identity)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

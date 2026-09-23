@@ -22,8 +22,18 @@ builder.Services.AddDbContext<AppDbContext>(o =>
     if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
         o.UseSqlServer(config.GetConnectionString("SqlServer"));
     else
-        o.UseSqlite(config.GetConnectionString("Sqlite"));
+        o.UseSqlite(ResolveSqlitePath(config.GetConnectionString("Sqlite"), builder.Environment.ContentRootPath));
 });
+
+// Rruga relative e SQLite lidhet me dosjen e aplikacionit (jo me dosjen aktuale të procesit),
+// që databaza të mos përfundojë p.sh. në C:\Windows\System32 kur punon si shërbim/IIS.
+static string ResolveSqlitePath(string? connectionString, string contentRoot)
+{
+    var csb = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString ?? "Data Source=smartscreen.db");
+    if (!Path.IsPathRooted(csb.DataSource) && csb.DataSource != ":memory:")
+        csb.DataSource = Path.Combine(contentRoot, csb.DataSource);
+    return csb.ToString();
+}
 
 // ---------- Shërbimet ----------
 builder.Services.AddControllers()
@@ -59,6 +69,7 @@ builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 const long maxUpload = 1L * 1024 * 1024 * 1024;
 builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxUpload);
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxUpload);
+builder.Services.Configure<IISServerOptions>(o => o.MaxRequestBodySize = maxUpload);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters
