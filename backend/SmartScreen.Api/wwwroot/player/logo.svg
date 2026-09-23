@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ss-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef2a4b"/>
+      <stop offset="1" stop-color="#9a0c25"/>
+    </linearGradient>
+    <linearGradient id="ss-screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffe4e8"/>
+    </linearGradient>
+    <linearGradient id="ss-shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sfondi -->
+  <rect width="512" height="512" rx="116" fill="url(#ss-bg)"/>
+  <path d="M116 0h280a116 116 0 0 1 116 116v70C360 230 170 230 0 170v-54A116 116 0 0 1 116 0z" fill="url(#ss-shine)"/>
+
+  <!-- Ekrani -->
+  <rect x="92" y="138" width="328" height="210" rx="30" fill="url(#ss-screen)"/>
+
+  <!-- Butoni play -->
+  <path d="M232 204c0-9 10-15 18-10l62 38c8 5 8 16 0 21l-62 38c-8 5-18-1-18-10z" fill="#c8102e"/>
+
+  <!-- Mbajtësja -->
+  <path d="M232 348h48l8 30h-64z" fill="#ffffff" fill-opacity=".85"/>
+  <rect x="182" y="374" width="148" height="22" rx="11" fill="#ffffff"/>
+
+  <!-- Sinjali "smart" -->
+  <circle cx="412" cy="138" r="50" fill="#b80f2d"/>
+  <circle cx="412" cy="138" r="43" fill="#ffc72c"/>
+  <circle cx="398" cy="154" r="8" fill="#9a0c25"/>
+  <path d="M398 131a23 23 0 0 1 23 23" fill="none" stroke="#9a0c25" stroke-width="9" stroke-linecap="round"/>
+  <path d="M398 112a42 42 0 0 1 42 42" fill="none" stroke="#9a0c25" stroke-width="9" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!--
+  Launcher i përbashkët për aplikacionet TV (LG webOS / Samsung Tizen).
+  Kontrollon nëse serveri është online dhe pastaj hap player-in.
+  NDRYSHONI SERVER_URL me IP-në e kompjuterit/serverit ku punon backend-i .NET.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Smart Screen</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #121419; color: #fff; font-family: Arial, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+    h1 { color: #ffc72c; font-size: 5vmin; letter-spacing: .1em; margin: 0 0 3vmin; }
+    p { font-size: 3vmin; opacity: .7; }
+  </style>
+</head>
+<body>
+  <img src="icon.png" alt="" style="width:18vmin;height:auto;margin-bottom:3vmin"><h1 style="color:#fff">Smart Screen</h1><div style="color:#ffc72c;letter-spacing:.3em;font-size:2.4vmin;font-weight:bold">DIGITAL SIGNAGE</div>
+  <p id="msg">Duke u lidhur me serverin...</p>
+  <script>
+    var SERVER_URL = 'http://192.168.1.10:5080';
+
+    function tryConnect() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', SERVER_URL + '/api/health', true);
+      xhr.timeout = 8000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status === 200) {
+          location.replace(SERVER_URL + '/player/');
+        } else {
+          document.getElementById('msg').textContent = 'Serveri ' + SERVER_URL + ' nuk u gjet. Provoj përsëri...';
+          setTimeout(tryConnect, 10000);
+        }
+      };
+      xhr.ontimeout = xhr.onerror = function () { xhr.onreadystatechange = null; xhr.status || retry(); };
+      xhr.send();
+    }
+    function retry() {
+      document.getElementById('msg').textContent = 'Serveri ' + SERVER_URL + ' nuk u gjet. Provoj përsëri...';
+      setTimeout(tryConnect, 10000);
+    }
+    tryConnect();
+  </script>
+</body>
+</html>

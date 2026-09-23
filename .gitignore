@@ -1,0 +1,24 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.db
+*.db-shm
+*.db-wal
+backend/SmartScreen.Api/uploads/
+
+# Build i frontend-it (gjenerohet me npm run build)
+backend/SmartScreen.Api/wwwroot/app/
+
+# Node
+node_modules/
+*.tsbuildinfo
+dist/
+
+# Android
+tv-apps/android-tv/.gradle/
+tv-apps/android-tv/build/
+tv-apps/android-tv/app/build/
+tv-apps/android-tv/local.properties
+tv-apps/android-tv/.idea/

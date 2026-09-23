@@ -1,0 +1,16 @@
+{
+  "id": "com.smartscreen.player",
+  "version": "1.0.0",
+  "vendor": "Smart Screen",
+  "type": "web",
+  "main": "index.html",
+  "title": "Smart Screen",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "splashBackground": "splash.png",
+  "bgColor": "#121419",
+  "iconColor": "#c8102e",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "requiredPermissions": ["time.query"]
+}

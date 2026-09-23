@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Smart Screen Player</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <div id="root">
+    <div id="slides">
+      <div class="layer" id="layerA"></div>
+      <div class="layer" id="layerB"></div>
+    </div>
+    <div id="clock" class="hidden"></div>
+    <div id="ticker" class="hidden"><div class="ticker-track"><span id="tickerText"></span></div></div>
+    <div id="overlay" class="hidden"></div>
+    <div id="netStatus" class="hidden" title="Pa lidhje me serverin"></div>
+  </div>
+  <script src="player.js"></script>
+</body>
+</html>
