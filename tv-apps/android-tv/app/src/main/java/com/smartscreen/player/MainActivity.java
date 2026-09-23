@@ -17,8 +17,9 @@ import android.webkit.WebViewClient;
  */
 public class MainActivity extends Activity {
 
-    // NDRYSHOJENI me IP-në e serverit .NET
-    private static final String SERVER_URL = "http://192.168.1.10:5080/player/";
+    // Launcher-i lokal (assets/index.html) kërkon adresën e serverit herën e parë, e ruan
+    // dhe pastaj hap player-in. Kështu i njëjti APK punon për çdo server pa u rindërtuar.
+    private static final String LAUNCHER_URL = "file:///android_asset/index.html";
 
     private WebView webView;
 
@@ -35,17 +36,18 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true);            // localStorage për deviceKey dhe cache offline
         s.setMediaPlaybackRequiresUserGesture(false); // autoplay i videove
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setAllowFileAccess(true);              // launcher-i nga assets (default false në Android 11+)
 
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                // Serveri nuk u gjet -> provo përsëri pas 10 sekondash
-                if (request.isForMainFrame()) view.postDelayed(() -> view.loadUrl(SERVER_URL), 10000);
+                // Serveri nuk u gjet -> kthehu te launcher-i, që provon përsëri çdo 10 sekonda
+                if (request.isForMainFrame()) view.postDelayed(() -> view.loadUrl(LAUNCHER_URL), 5000);
             }
         });
 
-        webView.loadUrl(SERVER_URL);
+        webView.loadUrl(LAUNCHER_URL);
         hideSystemUi();
     }
 

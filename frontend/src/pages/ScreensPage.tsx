@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, timeAgo } from '../api';
+import TvSetupGuide from '../components/TvSetupGuide';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import { platformLabels, type Orientation, type PlaylistSummary, type Schedule, type Screen } from '../types';
 
@@ -45,14 +46,7 @@ export default function ScreensPage() {
       <ErrorBox error={error} />
       {notice && <div className="alert info" onClick={() => setNotice(null)}>{notice}</div>}
 
-      <div className="card help">
-        <strong>Si të lidhni një TV të ri:</strong>
-        <ol>
-          <li>Në TV hapni shfletuesin (ose aplikacionin Smart Screen) te <code>{location.protocol}//{location.hostname}:5080/player/</code></li>
-          <li>Në ekran do të shfaqet një <b>kod 6-shifror</b>.</li>
-          <li>Klikoni <b>Shto ekran</b>, vendosni kodin dhe zgjidhni playlist-ën.</li>
-        </ol>
-      </div>
+      <TvSetupGuide />
 
       {screens.length === 0 ? (
         <Empty>Ende nuk ka ekrane të lidhura.</Empty>

@@ -75,14 +75,23 @@ Te `backend/SmartScreen.Api/appsettings.json`:
 Tabelat krijohen automatikisht në nisje.
 
 ## Aplikacionet për TV (`tv-apps/`)
-Në të gjitha, ndryshoni `SERVER_URL` me IP-në e serverit.
+Nuk nevojitet asnjë pajisje shtesë për Smart TV (LG, Samsung, Sony, Android/Google TV). Një **Android TV Box / Fire TV Stick**
+nevojitet vetëm për TV jo-smart ose shumë të vjetër (lidhet në HDMI).
+
+Aplikacionet **nuk kanë më IP të shkruar në kod**: herën e parë TV-ja kërkon adresën e serverit
+(p.sh. `192.168.1.10` → plotësohet vetë në `http://192.168.1.10:5080`), e ruan dhe pas çdo ndezjeje hap player-in.
+Për ta ndryshuar më vonë: shtypni **OK** në telekomandë gjatë ekranit "Duke u lidhur...".
+Adresa e saktë shfaqet te paneli → **Ekranet** (me udhëzime për çdo markë).
 
 | TV | Si |
 |---|---|
-| **LG (webOS)** | `tv-apps/lg-webos` – ikonat dhe splash-i janë gati; `ares-package` + `ares-install` (webOS CLI). |
-| **Samsung (Tizen)** | `tv-apps/samsung-tizen` – hapeni në Tizen Studio (ikona 512×423 është gati), ndërtoni `.wgt` dhe instalojeni në TV (Developer Mode). |
-| **Android TV / Sony Bravia / TV Box** | `tv-apps/android-tv` – hapeni në Android Studio → Build APK. Niset vetë kur ndizet TV-ja. |
-| **Çdo TV tjetër / monitor me PC** | Hapni `http://<IP>:5080/player/` në shfletues në ekran të plotë (F11 / kiosk mode). |
+| **LG (webOS)** | Shpejt: aplikacioni *Web Browser* → `http://<IP>:5080/player/`. Si aplikacion: *Developer Mode* nga LG Content Store, pastaj `ares-package tv-apps/lg-webos` + `ares-install`. |
+| **Samsung (Tizen)** | Shpejt: aplikacioni *Internet* → `http://<IP>:5080/player/`. Si aplikacion: *Apps* → `12345` → Developer mode, pastaj Tizen Studio → `tv-apps/samsung-tizen` → Run. Smart Signage: *URL Launcher*. |
+| **Android TV / Sony Bravia / Google TV / TV Box / Fire TV** | `tv-apps/android-tv` – Android Studio → Build APK, instalohet me USB ose *Downloader*. Niset vetë kur ndizet TV-ja. |
+| **Çdo TV tjetër / monitor me PC** | Hapni `http://<IP>:5080/player/` në shfletues në ekran të plotë (F11 / `chrome --kiosk`). |
+
+> Launcher-i (`index.html`) është i njëjtë në `lg-webos/`, `samsung-tizen/` dhe `android-tv/app/src/main/assets/`.
+> Kur e ndryshoni, kopjojeni në të tria.
 
 ## Logo dhe ikonat
 - Burimi: `frontend/public/logo.svg` (vektor, shkallëzohet pa humbur cilësi).

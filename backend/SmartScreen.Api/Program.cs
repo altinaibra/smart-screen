@@ -151,6 +151,34 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
+// Adresat e serverit në rrjetin lokal, që paneli të tregojë URL-në e saktë për TV-të
+// (jo "localhost", që në TV nuk funksionon).
+app.MapGet("/api/server-info", (HttpContext ctx) =>
+{
+    var port = ctx.Connection.LocalPort;
+    var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+        .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up
+                    && n.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback)
+        .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+        .Select(a => a.Address)
+        .Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !System.Net.IPAddress.IsLoopback(a)
+                    && !a.ToString().StartsWith("169.254."))
+        .Select(a => $"http://{a}:{port}")
+        .Distinct()
+        .ToList();
+
+    // Nëse paneli është hapur me një adresë që nuk është localhost (p.sh. domen), vendose të parën.
+    var host = ctx.Request.Host.Host;
+    if (host is not ("localhost" or "127.0.0.1" or "[::1]") && (ctx.Request.Host.Port is null || ctx.Request.Host.Port == port))
+    {
+        var own = $"{ctx.Request.Scheme}://{ctx.Request.Host}";
+        addresses.Remove(own);
+        addresses.Insert(0, own);
+    }
+
+    return Results.Ok(new { addresses, port });
+}).RequireAuthorization();
+
 // Çdo rrugë tjetër (p.sh. /screens, /menu) -> index.html i React (routing në klient).
 // Nëse frontend-i nuk është ndërtuar ende, jep një mesazh të qartë në vend të 404.
 app.MapFallback(async ctx =>

@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <!--
-  Launcher i përbashkët për aplikacionet TV (LG webOS / Samsung Tizen).
-  Kontrollon nëse serveri është online dhe pastaj hap player-in.
-  NDRYSHONI SERVER_URL me IP-në e kompjuterit/serverit ku punon backend-i .NET.
+  Launcher i përbashkët për aplikacionet TV (LG webOS / Samsung Tizen / Android TV).
+  Herën e parë kërkon adresën e serverit (me telekomandë) dhe e ruan në TV,
+  pastaj kontrollon nëse serveri është online dhe hap player-in.
+  I njëjti skedar ndodhet te: lg-webos/, samsung-tizen/, android-tv/app/src/main/assets/
+  -> kur e ndryshoni, kopjojeni në të tria vendet.
 -->
 <html>
 <head>
@@ -11,37 +13,164 @@
   <style>
     html, body { margin: 0; height: 100%; background: #121419; color: #fff; font-family: Arial, sans-serif; }
     body { display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
-    h1 { color: #ffc72c; font-size: 5vmin; letter-spacing: .1em; margin: 0 0 3vmin; }
-    p { font-size: 3vmin; opacity: .7; }
+    .logo { width: 16vmin; height: auto; margin-bottom: 2vmin; }
+    h1 { color: #fff; font-size: 5vmin; letter-spacing: .1em; margin: 0; }
+    .tag { color: #ffc72c; letter-spacing: .3em; font-size: 2.4vmin; font-weight: bold; margin-bottom: 4vmin; }
+    p { font-size: 3vmin; opacity: .75; margin: 1vmin 0; }
+    .hint { font-size: 2.2vmin; opacity: .5; margin-top: 3vmin; }
+    .hidden { display: none; }
+    #setup { width: 70vmin; }
+    label { display: block; font-size: 2.6vmin; opacity: .8; margin-bottom: 1.5vmin; }
+    input { width: 100%; box-sizing: border-box; font-size: 3.6vmin; padding: 1.8vmin 2vmin; border-radius: 1vmin;
+            border: .4vmin solid #3a3f4b; background: #1d2029; color: #fff; outline: none; }
+    input:focus, button:focus { border-color: #ffc72c; }
+    .buttons { margin-top: 3vmin; }
+    button { font-size: 3vmin; padding: 1.5vmin 4vmin; margin: 0 1vmin; border-radius: 1vmin; border: .4vmin solid transparent;
+             background: #c8102e; color: #fff; font-weight: bold; outline: none; }
+    button.secondary { background: #2a2e38; }
+    .error { color: #ff8a8a; opacity: 1; }
   </style>
 </head>
 <body>
-  <img src="icon.png" alt="" style="width:18vmin;height:auto;margin-bottom:3vmin"><h1 style="color:#fff">Smart Screen</h1><div style="color:#ffc72c;letter-spacing:.3em;font-size:2.4vmin;font-weight:bold">DIGITAL SIGNAGE</div>
-  <p id="msg">Duke u lidhur me serverin...</p>
-  <script>
-    var SERVER_URL = 'http://192.168.1.10:5080';
+  <img class="logo" src="icon.png" alt="">
+  <h1>Smart Screen</h1>
+  <div class="tag">DIGITAL SIGNAGE</div>
 
-    function tryConnect() {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', SERVER_URL + '/api/health', true);
-      xhr.timeout = 8000;
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState !== 4) return;
-        if (xhr.status === 200) {
-          location.replace(SERVER_URL + '/player/');
-        } else {
-          document.getElementById('msg').textContent = 'Serveri ' + SERVER_URL + ' nuk u gjet. Provoj përsëri...';
-          setTimeout(tryConnect, 10000);
+  <div id="connecting">
+    <p id="msg">Duke u lidhur me serverin...</p>
+    <div class="hint">Shtypni <b>OK</b> në telekomandë për të ndryshuar adresën e serverit.</div>
+  </div>
+
+  <div id="setup" class="hidden">
+    <label for="server">Adresa e serverit (shfaqet te paneli → Ekranet)</label>
+    <input id="server" type="url" placeholder="http://192.168.1.10:5080" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <p id="setupMsg" class="error"></p>
+    <div class="buttons">
+      <button id="save" type="button">Ruaj dhe lidhu</button>
+      <button id="cancel" type="button" class="secondary">Anulo</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'ss_server_url';
+      var DEFAULT_PORT = '5080';
+      var BOOT_DELAY_MS = 3000;   // koha për të shtypur OK para se të hapet player-i
+      var RETRY_MS = 10000;
+      var KEY_ENTER = 13, KEY_BACK = 8, KEY_TIZEN_BACK = 10009, KEY_WEBOS_BACK = 461, KEY_UP = 38, KEY_DOWN = 40;
+
+      var server = load();
+      var pending = null;     // timer i lidhjes/rilidhjes
+      var inSetup = false;
+      var bootAt = new Date().getTime();
+
+      function $(id) { return document.getElementById(id); }
+
+      function load() {
+        try { return window.localStorage.getItem(STORAGE_KEY) || ''; } catch (e) { return ''; }
+      }
+
+      function save(url) {
+        try { window.localStorage.setItem(STORAGE_KEY, url); } catch (e) { /* s'ka localStorage */ }
+      }
+
+      // "192.168.1.10" -> "http://192.168.1.10:5080"
+      function normalize(value) {
+        var v = String(value || '').replace(/^\s+|\s+$/g, '').replace(/\/+$/, '').replace(/\/player$/i, '');
+        if (!v) return '';
+        if (!/^https?:\/\//i.test(v)) v = 'http://' + v;
+        var m = /^(https?:\/\/)([^\/:]+)(:\d+)?(\/.*)?$/i.exec(v);
+        if (!m) return '';
+        var port = m[3] || (/^https/i.test(m[1]) ? '' : ':' + DEFAULT_PORT);
+        return m[1].toLowerCase() + m[2] + port + (m[4] || '');
+      }
+
+      function showSetup(message) {
+        inSetup = true;
+        clearTimeout(pending);
+        $('connecting').className = 'hidden';
+        $('setup').className = '';
+        $('cancel').className = server ? 'secondary' : 'hidden';
+        $('setupMsg').textContent = message || '';
+        var input = $('server');
+        input.value = server || 'http://192.168.1.';
+        input.focus();
+      }
+
+      function hideSetup() {
+        inSetup = false;
+        $('setup').className = 'hidden';
+        $('connecting').className = '';
+        connect();
+      }
+
+      function submit() {
+        var url = normalize($('server').value);
+        if (!url) { $('setupMsg').textContent = 'Adresa nuk është e vlefshme. Shembull: http://192.168.1.10:5080'; return; }
+        server = url;
+        save(url);
+        bootAt = 0; // pas konfigurimit, hape menjëherë
+        hideSetup();
+      }
+
+      function connect() {
+        if (inSetup) return;
+        if (!server) { showSetup(); return; }
+        $('msg').textContent = 'Duke u lidhur me ' + server + ' ...';
+
+        var xhr = new XMLHttpRequest();
+        var finished = false;
+        var fail = function () {
+          if (finished) return;
+          finished = true;
+          if (inSetup) return;
+          $('msg').textContent = 'Serveri ' + server + ' nuk u gjet. Provoj përsëri pas 10 sekondash...';
+          pending = setTimeout(connect, RETRY_MS);
+        };
+        try {
+          xhr.open('GET', server + '/api/health', true);
+          xhr.timeout = 8000;
+        } catch (e) { fail(); return; }
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4 || finished) return;
+          if (xhr.status !== 200) { fail(); return; }
+          finished = true;
+          if (inSetup) return;
+          $('msg').textContent = 'U lidh me ' + server;
+          var wait = Math.max(0, BOOT_DELAY_MS - (new Date().getTime() - bootAt));
+          pending = setTimeout(function () { if (!inSetup) location.replace(server + '/player/'); }, wait);
+        };
+        xhr.ontimeout = xhr.onerror = fail;
+        xhr.send();
+      }
+
+      document.addEventListener('keydown', function (e) {
+        var key = e.keyCode;
+        if (!inSetup) {
+          if (key === KEY_ENTER) { e.preventDefault(); showSetup(); }
+          return;
         }
-      };
-      xhr.ontimeout = xhr.onerror = function () { xhr.onreadystatechange = null; xhr.status || retry(); };
-      xhr.send();
-    }
-    function retry() {
-      document.getElementById('msg').textContent = 'Serveri ' + SERVER_URL + ' nuk u gjet. Provoj përsëri...';
-      setTimeout(tryConnect, 10000);
-    }
-    tryConnect();
+        var active = document.activeElement;
+        var order = [$('server'), $('save'), $('cancel')];
+        var i = order.indexOf(active);
+        if (key === KEY_DOWN || key === KEY_UP) {
+          e.preventDefault();
+          var next = i + (key === KEY_DOWN ? 1 : -1);
+          if (next >= 0 && next < order.length && order[next].className !== 'hidden') order[next].focus();
+        } else if (key === KEY_ENTER) {
+          e.preventDefault();
+          if (active === $('cancel')) hideSetup(); else submit();
+        } else if ((key === KEY_TIZEN_BACK || key === KEY_WEBOS_BACK || (key === KEY_BACK && active !== $('server'))) && server) {
+          e.preventDefault();
+          hideSetup();
+        }
+      });
+
+      $('save').onclick = submit;
+      $('cancel').onclick = hideSetup;
+
+      connect();
+    })();
   </script>
 </body>
 </html>
