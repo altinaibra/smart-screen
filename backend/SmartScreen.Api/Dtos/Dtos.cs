@@ -73,7 +73,17 @@ public record PlayerRegisterResponse(string DeviceKey, bool Paired, string? Pair
 
 public record PlayerContentDto(
     bool Paired, string? PairingCode, string? Version, int CommandVersion,
-    PlayerScreenDto? Screen, PlayerSettingsDto? Settings, PlayerPlaylistDto? Playlist);
+    PlayerScreenDto? Screen, PlayerSettingsDto? Settings, PlayerPlaylistDto? Playlist,
+    PlayerOfflineDto? Offline = null);
+
+/// <summary>
+/// Gjithçka që i duhet TV-së për të vazhduar pa rrjet: oraret dhe të gjitha playlist-at e ekranit,
+/// që player-i të ndërrojë vetë playlist-ën sipas orës kur serveri nuk arrihet.
+/// </summary>
+public record PlayerOfflineDto(int? DefaultPlaylistId, List<PlayerScheduleDto> Schedules, List<PlayerPlaylistDto> Playlists);
+
+/// <summary>DaysOfWeek: bit 0 = e diel. StartTime/EndTime: "HH:mm".</summary>
+public record PlayerScheduleDto(int PlaylistId, int DaysOfWeek, string StartTime, string EndTime, int Priority);
 
 public record PlayerScreenDto(int Id, string Name, ScreenOrientation Orientation);
 

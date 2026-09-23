@@ -63,8 +63,31 @@ frontend/src/
 - **Menuja** – kategori, produkte, çmime, oferta (çmim i vjetër → % zbritje), "E mbaruar" me një klik.
 - **Cilësimet** – emri, logo, ngjyrat e markës, monedha, ora, shiriti i lajmeve, zona kohore.
 
-Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në. Nëse bie interneti,
-vazhdon të luajë përmbajtjen e fundit të ruajtur.
+Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në.
+
+## Puna pa rrjet (offline)
+TV-ja ruan gjithçka që i duhet për të luajtur pa internet, edhe pas rinisjes:
+
+| Çfarë | Ku ruhet |
+|---|---|
+| Përmbajtja: playlist-at, menuja me çmime, cilësimet **dhe oraret** | `localStorage` i player-it |
+| Foto & video | **Android/Sony/Fire TV:** në diskun e TV-së (aplikacioni). **PC/shfletues:** Service Worker (`player/sw.js`) |
+| Faqja e player-it | njësoj si media |
+
+- Media shkarkohet paraprakisht sapo TV-ja merr përmbajtje të re (jo vetëm kur shfaqet), dhe fshihet kur nuk përdoret më.
+- Pa rrjet, oraret (p.sh. mëngjes 07–11, drekë 12–15) zbatohen nga vetë TV-ja me orën e saj.
+- Kur kthehet rrjeti, TV-ja merr menjëherë ndryshimet e reja nga serveri.
+- Slide-t "Faqe web" kanë nevojë për internet.
+
+| Pajisja | Luan pa rrjet | Ndizet pa rrjet |
+|---|---|---|
+| Android TV / Sony / Google TV / Fire TV (APK) | Po | Po |
+| PC me *Player për Windows* | Po | Po |
+| Shfletues me server HTTPS ose `localhost` | Po | Po |
+| LG / Samsung (aplikacioni ose shfletuesi) me server `http://` | Po, përmbajtja e ruajtur | Jo, pret serverin |
+
+> Service Worker-i punon vetëm në "secure context" (HTTPS ose `localhost`). Për LG/Samsung, përdorni serverin me HTTPS
+> (p.sh. online me domen) ose një Android box në HDMI.
 
 ## Databaza – SQL Server (Smartscreen)
 Aplikacioni tani përdor **SQL Server** me databazën **`Smartscreen`** (Windows Authentication).
@@ -86,14 +109,38 @@ Te `backend/SmartScreen.Api/appsettings.json`:
 - Për t'u kthyer te SQLite: `"Provider": "Sqlite"`.
 
 ## Aplikacionet për TV (`tv-apps/`)
-Në të gjitha, ndryshoni `SERVER_URL` me IP-në e serverit.
+Nuk nevojitet asnjë pajisje shtesë për Smart TV (LG, Samsung, Sony, Android/Google TV). Një **Android TV Box / Fire TV Stick**
+nevojitet vetëm për TV jo-smart ose shumë të vjetër (lidhet në HDMI).
+
+Aplikacionet **nuk kanë më IP të shkruar në kod**: herën e parë TV-ja kërkon adresën e serverit
+(p.sh. `192.168.1.10` → plotësohet vetë në `http://192.168.1.10:5080`), e ruan dhe pas çdo ndezjeje hap player-in.
+Për ta ndryshuar më vonë: shtypni **OK** në telekomandë gjatë ekranit "Duke u lidhur...".
+Adresa e saktë shfaqet te paneli → **Ekranet** (me udhëzime për çdo markë).
+
+### Shkarkimi (pa Android Studio)
+Aplikacionet e gatshme shërbehen nga vetë serveri dhe shkarkohen nga paneli → **Ekranet**:
+
+| Skedari | Për | Instalimi |
+|---|---|---|
+| `/downloads/smart-screen-player.apk` | Android TV, Sony, Google TV, Fire TV, TV Box | Në TV: aplikacioni **Downloader** → `http://<IP>:5080/downloads/smart-screen-player.apk` |
+| `/downloads/smart-screen-player-lg.ipk` | LG webOS | `ares-install` (Developer Mode) |
+| `/downloads/smart-screen-player.cmd` | PC Windows te TV-ja | Klik i dyfishtë: hap player-in në ekran të plotë me Edge dhe e shton te Startup |
+
+Skedarët ndodhen te `backend/SmartScreen.Api/wwwroot/downloads/`. Pas ndryshimeve në `tv-apps/`, rindërtojini:
+Android Studio → Build APK (ose `gradle assembleDebug`), LG: `ares-package tv-apps/lg-webos`, dhe zëvendësoni skedarët.
+
+> APK-ja është e nënshkruar me çelës *debug*. Për ta përditësuar në TV pa e çinstaluar, nënshkruajeni gjithmonë me
+> të njëjtin çelës. Për prodhim krijoni një çelës *release* dhe **mos e vendosni në GitHub** (repo-ja është publike).
 
 | TV | Si |
 |---|---|
-| **LG (webOS)** | `tv-apps/lg-webos` – ikonat dhe splash-i janë gati; `ares-package` + `ares-install` (webOS CLI). |
-| **Samsung (Tizen)** | `tv-apps/samsung-tizen` – hapeni në Tizen Studio (ikona 512×423 është gati), ndërtoni `.wgt` dhe instalojeni në TV (Developer Mode). |
-| **Android TV / Sony Bravia / TV Box** | `tv-apps/android-tv` – hapeni në Android Studio → Build APK. Niset vetë kur ndizet TV-ja. |
-| **Çdo TV tjetër / monitor me PC** | Hapni `http://<IP>:5080/player/` në shfletues në ekran të plotë (F11 / kiosk mode). |
+| **LG (webOS)** | Shpejt: aplikacioni *Web Browser* → `http://<IP>:5080/player/`. Si aplikacion: *Developer Mode* nga LG Content Store, pastaj `ares-package tv-apps/lg-webos` + `ares-install`. |
+| **Samsung (Tizen)** | Shpejt: aplikacioni *Internet* → `http://<IP>:5080/player/`. Si aplikacion: *Apps* → `12345` → Developer mode, pastaj Tizen Studio → `tv-apps/samsung-tizen` → Run. Smart Signage: *URL Launcher*. |
+| **Android TV / Sony Bravia / Google TV / TV Box / Fire TV** | `tv-apps/android-tv` – Android Studio → Build APK, instalohet me USB ose *Downloader*. Niset vetë kur ndizet TV-ja. |
+| **Çdo TV tjetër / monitor me PC** | Hapni `http://<IP>:5080/player/` në shfletues në ekran të plotë (F11 / `chrome --kiosk`). |
+
+> Launcher-i (`index.html`) është i njëjtë në `lg-webos/`, `samsung-tizen/` dhe `android-tv/app/src/main/assets/`.
+> Kur e ndryshoni, kopjojeni në të tria.
 
 ## Logo dhe ikonat
 - Burimi: `frontend/public/logo.svg` (vektor, shkallëzohet pa humbur cilësi).

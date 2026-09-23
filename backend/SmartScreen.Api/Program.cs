@@ -121,10 +121,16 @@ Directory.CreateDirectory(appRoot);
 var appFiles = new StaticFileOptions { FileProvider = new PhysicalFileProvider(appRoot) };
 app.UseStaticFiles(appFiles);
 
-// Player-i për TV (/player) nga wwwroot/player
+// Player-i për TV (/player) nga wwwroot/player, dhe aplikacionet për TV (/downloads).
+// .apk / .ipk / .wgt nuk njihen nga ASP.NET, prandaj u shtojmë llojin që të mund të shkarkohen.
+var contentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+contentTypes.Mappings[".apk"] = "application/vnd.android.package-archive";
+contentTypes.Mappings[".ipk"] = "application/octet-stream";
+contentTypes.Mappings[".wgt"] = "application/widget";
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
+    ContentTypeProvider = contentTypes,
     OnPrepareResponse = ctx =>
     {
         // Mos i ruaj në cache skedarët e player-it që TV-të të marrin versionin e ri pas rifreskimit.
@@ -151,12 +157,64 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
+// Adresat e serverit në rrjetin lokal, që paneli të tregojë URL-në e saktë për TV-të
+// (jo "localhost", që në TV nuk funksionon).
+app.MapGet("/api/server-info", (HttpContext ctx) =>
+    Results.Ok(new { addresses = ServerAddresses(ctx), port = ctx.Connection.LocalPort })).RequireAuthorization();
+
+// Player-i për Windows (PC / mini-PC te TV-ja): një .cmd që hap player-in në ekran të plotë (kiosk)
+// me Microsoft Edge dhe e shton vetveten te Startup, që të niset sa herë ndizet kompjuteri.
+// "--unsafely-treat-insecure-origin-as-secure" lejon Service Worker-in (puna pa rrjet) edhe në http:// të rrjetit lokal.
+app.MapGet("/downloads/smart-screen-player.cmd", (HttpContext ctx) =>
+{
+    var origin = ServerAddresses(ctx).FirstOrDefault() ?? $"http://localhost:{ctx.Connection.LocalPort}";
+    var url = origin + "/player/";
+    var script = string.Join("\r\n",
+        "@echo off",
+        "rem Smart Screen Player - hap player-in ne ekran te plote. Mbyllja: Alt+F4",
+        $"set URL={url}",
+        $"set ORIGIN={origin}",
+        "set STARTUP=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\SmartScreenPlayer.cmd",
+        "if /I not \"%~f0\"==\"%STARTUP%\" copy /Y \"%~f0\" \"%STARTUP%\" >nul",
+        "start \"\" msedge --kiosk %URL% --edge-kiosk-type=fullscreen --no-first-run --autoplay-policy=no-user-gesture-required --unsafely-treat-insecure-origin-as-secure=%ORIGIN% --user-data-dir=\"%LOCALAPPDATA%\\SmartScreenPlayer\"",
+        "");
+    return Results.File(Encoding.ASCII.GetBytes(script), "application/octet-stream", "SmartScreenPlayer.cmd");
+});
+
+static List<string> ServerAddresses(HttpContext ctx)
+{
+    var port = ctx.Connection.LocalPort;
+    // Përshtatësit me gateway (WiFi/Ethernet i vërtetë) para atyre virtualë (Hyper-V, WSL, VirtualBox).
+    var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+        .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up
+                    && n.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback)
+        .Select(n => n.GetIPProperties())
+        .OrderByDescending(p => p.GatewayAddresses.Any(g => !g.Address.Equals(System.Net.IPAddress.Any)))
+        .SelectMany(p => p.UnicastAddresses)
+        .Select(a => a.Address)
+        .Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !System.Net.IPAddress.IsLoopback(a)
+                    && !a.ToString().StartsWith("169.254."))
+        .Select(a => $"http://{a}:{port}")
+        .Distinct()
+        .ToList();
+
+    // Nëse paneli është hapur me një adresë që nuk është localhost (p.sh. domen), vendose të parën.
+    var host = ctx.Request.Host.Host;
+    if (host is not ("localhost" or "127.0.0.1" or "[::1]") && (ctx.Request.Host.Port is null || ctx.Request.Host.Port == port))
+    {
+        var own = $"{ctx.Request.Scheme}://{ctx.Request.Host}";
+        addresses.Remove(own);
+        addresses.Insert(0, own);
+    }
+    return addresses;
+}
+
 // Çdo rrugë tjetër (p.sh. /screens, /menu) -> index.html i React (routing në klient).
 // Nëse frontend-i nuk është ndërtuar ende, jep një mesazh të qartë në vend të 404.
 app.MapFallback(async ctx =>
 {
     var path = ctx.Request.Path;
-    if (path.StartsWithSegments("/api") || path.StartsWithSegments("/uploads") || path.StartsWithSegments("/player") || path.StartsWithSegments("/swagger"))
+    if (path.StartsWithSegments("/api") || path.StartsWithSegments("/uploads") || path.StartsWithSegments("/player") || path.StartsWithSegments("/downloads") || path.StartsWithSegments("/swagger"))
     {
         ctx.Response.StatusCode = StatusCodes.Status404NotFound;
         return;
