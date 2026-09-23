@@ -12,9 +12,10 @@ const platforms: Platform[] = [
     needs: 'Asnjë pajisje shtesë – instalohet APK-ja direkt në TV.',
     steps: (_url, server) => (
       <ol>
-        <li>Ndërtoni APK-në nga <code>tv-apps/android-tv</code> (Android Studio → Build APK) ose përdorni atë të gatshmen.</li>
-        <li>Në TV: <b>Settings → Device Preferences → Security</b> → lejoni <b>Unknown sources</b>.</li>
-        <li>Kopjoni APK-në në një USB dhe hapeni me një file manager (p.sh. <i>File Commander</i>), ose instalojeni me <i>Send Files to TV</i> / <i>Downloader</i>.</li>
+        <li>Në TV instaloni aplikacionin falas <b>Downloader</b> (nga Google Play në TV).</li>
+        <li>Hapeni dhe shkruani <code>{server}/downloads/smart-screen-player.apk</code> → <b>Install</b>.
+          Herën e parë TV-ja kërkon leje për <b>Unknown sources</b> – lejojeni për Downloader.</li>
+        <li>Ose: shkarkoni APK-në më lart, kopjojeni në USB dhe hapeni në TV me një file manager.</li>
         <li>Hapni <b>Smart Screen</b>, shkruani adresën e serverit <code>{server}</code> dhe shtypni <b>Ruaj</b>.</li>
         <li>Aplikacioni niset vetë sa herë ndizet TV-ja.</li>
       </ol>
@@ -28,7 +29,8 @@ const platforms: Platform[] = [
       <ol>
         <li><b>Më e shpejta:</b> hapni aplikacionin <b>Web Browser</b> të TV-së dhe shkruani <code>{url}</code>.</li>
         <li><b>Si aplikacion (rekomandohet):</b> instaloni <i>Developer Mode</i> nga LG Content Store, pastaj
-          nga kompjuteri: <code>ares-package tv-apps/lg-webos</code> → <code>ares-install *.ipk</code>.</li>
+          shkarkoni <b>paketën LG (.ipk)</b> më lart dhe instalojeni nga kompjuteri me <code>ares-install smart-screen-player-lg.ipk</code>
+          (webOS CLI, pasi ta shtoni TV-në me <code>ares-setup-device</code>).</li>
         <li>Në hapjen e parë shkruani adresën e serverit <code>{server}</code> dhe shtypni <b>Ruaj</b>.</li>
         <li>Për nisje automatike: LG Signage/Hotel mode lejon zgjedhjen e aplikacionit në ndezje.</li>
       </ol>
@@ -55,7 +57,8 @@ const platforms: Platform[] = [
     steps: (_url, server) => (
       <ol>
         <li>Lidheni kutinë në HDMI të TV-së dhe në të njëjtin rrjet me serverin.</li>
-        <li>Instaloni APK-në nga <code>tv-apps/android-tv</code> (në Fire TV me aplikacionin <i>Downloader</i>).</li>
+        <li>Instaloni aplikacionin <b>Downloader</b> dhe shkruani <code>{server}/downloads/smart-screen-player.apk</code>
+          (Fire TV: <b>Settings → My Fire TV → Developer options → Install unknown apps</b>).</li>
         <li>Hapni <b>Smart Screen</b> dhe shkruani adresën e serverit <code>{server}</code>.</li>
         <li>Kutia niset vetë dhe hap player-in sa herë ndizet.</li>
       </ol>
@@ -67,8 +70,9 @@ const platforms: Platform[] = [
     needs: 'Çdo pajisje me shfletues modern (PC, mini-PC, Raspberry Pi, Chromebox).',
     steps: url => (
       <ol>
-        <li>Hapni <code>{url}</code> në Chrome/Edge dhe shtypni <b>F11</b> për ekran të plotë.</li>
-        <li>Për nisje automatike (kiosk): <code>chrome --kiosk --autoplay-policy=no-user-gesture-required {url}</code> në Startup.</li>
+        <li><b>Windows:</b> shkarkoni <b>Player për Windows</b> më lart dhe klikoni dy herë mbi të. Player-i hapet në ekran të plotë
+          dhe niset vetë sa herë ndizet kompjuteri. Mbyllja: <b>Alt+F4</b>.</li>
+        <li>Tjetër (Linux, Raspberry Pi, Mac): <code>chromium --kiosk --autoplay-policy=no-user-gesture-required {url}</code>.</li>
       </ol>
     ),
   },
@@ -111,6 +115,13 @@ export default function TvSetupGuide() {
           (Windows: <code>ipconfig</code> → IPv4 Address), p.sh. <code>http://192.168.1.10:5080/player/</code>.
         </div>
       )}
+
+      <div className="downloads">
+        <strong>Shkarko aplikacionin për TV:</strong>
+        <a className="btn" href="/downloads/smart-screen-player.apk" download>⬇ Android TV / Sony / Fire TV (.apk)</a>
+        <a className="btn" href="/downloads/smart-screen-player-lg.ipk" download>⬇ LG webOS (.ipk)</a>
+        <a className="btn" href="/downloads/smart-screen-player.cmd" download>⬇ Player për Windows</a>
+      </div>
 
       <div className="tabs">
         {platforms.map(p => (

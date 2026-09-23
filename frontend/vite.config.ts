@@ -12,6 +12,7 @@ export default defineConfig({
       '/api': backend,
       '/uploads': backend,
       '/player': backend,
+      '/downloads': backend,
     },
   },
   build: {

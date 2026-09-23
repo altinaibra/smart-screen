@@ -83,6 +83,21 @@ Aplikacionet **nuk kanë më IP të shkruar në kod**: herën e parë TV-ja kër
 Për ta ndryshuar më vonë: shtypni **OK** në telekomandë gjatë ekranit "Duke u lidhur...".
 Adresa e saktë shfaqet te paneli → **Ekranet** (me udhëzime për çdo markë).
 
+### Shkarkimi (pa Android Studio)
+Aplikacionet e gatshme shërbehen nga vetë serveri dhe shkarkohen nga paneli → **Ekranet**:
+
+| Skedari | Për | Instalimi |
+|---|---|---|
+| `/downloads/smart-screen-player.apk` | Android TV, Sony, Google TV, Fire TV, TV Box | Në TV: aplikacioni **Downloader** → `http://<IP>:5080/downloads/smart-screen-player.apk` |
+| `/downloads/smart-screen-player-lg.ipk` | LG webOS | `ares-install` (Developer Mode) |
+| `/downloads/smart-screen-player.cmd` | PC Windows te TV-ja | Klik i dyfishtë: hap player-in në ekran të plotë me Edge dhe e shton te Startup |
+
+Skedarët ndodhen te `backend/SmartScreen.Api/wwwroot/downloads/`. Pas ndryshimeve në `tv-apps/`, rindërtojini:
+Android Studio → Build APK (ose `gradle assembleDebug`), LG: `ares-package tv-apps/lg-webos`, dhe zëvendësoni skedarët.
+
+> APK-ja është e nënshkruar me çelës *debug*. Për ta përditësuar në TV pa e çinstaluar, nënshkruajeni gjithmonë me
+> të njëjtin çelës. Për prodhim krijoni një çelës *release* dhe **mos e vendosni në GitHub** (repo-ja është publike).
+
 | TV | Si |
 |---|---|
 | **LG (webOS)** | Shpejt: aplikacioni *Web Browser* → `http://<IP>:5080/player/`. Si aplikacion: *Developer Mode* nga LG Content Store, pastaj `ares-package tv-apps/lg-webos` + `ares-install`. |
