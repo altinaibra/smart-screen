@@ -13,7 +13,7 @@
     Ky skript nuk është i detyrueshëm: nëse databaza është bosh, aplikacioni i krijon tabelat vetë.
     Nëse tabelat janë krijuar me një version më të vjetër të skriptit, aplikacioni shton vetë
     tabelat që mungojnë (p.sh. MediaChunks) në nisje.
-    Nëse ndryshon modeli (Entities.cs / AppDbContext.cs), ky skript duhet rigjeneruar.
+    Nëse ndryshon modeli (dosja Models/ ose AppDbContext.cs), ky skript duhet rigjeneruar.
 */
 
 IF DB_ID(N'Smartscreen') IS NULL
