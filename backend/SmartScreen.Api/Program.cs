@@ -61,7 +61,6 @@ builder.Services.AddSwaggerGen(o =>
     o.AddSecurityDefinition("Bearer", bearer);
     o.AddSecurityRequirement(new OpenApiSecurityRequirement { [bearer] = [] });
 });
-builder.Services.AddSingleton<UploadStorage>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<PlayerContentService>();
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
@@ -102,7 +101,9 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var sp = scope.ServiceProvider;
-    await DbSeeder.SeedAsync(sp.GetRequiredService<AppDbContext>(), config, sp.GetRequiredService<IPasswordHasher<AppUser>>());
+    var db = sp.GetRequiredService<AppDbContext>();
+    await DbSeeder.SeedAsync(db, config, sp.GetRequiredService<IPasswordHasher<AppUser>>());
+    await MediaStore.ImportLegacyFilesAsync(db, config, app.Environment, app.Logger);
 }
 
 // Swagger UI: http://localhost:5080/swagger
@@ -139,16 +140,26 @@ app.UseStaticFiles(new StaticFileOptions
     },
 });
 
-// Media e ngarkuar – emrat janë GUID, kështu që mund të ruhen në cache përgjithmonë.
-var storage = app.Services.GetRequiredService<UploadStorage>();
-app.UseStaticFiles(new StaticFileOptions
+// Media e ngarkuar – lexohet nga databaza (MediaChunks). Emrat janë GUID, kështu që mund të ruhen
+// në cache përgjithmonë. Range mbështetet që videot të luhen/kërcejnë pa u shkarkuar të gjitha.
+app.MapMethods("/uploads/{fileName}", ["GET", "HEAD"], async (string fileName, AppDbContext db, HttpContext ctx) =>
 {
-    FileProvider = new PhysicalFileProvider(storage.Root),
-    RequestPath = "/uploads",
-    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable",
+    var media = await db.MediaAssets.AsNoTracking()
+        .Where(m => m.FileName == fileName)
+        .Select(m => new { m.Id, m.ContentType, m.SizeBytes, m.CreatedAt })
+        .FirstOrDefaultAsync();
+    if (media is null) return Results.NotFound();
+
+    ctx.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    return Results.File(
+        new MediaChunkStream(db, media.Id, media.SizeBytes),
+        media.ContentType,
+        lastModified: media.CreatedAt,
+        entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{fileName}\""),
+        enableRangeProcessing: true);
 });
 
-// Routing pas skedarëve statikë, që fallback-u i React të mos kapë /player/ ose /uploads.
+// Routing pas skedarëve statikë, që fallback-u i React të mos kapë /player/.
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();

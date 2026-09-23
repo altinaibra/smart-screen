@@ -108,6 +108,13 @@ Te `backend/SmartScreen.Api/appsettings.json`:
   (Security → Logins) dhe i jepni rolin `db_owner` te `Smartscreen`.
 - Për t'u kthyer te SQLite: `"Provider": "Sqlite"`.
 
+**Çfarë ruhet në databazë:** të gjitha të dhënat – përdoruesit (admini), cilësimet, menuja me çmime,
+playlistat, ekranet – dhe **vetë fotot e videot** që ngarkoni. Të dhënat e skedarit (emri, lloji, madhësia)
+janë te `MediaAssets`, ndërsa përmbajtja te `MediaChunks` (copa 1 MB, që edhe videot e mëdha të luhen pa u
+ngarkuar të gjitha në memorie). TV-të i marrin si më parë nga `/uploads/<emri>`.
+Fotot/videot e vjetra në dosjen `uploads/` kopjohen automatikisht në databazë në nisjen e parë.
+
+
 ## Aplikacionet për TV (`tv-apps/`)
 Nuk nevojitet asnjë pajisje shtesë për Smart TV (LG, Samsung, Sony, Android/Google TV). Një **Android TV Box / Fire TV Stick**
 nevojitet vetëm për TV jo-smart ose shumë të vjetër (lidhet në HDMI).
@@ -160,12 +167,12 @@ Ose në Visual Studio: klik i djathtë te **SmartScreen.Api → Publish → Fold
 1. Instaloni [ASP.NET Core 9 Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/9.0) dhe rinisni IIS (`iisreset`).
 2. Kopjoni dosjen `publish` në server (p.sh. `C:\inetpub\SmartScreen`).
 3. IIS Manager → Add Website → Physical path = dosja, Port = 5080. Application Pool: **No Managed Code**.
-4. I jepni Application Pool-it (`IIS AppPool\SmartScreen`) leje **Modify** mbi dosjen (për `smartscreen.db` dhe `uploads`).
+4. I jepni Application Pool-it (`IIS AppPool\SmartScreen`) leje **Modify** mbi dosjen (vetëm nëse përdorni SQLite, për `smartscreen.db`).
 5. Hapni portin në Firewall.
 
 **Pa IIS:** në dosjen `publish` nisni `SmartScreen.Api.exe` (dëgjon në `http://0.0.0.0:5080`).
 
-**Përditësimet:** kur publikoni sërish në të njëjtën dosje, `smartscreen.db` dhe `uploads/` nuk preken. Mos zgjidhni
+**Përditësimet:** kur publikoni sërish në të njëjtën dosje, të dhënat në SQL Server nuk preken (me SQLite: `smartscreen.db` nuk preket). Mos zgjidhni
 "Delete all existing files" në Visual Studio, ose ruani një kopje të tyre para publikimit.
 
 ## Siguria në prodhim

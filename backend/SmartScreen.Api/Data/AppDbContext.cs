@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Screen> Screens => Set<Screen>();
     public DbSet<ScreenSchedule> ScreenSchedules => Set<ScreenSchedule>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<MediaChunk> MediaChunks => Set<MediaChunk>();
     public DbSet<Playlist> Playlists => Set<Playlist>();
     public DbSet<PlaylistItem> PlaylistItems => Set<PlaylistItem>();
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
@@ -59,6 +60,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(m => m.Name).HasMaxLength(200);
             e.Property(m => m.FileName).HasMaxLength(200);
             e.Ignore(m => m.Url);
+        });
+
+        b.Entity<MediaChunk>(e =>
+        {
+            e.HasIndex(c => new { c.MediaAssetId, c.Index }).IsUnique();
+            e.HasOne(c => c.MediaAsset).WithMany().HasForeignKey(c => c.MediaAssetId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<Playlist>(e => e.Property(p => p.Name).HasMaxLength(100));

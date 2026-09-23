@@ -4,10 +4,15 @@
     Hapeni në SQL Server Management Studio (SSMS) dhe shtypni Execute (F5).
 
     - Krijon databazën [Smartscreen] nëse nuk ekziston.
-    - Krijon tabelat (të njëjta me modelin e Entity Framework në AppDbContext.cs).
+    - Krijon tabelat (të njëjta me modelin e Entity Framework në AppDbContext.cs):
+        Users (admini), BusinessSettings, MenuCategories, Products, Playlists, PlaylistItems,
+        Screens, ScreenSchedules, MediaAssets (të dhënat e fotove/videove) dhe
+        MediaChunks (vetë përmbajtja e fotove/videove, e ndarë në copa 1 MB).
     - Të dhënat fillestare (përdoruesi admin, cilësimet, menuja demo) i shton vetë aplikacioni në nisjen e parë.
 
     Ky skript nuk është i detyrueshëm: nëse databaza është bosh, aplikacioni i krijon tabelat vetë.
+    Nëse tabelat janë krijuar me një version më të vjetër të skriptit, aplikacioni shton vetë
+    tabelat që mungojnë (p.sh. MediaChunks) në nisje.
     Nëse ndryshon modeli (Entities.cs / AppDbContext.cs), ky skript duhet rigjeneruar.
 */
 
@@ -83,6 +88,17 @@ CREATE TABLE [BusinessSettings] (
     [UpdatedAt] datetime2 NOT NULL,
     CONSTRAINT [PK_BusinessSettings] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_BusinessSettings_MediaAssets_LogoAssetId] FOREIGN KEY ([LogoAssetId]) REFERENCES [MediaAssets] ([Id]) ON DELETE SET NULL
+);
+GO
+
+
+CREATE TABLE [MediaChunks] (
+    [Id] bigint NOT NULL IDENTITY,
+    [MediaAssetId] int NOT NULL,
+    [Index] int NOT NULL,
+    [Data] varbinary(max) NOT NULL,
+    CONSTRAINT [PK_MediaChunks] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MediaChunks_MediaAssets_MediaAssetId] FOREIGN KEY ([MediaAssetId]) REFERENCES [MediaAssets] ([Id]) ON DELETE CASCADE
 );
 GO
 
@@ -169,6 +185,10 @@ CREATE INDEX [IX_BusinessSettings_LogoAssetId] ON [BusinessSettings] ([LogoAsset
 GO
 
 
+CREATE UNIQUE INDEX [IX_MediaChunks_MediaAssetId_Index] ON [MediaChunks] ([MediaAssetId], [Index]);
+GO
+
+
 CREATE INDEX [IX_PlaylistItems_MediaAssetId] ON [PlaylistItems] ([MediaAssetId]);
 GO
 
@@ -211,8 +231,6 @@ GO
 
 CREATE UNIQUE INDEX [IX_Users_Username] ON [Users] ([Username]);
 GO
-
-
 
 SET NOEXEC OFF;
 GO
