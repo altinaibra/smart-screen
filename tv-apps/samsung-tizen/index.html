@@ -113,6 +113,10 @@
         hideSetup();
       }
 
+      function hasOfflinePlayer() {
+        try { return !!(window.SmartScreenNative && window.SmartScreenNative.hasCachedPlayer(server)); } catch (e) { return false; }
+      }
+
       function connect() {
         if (inSetup) return;
         if (!server) { showSetup(); return; }
@@ -124,6 +128,12 @@
           if (finished) return;
           finished = true;
           if (inSetup) return;
+          // Android: player-i dhe media janë ruajtur në TV -> luaj pa rrjet (player-i rilidhet vetë).
+          if (hasOfflinePlayer()) {
+            $('msg').textContent = 'Pa rrjet – po luaj përmbajtjen e ruajtur në TV...';
+            pending = setTimeout(function () { if (!inSetup) location.replace(server + '/player/'); }, BOOT_DELAY_MS);
+            return;
+          }
           $('msg').textContent = 'Serveri ' + server + ' nuk u gjet. Provoj përsëri pas 10 sekondash...';
           pending = setTimeout(connect, RETRY_MS);
         };

@@ -63,8 +63,31 @@ frontend/src/
 - **Menuja** – kategori, produkte, çmime, oferta (çmim i vjetër → % zbritje), "E mbaruar" me një klik.
 - **Cilësimet** – emri, logo, ngjyrat e markës, monedha, ora, shiriti i lajmeve, zona kohore.
 
-Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në. Nëse bie interneti,
-vazhdon të luajë përmbajtjen e fundit të ruajtur.
+Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në.
+
+## Puna pa rrjet (offline)
+TV-ja ruan gjithçka që i duhet për të luajtur pa internet, edhe pas rinisjes:
+
+| Çfarë | Ku ruhet |
+|---|---|
+| Përmbajtja: playlist-at, menuja me çmime, cilësimet **dhe oraret** | `localStorage` i player-it |
+| Foto & video | **Android/Sony/Fire TV:** në diskun e TV-së (aplikacioni). **PC/shfletues:** Service Worker (`player/sw.js`) |
+| Faqja e player-it | njësoj si media |
+
+- Media shkarkohet paraprakisht sapo TV-ja merr përmbajtje të re (jo vetëm kur shfaqet), dhe fshihet kur nuk përdoret më.
+- Pa rrjet, oraret (p.sh. mëngjes 07–11, drekë 12–15) zbatohen nga vetë TV-ja me orën e saj.
+- Kur kthehet rrjeti, TV-ja merr menjëherë ndryshimet e reja nga serveri.
+- Slide-t "Faqe web" kanë nevojë për internet.
+
+| Pajisja | Luan pa rrjet | Ndizet pa rrjet |
+|---|---|---|
+| Android TV / Sony / Google TV / Fire TV (APK) | Po | Po |
+| PC me *Player për Windows* | Po | Po |
+| Shfletues me server HTTPS ose `localhost` | Po | Po |
+| LG / Samsung (aplikacioni ose shfletuesi) me server `http://` | Po, përmbajtja e ruajtur | Jo, pret serverin |
+
+> Service Worker-i punon vetëm në "secure context" (HTTPS ose `localhost`). Për LG/Samsung, përdorni serverin me HTTPS
+> (p.sh. online me domen) ose një Android box në HDMI.
 
 ## Përdorimi i SQL Server
 Te `backend/SmartScreen.Api/appsettings.json`:

@@ -16,8 +16,10 @@ public class PlayerContentService(AppDbContext db)
     public async Task<PlayerContentDto> BuildForScreenAsync(Screen screen)
     {
         var settings = await GetSettingsAsync();
-        var playlistId = await ResolvePlaylistIdAsync(screen, GetTimeZone(settings.TimeZoneId));
-        return await BuildAsync(playlistId, settings, new PlayerScreenDto(screen.Id, screen.Name, screen.Orientation), screen.CommandVersion);
+        var schedules = await db.ScreenSchedules.AsNoTracking().Where(s => s.ScreenId == screen.Id).ToListAsync();
+        var playlistId = ResolvePlaylistId(screen, schedules, GetTimeZone(settings.TimeZoneId));
+        return await BuildAsync(playlistId, settings, new PlayerScreenDto(screen.Id, screen.Name, screen.Orientation), screen.CommandVersion,
+            screen, schedules);
     }
 
     public async Task<PlayerContentDto> BuildPreviewAsync(int playlistId, ScreenOrientation orientation)
@@ -27,9 +29,8 @@ public class PlayerContentService(AppDbContext db)
     }
 
     /// <summary>Orari aktiv me prioritet më të lartë, përndryshe playlist-a e parazgjedhur.</summary>
-    public async Task<int?> ResolvePlaylistIdAsync(Screen screen, TimeZoneInfo tz)
+    private static int? ResolvePlaylistId(Screen screen, List<ScreenSchedule> schedules, TimeZoneInfo tz)
     {
-        var schedules = await db.ScreenSchedules.AsNoTracking().Where(s => s.ScreenId == screen.Id).ToListAsync();
         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
 
         var active = schedules
@@ -65,25 +66,43 @@ public class PlayerContentService(AppDbContext db)
     private async Task<BusinessSettings> GetSettingsAsync() =>
         await db.BusinessSettings.AsNoTracking().Include(s => s.LogoAsset).FirstOrDefaultAsync() ?? new BusinessSettings();
 
-    private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion)
+    private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion,
+        Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
         var settings = new PlayerSettingsDto(
             s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency, s.ShowTicker, s.TickerText, s.ShowClock);
 
-        PlayerPlaylistDto? playlistDto = null;
-        if (playlistId is int id)
-        {
-            var playlist = await db.Playlists.AsNoTracking()
-                .Include(p => p.Items).ThenInclude(i => i.MediaAsset)
-                .Include(p => p.Items).ThenInclude(i => i.MenuCategory)
-                .FirstOrDefaultAsync(p => p.Id == id);
+        // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
+        var ids = new List<int>();
+        if (playlistId is int active) ids.Add(active);
+        if (entity?.DefaultPlaylistId is int def) ids.Add(def);
+        if (schedules is not null) ids.AddRange(schedules.Select(x => x.PlaylistId));
+        ids = ids.Distinct().ToList();
 
-            if (playlist is not null)
-                playlistDto = new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist));
+        var playlists = await db.Playlists.AsNoTracking()
+            .Include(p => p.Items).ThenInclude(i => i.MediaAsset)
+            .Include(p => p.Items).ThenInclude(i => i.MenuCategory)
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync();
+
+        var built = new List<PlayerPlaylistDto>();
+        foreach (var playlist in playlists)
+            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist)));
+
+        var playlistDto = built.FirstOrDefault(p => p.Id == playlistId);
+
+        PlayerOfflineDto? offline = null;
+        if (entity is not null)
+        {
+            offline = new PlayerOfflineDto(
+                entity.DefaultPlaylistId,
+                (schedules ?? []).Select(x => new PlayerScheduleDto(
+                    x.PlaylistId, x.DaysOfWeek, x.StartTime.ToString("HH:mm"), x.EndTime.ToString("HH:mm"), x.Priority)).ToList(),
+                built);
         }
 
-        var version = ComputeVersion(screen, settings, playlistDto);
-        return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto);
+        var version = ComputeVersion(screen, settings, playlistDto, offline);
+        return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto, offline);
     }
 
     private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist)
@@ -128,9 +147,9 @@ public class PlayerContentService(AppDbContext db)
         return slides;
     }
 
-    private static string ComputeVersion(PlayerScreenDto screen, PlayerSettingsDto settings, PlayerPlaylistDto? playlist)
+    private static string ComputeVersion(PlayerScreenDto screen, PlayerSettingsDto settings, PlayerPlaylistDto? playlist, PlayerOfflineDto? offline)
     {
-        var json = JsonSerializer.Serialize(new { screen.Orientation, settings, playlist }, HashJson);
+        var json = JsonSerializer.Serialize(new { screen.Orientation, settings, playlist, offline }, HashJson);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)))[..16];
     }
 }

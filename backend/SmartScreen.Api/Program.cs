@@ -164,16 +164,19 @@ app.MapGet("/api/server-info", (HttpContext ctx) =>
 
 // Player-i për Windows (PC / mini-PC te TV-ja): një .cmd që hap player-in në ekran të plotë (kiosk)
 // me Microsoft Edge dhe e shton vetveten te Startup, që të niset sa herë ndizet kompjuteri.
+// "--unsafely-treat-insecure-origin-as-secure" lejon Service Worker-in (puna pa rrjet) edhe në http:// të rrjetit lokal.
 app.MapGet("/downloads/smart-screen-player.cmd", (HttpContext ctx) =>
 {
-    var url = (ServerAddresses(ctx).FirstOrDefault() ?? $"http://localhost:{ctx.Connection.LocalPort}") + "/player/";
+    var origin = ServerAddresses(ctx).FirstOrDefault() ?? $"http://localhost:{ctx.Connection.LocalPort}";
+    var url = origin + "/player/";
     var script = string.Join("\r\n",
         "@echo off",
         "rem Smart Screen Player - hap player-in ne ekran te plote. Mbyllja: Alt+F4",
         $"set URL={url}",
+        $"set ORIGIN={origin}",
         "set STARTUP=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\SmartScreenPlayer.cmd",
         "if /I not \"%~f0\"==\"%STARTUP%\" copy /Y \"%~f0\" \"%STARTUP%\" >nul",
-        "start \"\" msedge --kiosk %URL% --edge-kiosk-type=fullscreen --no-first-run --autoplay-policy=no-user-gesture-required --user-data-dir=\"%LOCALAPPDATA%\\SmartScreenPlayer\"",
+        "start \"\" msedge --kiosk %URL% --edge-kiosk-type=fullscreen --no-first-run --autoplay-policy=no-user-gesture-required --unsafely-treat-insecure-origin-as-secure=%ORIGIN% --user-data-dir=\"%LOCALAPPDATA%\\SmartScreenPlayer\"",
         "");
     return Results.File(Encoding.ASCII.GetBytes(script), "application/octet-stream", "SmartScreenPlayer.cmd");
 });
