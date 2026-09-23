@@ -1,3 +1,5 @@
+![Smart Screen](docs/banner.png)
+
 # Smart Screen – Digital Signage për restorante dhe biznese
 
 Sistem për shfaqjen e reklamave, fotove të ushqimeve, videove, menuve me çmime dhe njoftimeve në TV
@@ -77,10 +79,14 @@ Në të gjitha, ndryshoni `SERVER_URL` me IP-në e serverit.
 
 | TV | Si |
 |---|---|
-| **LG (webOS)** | `tv-apps/lg-webos` – shtoni `icon.png` (80×80) dhe `largeIcon.png` (130×130), pastaj `ares-package` + `ares-install` (webOS CLI). |
-| **Samsung (Tizen)** | `tv-apps/samsung-tizen` – hapeni në Tizen Studio, shtoni `icon.png`, ndërtoni `.wgt` dhe instalojeni në TV (Developer Mode). |
+| **LG (webOS)** | `tv-apps/lg-webos` – ikonat dhe splash-i janë gati; `ares-package` + `ares-install` (webOS CLI). |
+| **Samsung (Tizen)** | `tv-apps/samsung-tizen` – hapeni në Tizen Studio (ikona 512×423 është gati), ndërtoni `.wgt` dhe instalojeni në TV (Developer Mode). |
 | **Android TV / Sony Bravia / TV Box** | `tv-apps/android-tv` – hapeni në Android Studio → Build APK. Niset vetë kur ndizet TV-ja. |
 | **Çdo TV tjetër / monitor me PC** | Hapni `http://<IP>:5080/player/` në shfletues në ekran të plotë (F11 / kiosk mode). |
+
+## Logo dhe ikonat
+- Burimi: `frontend/public/logo.svg` (vektor, shkallëzohet pa humbur cilësi).
+- Ngjyrat: e kuqe `#c8102e`, e verdhë `#ffc72c`, sfond i errët `#121419`.
 
 ## Siguria në prodhim
 - Ndryshoni `Jwt:Key` dhe fjalëkalimin e adminit te `appsettings.json`.
