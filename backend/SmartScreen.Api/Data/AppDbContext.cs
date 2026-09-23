@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -101,6 +103,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(s => s.LogoAsset).WithMany().HasForeignKey(s => s.LogoAssetId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
+
+        b.Entity<Currency>(e =>
+        {
+            e.HasIndex(c => c.CurrencyCode).IsUnique();
+            e.Property(c => c.CurrencyCode).HasMaxLength(10);
+            e.Property(c => c.CurrencyName).HasMaxLength(100);
+            e.Property(c => c.CurrencySymbol).HasMaxLength(10);
+            e.Property(c => c.ExchangeRate).HasPrecision(18, 3);
+            ConfigureRowVersion(e.Property(c => c.RowVersion));
+        });
+
+        b.Entity<PaymentMethod>(e =>
+        {
+            e.HasIndex(p => p.PaymentMethodCode).IsUnique();
+            e.Property(p => p.PaymentMethodCode).HasMaxLength(20);
+            e.Property(p => p.PaymentMethodName).HasMaxLength(100);
+            ConfigureRowVersion(e.Property(p => p.RowVersion));
+        });
+    }
+
+    // SQL Server e gjeneron vetë rowversion në çdo ndryshim. SQLite nuk e ka këtë lloj, prandaj atje
+    // kolona mbetet e zakonshme (null) dhe nuk përdoret për kontrollin e ndryshimeve.
+    private void ConfigureRowVersion(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<byte[]?> property)
+    {
+        if (Database.IsSqlServer()) property.IsRowVersion();
     }
 
     private class UtcConverter() : ValueConverter<DateTime, DateTime>(

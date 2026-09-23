@@ -7,12 +7,13 @@
     - Krijon tabelat (të njëjta me modelin e Entity Framework në AppDbContext.cs):
         Users (admini), BusinessSettings, MenuCategories, Products, Playlists, PlaylistItems,
         Screens, ScreenSchedules, MediaAssets (të dhënat e fotove/videove) dhe
-        MediaChunks (vetë përmbajtja e fotove/videove, e ndarë në copa 1 MB).
-    - Të dhënat fillestare (përdoruesi admin, cilësimet, menuja demo) i shton vetë aplikacioni në nisjen e parë.
+        MediaChunks (vetë përmbajtja e fotove/videove, e ndarë në copa 1 MB),
+        Currencies (valutat) dhe PaymentMethods (mënyrat e pagesës).
+    - Të dhënat fillestare (përdoruesi admin, cilësimet, valutat, mënyrat e pagesës, menuja demo) i shton vetë aplikacioni në nisjen e parë.
 
     Ky skript nuk është i detyrueshëm: nëse databaza është bosh, aplikacioni i krijon tabelat vetë.
     Nëse tabelat janë krijuar me një version më të vjetër të skriptit, aplikacioni shton vetë
-    tabelat që mungojnë (p.sh. MediaChunks) në nisje.
+    tabelat që mungojnë (p.sh. MediaChunks, Currencies, PaymentMethods) në nisje.
     Nëse ndryshon modeli (dosja Models/ ose AppDbContext.cs), ky skript duhet rigjeneruar.
 */
 
@@ -30,6 +31,22 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+
+CREATE TABLE [Currencies] (
+    [CurrencyId] int NOT NULL IDENTITY,
+    [CurrencyCode] nvarchar(10) NOT NULL,
+    [CurrencyName] nvarchar(100) NOT NULL,
+    [CurrencySymbol] nvarchar(10) NOT NULL,
+    [ExchangeRate] decimal(18,3) NOT NULL,
+    [Status] bit NOT NULL,
+    [IsMainCurrency] bit NOT NULL,
+    [EntryDate] datetime2 NOT NULL,
+    [FiscalType] int NOT NULL,
+    [RowVersion] rowversion NULL,
+    CONSTRAINT [PK_Currencies] PRIMARY KEY ([CurrencyId])
+);
+GO
+
 
 CREATE TABLE [MediaAssets] (
     [Id] int NOT NULL IDENTITY,
@@ -49,6 +66,21 @@ CREATE TABLE [MenuCategories] (
     [Name] nvarchar(100) NOT NULL,
     [SortOrder] int NOT NULL,
     CONSTRAINT [PK_MenuCategories] PRIMARY KEY ([Id])
+);
+GO
+
+
+CREATE TABLE [PaymentMethods] (
+    [PaymentMethodId] int NOT NULL IDENTITY,
+    [PaymentMethodCode] nvarchar(20) NOT NULL,
+    [PaymentMethodName] nvarchar(100) NOT NULL,
+    [Status] bit NOT NULL,
+    [IsDefault] bit NOT NULL,
+    [SortOrder] int NOT NULL,
+    [EntryDate] datetime2 NOT NULL,
+    [FiscalType] int NOT NULL,
+    [RowVersion] rowversion NULL,
+    CONSTRAINT [PK_PaymentMethods] PRIMARY KEY ([PaymentMethodId])
 );
 GO
 
@@ -185,7 +217,15 @@ CREATE INDEX [IX_BusinessSettings_LogoAssetId] ON [BusinessSettings] ([LogoAsset
 GO
 
 
+CREATE UNIQUE INDEX [IX_Currencies_CurrencyCode] ON [Currencies] ([CurrencyCode]);
+GO
+
+
 CREATE UNIQUE INDEX [IX_MediaChunks_MediaAssetId_Index] ON [MediaChunks] ([MediaAssetId], [Index]);
+GO
+
+
+CREATE UNIQUE INDEX [IX_PaymentMethods_PaymentMethodCode] ON [PaymentMethods] ([PaymentMethodCode]);
 GO
 
 

@@ -37,4 +37,12 @@ public static class Mapping
     public static SettingsDto ToDto(this BusinessSettings s) => new(
         s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency,
         s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId);
+
+    public static CurrencyDto ToDto(this Currency c) => new(
+        c.CurrencyId, c.CurrencyCode, c.CurrencyName, c.CurrencySymbol, c.ExchangeRate,
+        c.Status, c.IsMainCurrency, c.EntryDate, c.FiscalType, c.RowVersion);
+
+    public static PaymentMethodDto ToDto(this PaymentMethod p) => new(
+        p.PaymentMethodId, p.PaymentMethodCode, p.PaymentMethodName, p.Status, p.IsDefault,
+        p.SortOrder, p.EntryDate, p.FiscalType, p.RowVersion);
 }
