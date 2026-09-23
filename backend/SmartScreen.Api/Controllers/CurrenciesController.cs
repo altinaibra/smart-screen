@@ -68,6 +68,21 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
         return currency.ToDto();
     }
 
+    /// <summary>E bën këtë valutë kryesore (hiqet nga të tjerat). Kjo shfaqet te çmimet në panel dhe në TV.</summary>
+    [HttpPut("{id:int}/main")]
+    public async Task<ActionResult<CurrencyDto>> SetMain(int id)
+    {
+        var currency = await db.Currencies.FindAsync(id);
+        if (currency is null) return NotFound();
+        if (!currency.Status)
+            return BadRequest(new { message = "Valuta joaktive nuk mund të jetë kryesore." });
+
+        currency.IsMainCurrency = true;
+        await ClearOtherMainAsync(currency);
+        await db.SaveChangesAsync();
+        return currency.ToDto();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -89,6 +104,8 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
         if (!req.IsMainCurrency && id is not null &&
             await db.Currencies.AnyAsync(c => c.CurrencyId == id && c.IsMainCurrency))
             return "Duhet të ketë gjithmonë një valutë kryesore. Caktoni një valutë tjetër si kryesore.";
+        if (req.IsMainCurrency && !req.Status)
+            return "Valuta kryesore duhet të jetë aktive.";
         return null;
     }
 

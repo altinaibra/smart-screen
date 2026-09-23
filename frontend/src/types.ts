@@ -108,6 +108,19 @@ export interface Settings {
   timeZoneId: string;
 }
 
+export interface Currency {
+  currencyId: number;
+  currencyCode: string;
+  currencyName: string;
+  currencySymbol: string;
+  exchangeRate: number;
+  status: boolean;
+  isMainCurrency: boolean;
+  entryDate: string;
+  fiscalType: number;
+  rowVersion?: string | null;
+}
+
 export interface Dashboard {
   screensTotal: number;
   screensOnline: number;

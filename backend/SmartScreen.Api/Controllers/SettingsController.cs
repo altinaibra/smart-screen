@@ -14,7 +14,7 @@ namespace SmartScreen.Api.Controllers;
 public partial class SettingsController(AppDbContext db) : ControllerBase
 {
     [HttpGet("api/settings")]
-    public async Task<SettingsDto> Get() => (await LoadAsync()).ToDto();
+    public async Task<SettingsDto> Get() => await ToDtoAsync(await LoadAsync());
 
     [HttpPut("api/settings")]
     public async Task<ActionResult<SettingsDto>> Update(SettingsDto req)
@@ -29,7 +29,7 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
         s.LogoAssetId = req.LogoAssetId;
         s.PrimaryColor = req.PrimaryColor;
         s.AccentColor = req.AccentColor;
-        s.Currency = req.Currency.Trim();
+        // Monedha nuk ruhet këtu: shfaqet gjithmonë valuta kryesore (api/currencies/{id}/main).
         s.ShowTicker = req.ShowTicker;
         s.TickerText = req.TickerText;
         s.ShowClock = req.ShowClock;
@@ -37,7 +37,7 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
         s.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        return (await LoadAsync()).ToDto();
+        return await ToDtoAsync(await LoadAsync());
     }
 
     [HttpGet("api/dashboard")]
@@ -65,6 +65,9 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
         }
         return s;
     }
+
+    private async Task<SettingsDto> ToDtoAsync(BusinessSettings s) =>
+        s.ToDto(await MainCurrency.GetSymbolAsync(db, s.Currency));
 
     [GeneratedRegex("^#[0-9a-fA-F]{6}$")]
     private static partial Regex HexColor();

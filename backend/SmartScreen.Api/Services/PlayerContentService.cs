@@ -69,8 +69,9 @@ public class PlayerContentService(AppDbContext db)
     private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion,
         Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
+        var currency = await MainCurrency.GetSymbolAsync(db, s.Currency);
         var settings = new PlayerSettingsDto(
-            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency, s.ShowTicker, s.TickerText, s.ShowClock);
+            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, s.TickerText, s.ShowClock);
 
         // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
         var ids = new List<int>();

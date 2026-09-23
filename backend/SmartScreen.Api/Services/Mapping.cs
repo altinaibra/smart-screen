@@ -34,8 +34,8 @@ public static class Mapping
     public static CategoryDto ToDto(this MenuCategory c) => new(
         c.Id, c.Name, c.SortOrder, c.Products.OrderBy(p => p.SortOrder).ThenBy(p => p.Name).Select(p => p.ToDto()).ToList());
 
-    public static SettingsDto ToDto(this BusinessSettings s) => new(
-        s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency,
+    public static SettingsDto ToDto(this BusinessSettings s, string currency) => new(
+        s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency,
         s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId);
 
     public static CurrencyDto ToDto(this Currency c) => new(

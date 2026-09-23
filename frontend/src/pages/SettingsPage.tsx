@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
-import type { Settings } from '../types';
+import type { Currency, Settings } from '../types';
 
 const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
 
@@ -11,8 +11,16 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [mainId, setMainId] = useState<number | null>(null);
 
-  useEffect(() => { api<Settings>('/settings').then(setS).catch(e => setError(e.message)); }, []);
+  useEffect(() => {
+    api<Settings>('/settings').then(setS).catch(e => setError(e.message));
+    api<Currency[]>('/currencies?status=true').then(list => {
+      setCurrencies(list);
+      setMainId(list.find(c => c.isMainCurrency)?.currencyId ?? null);
+    }).catch(e => setError(e.message));
+  }, []);
 
   if (!s) return <ErrorBox error={error} />;
   const set = (patch: Partial<Settings>) => { setS({ ...s, ...patch }); setSaved(false); };
@@ -21,6 +29,12 @@ export default function SettingsPage() {
     e.preventDefault();
     setError(null);
     try {
+      // Monedha që shfaqet te çmimet është gjithmonë valuta kryesore (isMainCurrency).
+      const main = currencies.find(c => c.isMainCurrency);
+      if (mainId !== null && mainId !== main?.currencyId) {
+        await api(`/currencies/${mainId}/main`, { method: 'PUT' });
+        setCurrencies(currencies.map(c => ({ ...c, isMainCurrency: c.currencyId === mainId })));
+      }
       setS(await api<Settings>('/settings', { method: 'PUT', json: s }));
       setSaved(true);
     } catch (err) { setError((err as Error).message); }
@@ -35,7 +49,15 @@ export default function SettingsPage() {
           <h2>Biznesi</h2>
           <div className="grid-2">
             <Field label="Emri i biznesit"><input value={s.businessName} onChange={e => set({ businessName: e.target.value })} required /></Field>
-            <Field label="Monedha"><input value={s.currency} onChange={e => set({ currency: e.target.value })} placeholder="L, €, $" required /></Field>
+            <Field label="Monedha" hint="Valuta kryesore – shfaqet te çmimet në panel dhe në TV">
+              {currencies.length > 0 ? (
+                <select value={mainId ?? ''} onChange={e => { setMainId(Number(e.target.value)); setSaved(false); }}>
+                  {currencies.map(c => (
+                    <option key={c.currencyId} value={c.currencyId}>{c.currencyCode} – {c.currencyName} ({c.currencySymbol})</option>
+                  ))}
+                </select>
+              ) : <input value={s.currency} disabled />}
+            </Field>
           </div>
           <Field label="Logo">
             <div className="logo-row">
