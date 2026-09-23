@@ -8,7 +8,7 @@ Sistem për shfaqjen e reklamave, fotove të ushqimeve, videove, menuve me çmim
 | Pjesa | Teknologjia | Dosja |
 |---|---|---|
 | **Backend / API** | ASP.NET Core 9, Entity Framework Core, JWT, Swagger | `backend/SmartScreen.Api` |
-| **Databaza** | SQLite (parazgjedhje) ose SQL Server | `smartscreen.db` / SQL Server |
+| **Databaza** | SQL Server (parazgjedhje) ose SQLite | `Smartscreen` / `smartscreen.db` |
 | **Frontend** (paneli i menaxhimit) | React + TypeScript + Vite | `frontend/` |
 | **Player për TV** | HTML/CSS/JS (ES5) – punon edhe në TV të vjetër | `backend/SmartScreen.Api/wwwroot/player` |
 | **Aplikacione TV** | LG webOS, Samsung Tizen, Android TV / Sony | `tv-apps/` |
@@ -66,13 +66,24 @@ frontend/src/
 Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në. Nëse bie interneti,
 vazhdon të luajë përmbajtjen e fundit të ruajtur.
 
-## Përdorimi i SQL Server
+## Databaza – SQL Server (Smartscreen)
+Aplikacioni tani përdor **SQL Server** me databazën **`Smartscreen`** (Windows Authentication).
 Te `backend/SmartScreen.Api/appsettings.json`:
 ```json
 "Database": { "Provider": "SqlServer" },
-"ConnectionStrings": { "SqlServer": "Server=localhost;Database=SmartScreen;Trusted_Connection=True;TrustServerCertificate=True" }
+"ConnectionStrings": { "SqlServer": "Server=localhost;Database=Smartscreen;Trusted_Connection=True;TrustServerCertificate=True" }
 ```
-Tabelat krijohen automatikisht në nisje.
+
+**Hapat:**
+1. Në SSMS krijoni databazën `Smartscreen` (ose lëreni skriptin ta krijojë).
+2. *(Opsionale)* Hapni `backend/Database/Smartscreen.sql` në SSMS dhe shtypni **Execute** – krijon tabelat.
+   Nëse e kapërceni, aplikacioni i krijon tabelat vetë kur databaza është bosh.
+3. Nisni backend-in – përdoruesi admin, cilësimet dhe menuja demo shtohen automatikisht.
+
+- Nëse SQL Server është instancë me emër (p.sh. `SQLEXPRESS`), përdorni `Server=localhost\\SQLEXPRESS`.
+- Në IIS, Application Pool-i lidhet me identitetin e vet: në SSMS shtoni login `IIS AppPool\SmartScreen`
+  (Security → Logins) dhe i jepni rolin `db_owner` te `Smartscreen`.
+- Për t'u kthyer te SQLite: `"Provider": "Sqlite"`.
 
 ## Aplikacionet për TV (`tv-apps/`)
 Në të gjitha, ndryshoni `SERVER_URL` me IP-në e serverit.
