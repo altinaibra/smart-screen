@@ -66,7 +66,7 @@ frontend/src/
 │   ├── Screen/
 │   └── Settings/
 ├── i18n/                 # useTranslation: locales/sq.json, locales/en.json
-├── assets/icons/         # vetëm skedarë .svg (nga svgrepo.com) – <Icon name="plus" />
+├── SVG/                  # ikonat si komponentë React (p.sh. LogOutIcon.tsx) – <Icon name="logout" />
 ├── styles.css
 ├── components/           # Layout, Modal, MediaPicker, ScreenPreview, Icon
 └── pages/                # Dashboard, Screens, Media, Playlists, PlaylistEditor, Menu, Settings, Login
@@ -81,9 +81,10 @@ const { mutateAsync: setMainCurrency } = useSetMainCurrency();
 `const { t } = useTranslation();` → `t('menu.title')`. Gjuha zgjidhet te paneli (poshtë majtas), te
 **Cilësimet → Paneli → Gjuha** ose në faqen e hyrjes, dhe ruhet në shfletues.
 
-**Ikonat:** çdo ikonë është një skedar te `src/assets/icons/<emri>.svg` (nga https://www.svgrepo.com/).
-Thirret me `<Icon name="plus" />`; ngjyra ndjek tekstin. Emrat e ikonave janë te `components/Icon.tsx`
-(`iconFallbacks`) – derisa të shtohet skedari SVG, shfaqet simboli rezervë.
+**Ikonat:** çdo ikonë është një komponent React te `src/SVG/` (p.sh. `SVG/LogOutIcon.tsx`, me SVG-në nga
+https://www.svgrepo.com/) dhe regjistrohet te `SVG/index.ts`. Thirret me `<Icon name="logout" />` ose direkt
+`<LogOutIcon size={20} color="#fff" />`; ngjyra ndjek tekstin. Ikonat që s'kanë ende komponent shfaqin
+simbolin rezervë nga `components/Icon.tsx` (`iconFallbacks`).
 
 Pas çdo ndryshimi (mutation) rifreskohen vetë query-t që varen prej tij (p.sh. ndërrimi i valutës kryesore
 rifreskon çmimet te Menuja).
