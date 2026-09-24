@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { timeAgo } from '../api';
 import Icon from '../components/Icon';
 import TvSetupGuide from '../components/TvSetupGuide';
@@ -18,7 +19,13 @@ export default function ScreensPage() {
   const { mutateAsync: reloadScreen } = useReloadScreen();
   const { mutateAsync: deleteScreen } = useDeleteScreen();
   const [error, setError] = useState<string | null>(null);
-  const [pairing, setPairing] = useState(false);
+  // /screens?pair=1 (butoni "Shto ekran" në panel) hap menjëherë çiftimin.
+  const [params, setParams] = useSearchParams();
+  const [pairing, setPairingState] = useState(params.get('pair') === '1');
+  const setPairing = (open: boolean) => {
+    setPairingState(open);
+    if (!open && params.has('pair')) setParams({}, { replace: true });
+  };
   const [editing, setEditing] = useState<Screen | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -78,7 +85,7 @@ export default function ScreensPage() {
         </div>
       )}
 
-      {pairing && <PairModal playlists={playlists} onClose={() => setPairing(false)} onDone={() => setPairing(false)} />}
+      {pairing && fullAccess && <PairModal playlists={playlists} onClose={() => setPairing(false)} onDone={() => setPairing(false)} />}
       {editing && <EditModal screen={editing} playlists={playlists} onClose={() => setEditing(null)} onDone={() => setEditing(null)} />}
     </>
   );
