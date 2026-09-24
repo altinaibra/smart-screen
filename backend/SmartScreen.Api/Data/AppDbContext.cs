@@ -14,7 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Playlist> Playlists => Set<Playlist>();
     public DbSet<PlaylistItem> PlaylistItems => Set<PlaylistItem>();
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
-    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Products> Products => Set<Products>();
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
@@ -101,7 +101,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<MenuCategory>(e => e.Property(c => c.Name).HasMaxLength(100));
 
-        b.Entity<Product>(e =>
+        b.Entity<Products>(e =>
         {
             e.Property(p => p.Name).HasMaxLength(150);
             e.Property(p => p.Price).HasPrecision(12, 2);

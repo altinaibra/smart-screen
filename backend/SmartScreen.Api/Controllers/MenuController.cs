@@ -61,7 +61,7 @@ public class MenuController(AppDbContext db) : ControllerBase
         var error = await ValidateAsync(req);
         if (error is not null) return BadRequest(new { message = error });
 
-        var product = new Product();
+        var product = new Products();
         Apply(product, req);
         db.Products.Add(product);
         await db.SaveChangesAsync();
@@ -112,7 +112,7 @@ public class MenuController(AppDbContext db) : ControllerBase
         return null;
     }
 
-    private static void Apply(Product p, SaveProductRequest req)
+    private static void Apply(Products p, SaveProductRequest req)
     {
         p.CategoryId = req.CategoryId;
         p.Name = req.Name.Trim();

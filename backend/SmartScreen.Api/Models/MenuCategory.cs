@@ -5,5 +5,5 @@ public class MenuCategory
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public int SortOrder { get; set; }
-    public List<Product> Products { get; set; } = [];
+    public List<Products> Products { get; set; } = [];
 }

@@ -113,7 +113,7 @@ public partial class PlayerContentService(AppDbContext db)
         var items = playlist.Items.Where(i => i.IsEnabled).OrderBy(i => i.SortOrder).ToList();
 
         // Ngarko produktet vetëm një herë për të gjitha slide-t e menusë.
-        List<Product> products = [];
+        List<Products> products = [];
         if (items.Any(i => i.Type == SlideType.Menu))
         {
             products = await db.Products.AsNoTracking().Include(p => p.ImageAsset).Include(p => p.Category)

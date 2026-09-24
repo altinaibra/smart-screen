@@ -1,6 +1,6 @@
 namespace SmartScreen.Api.Models;
 
-public class Product
+public class Products
 {
     public int Id { get; set; }
     public int CategoryId { get; set; }
