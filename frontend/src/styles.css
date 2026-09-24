@@ -149,6 +149,9 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
 .modal-body { padding: 20px; overflow: auto; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+.confirm-message { margin: 0; line-height: 1.5; }
+.btn.danger:not(.ghost) { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger:not(.ghost):hover:not(:disabled) { background: #b91c1c; }
 
 /* ---------- Login ---------- */
 .login-page { min-height: 100%; display: grid; place-items: center; background: linear-gradient(135deg, #16181d, #3b0a14); padding: 20px; }

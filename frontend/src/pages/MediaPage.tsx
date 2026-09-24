@@ -4,6 +4,7 @@ import { formatBytes } from '../api';
 import Icon from '../components/Icon';
 import { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { useDeleteMedia, useMediaList, useRenameMedia, useUploadMedia } from '../services/Media/mediaQueries';
 import type { Media, MediaType } from '../types';
 
@@ -52,7 +53,7 @@ export default function MediaPage() {
   }
 
   async function remove(m: Media) {
-    if (!confirm(t('media.confirmDelete', { name: m.name }))) return;
+    if (!(await confirmDialog(t('media.confirmDelete', { name: m.name })))) return;
     await deleteMedia(m.id).catch(e => setError(e.message));
   }
 

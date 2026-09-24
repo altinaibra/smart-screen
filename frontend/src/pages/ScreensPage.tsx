@@ -4,6 +4,7 @@ import { timeAgo } from '../api';
 import Icon from '../components/Icon';
 import TvSetupGuide from '../components/TvSetupGuide';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { usePlaylists } from '../services/Playlist/playlistQueries';
 import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
 import type { Orientation, PlaylistSummary, Schedule, Screen } from '../types';
@@ -27,7 +28,7 @@ export default function ScreensPage() {
   }
 
   async function remove(s: Screen) {
-    if (!confirm(t('screens.confirmDelete', { name: s.name }))) return;
+    if (!(await confirmDialog(t('screens.confirmDelete', { name: s.name })))) return;
     await deleteScreen(s.id).catch(e => setError(e.message));
   }
 

@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { auth } from './api';
 import Layout from './components/Layout';
+import { ConfirmHost } from './components/ConfirmDialog';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ScreensPage from './pages/ScreensPage';
@@ -42,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      <ConfirmHost />
     </QueryClientProvider>
   </React.StrictMode>,
 );

@@ -1,5 +1,7 @@
 {
   "common": {
+    "confirm": "Konfirmo",
+    "confirmTitle": "Jeni i sigurt?",
     "save": "Ruaj",
     "saved": "U ruajt",
     "cancel": "Anulo",

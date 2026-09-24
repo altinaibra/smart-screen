@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { locale } from '../i18n';
 import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import type { SaveCurrencyRequest } from '../services/Currency/currencyMethods';
 import { useCreateCurrency, useCurrencies, useDeleteCurrency, useSetMainCurrency, useUpdateCurrency } from '../services/Currency/currencyQueries';
 import type { Currency } from '../types';
@@ -28,7 +29,7 @@ export default function CurrenciesPage() {
   }
 
   async function remove(c: Currency) {
-    if (!confirm(t('currencies.confirmDelete', { code: c.currencyCode }))) return;
+    if (!(await confirmDialog(t('currencies.confirmDelete', { code: c.currencyCode })))) return;
     setError(null);
     await deleteCurrency(c.currencyId).catch(e => setError(e.message));
   }
