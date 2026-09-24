@@ -38,7 +38,7 @@ export default function Layout() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <a href="/player/" target="_blank" rel="noreferrer">{t('nav.openPlayer')} <Icon name="external-link" /></a>
+          <a href="/player/?pair=1" target="_blank" rel="noreferrer">{t('nav.openPlayer')} <Icon name="external-link" /></a>
           <LanguageSelect dark up />
           <div className="user">
             <span>{auth.username}</span>

@@ -15,7 +15,8 @@ public static class Mapping
         s.DefaultPlaylistId, s.DefaultPlaylist?.Name,
         s.LastSeenAt.HasValue && DateTime.UtcNow - s.LastSeenAt.Value < OnlineWindow,
         s.LastSeenAt, s.CreatedAt,
-        s.Schedules.OrderByDescending(x => x.Priority).ThenBy(x => x.StartTime).Select(x => x.ToDto()).ToList());
+        s.Schedules.OrderByDescending(x => x.Priority).ThenBy(x => x.StartTime).Select(x => x.ToDto()).ToList(),
+        s.DeviceKey);
 
     public static ScheduleDto ToDto(this ScreenSchedule x) => new(
         x.Id, x.PlaylistId, x.Playlist?.Name, x.DaysOfWeek, x.StartTime.ToString("HH:mm"), x.EndTime.ToString("HH:mm"), x.Priority);
