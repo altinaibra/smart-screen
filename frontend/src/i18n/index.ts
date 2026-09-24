@@ -1,11 +1,13 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import flagAL from '../assets/FlagAL.png';
+import flagEN from '../assets/FlagEN.png';
 import en from './locales/en.json';
 import sq from './locales/sq.json';
 
 export const languages = [
-  { code: 'sq', label: 'Shqip' },
-  { code: 'en', label: 'English' },
+  { code: 'sq', label: 'Shqip', flag: flagAL },
+  { code: 'en', label: 'English', flag: flagEN },
 ] as const;
 
 export type Language = (typeof languages)[number]['code'];

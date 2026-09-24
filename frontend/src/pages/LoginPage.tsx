@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ErrorBox, Field } from '../components/ui';
-import { changeLanguage, languages } from '../i18n';
+import LanguageSelect from '../components/LanguageSelect';
 import { useLogin } from '../services/Auth/authQueries';
 
 export default function LoginPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -32,12 +32,7 @@ export default function LoginPage() {
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
         </Field>
         <button className="btn primary block" disabled={busy}>{busy ? t('login.submitting') : t('login.submit')}</button>
-        <div className="login-lang">
-          {languages.map(l => (
-            <button key={l.code} type="button" className={`btn small ${i18n.language === l.code ? 'primary' : ''}`}
-              onClick={() => changeLanguage(l.code)}>{l.label}</button>
-          ))}
-        </div>
+        <div className="login-lang"><LanguageSelect /></div>
       </form>
     </div>
   );

@@ -2,9 +2,9 @@ import { FormEvent, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
+import LanguageSelect from '../components/LanguageSelect';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
-import { changeLanguage, languages, type Language } from '../i18n';
 import { useChangePassword } from '../services/Auth/authQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
@@ -109,15 +109,15 @@ function SettingsForm({ initial }: { initial: Settings }) {
 
 /** Gjuha e panelit (shqip / anglisht) – ndërrohet menjëherë dhe ruhet në shfletues. */
 function LanguageCard() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   return (
     <div className="card">
       <h2>{t('settings.panel')}</h2>
-      <Field label={t('common.language')} hint={t('settings.languageHint')}>
-        <select value={i18n.language} onChange={e => changeLanguage(e.target.value as Language)}>
-          {languages.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-        </select>
-      </Field>
+      <div className="field">
+        <span className="field-label">{t('common.language')}</span>
+        <LanguageSelect />
+        <span className="field-hint">{t('settings.languageHint')}</span>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { auth } from '../api';
-import { changeLanguage, languages, type Language } from '../i18n';
 import { queryClient } from '../services/queryClient';
 import Icon, { type IconName } from './Icon';
+import LanguageSelect from './LanguageSelect';
 import Logo from './Logo';
 
 const links: { to: string; label: string; icon: IconName; end?: boolean }[] = [
@@ -18,7 +18,7 @@ const links: { to: string; label: string; icon: IconName; end?: boolean }[] = [
 ];
 
 export default function Layout() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -37,12 +37,7 @@ export default function Layout() {
         </nav>
         <div className="sidebar-footer">
           <a href="/player/" target="_blank" rel="noreferrer">{t('nav.openPlayer')} <Icon name="external-link" /></a>
-          <label className="lang-row" title={t('common.language')}>
-            <Icon name="language" />
-            <select className="lang-select" value={i18n.language} onChange={e => changeLanguage(e.target.value as Language)}>
-              {languages.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-            </select>
-          </label>
+          <LanguageSelect dark up />
           <div className="user">
             <span>{auth.username}</span>
             <button className="link" onClick={() => { auth.clear(); queryClient.clear(); navigate('/login'); }}>
