@@ -28,10 +28,10 @@
   // Tekstet që shfaqen në TV (gjuha dhe lloji i biznesit zgjidhen te Cilësimet).
   // "order_barber" etj. zëvendësojnë "order" sipas llojit të biznesit.
   var LABELS = {
-    sq: { open: 'Hapur', closed: 'Mbyllur', only: 'Vetëm', prices: 'Çmimet në {c}', vat: 'TVSH e përfshirë',
+    sq: { open: 'Hapur', closed: 'Mbyllur', only: 'Vetëm',
           hours: 'Orari', order: 'Porosi', order_barber: 'Rezervo', order_shop: 'Kontakt',
           follow: 'Ndiqni', soldOut: 'E mbaruar', soldOut_barber: 'Jo sot', photo: 'Foto' },
-    en: { open: 'Open', closed: 'Closed', only: 'Only', prices: 'Prices in {c}', vat: 'VAT included',
+    en: { open: 'Open', closed: 'Closed', only: 'Only',
           hours: 'Hours', order: 'Order', order_barber: 'Book', order_shop: 'Contact',
           follow: 'Follow', soldOut: 'Sold out', soldOut_barber: 'Not today', photo: 'Photo' }
   };
@@ -455,10 +455,6 @@
 
     var head = div('menu-head');
     head.appendChild(textEl('h1', slide.menu.title));
-    var note = settings.currencyName
-      ? label(settings, 'prices').replace('{c}', settings.currencyName) + ' · ' + label(settings, 'vat')
-      : label(settings, 'vat');
-    head.appendChild(textEl('div', note, 'menu-note'));
     el.appendChild(head);
 
     var products = slide.menu.products;
@@ -672,7 +668,8 @@
   function label(settings, key) {
     var lang = settings && settings.screenLanguage === 'en' ? 'en' : 'sq';
     var typed = LABELS[lang][key + '_' + (settings && settings.businessType)];
-    return typed || LABELS[lang][key];
+    // Një tekst që mungon (p.sh. i fshirë nga LABELS) nuk duhet ta ndalë player-in.
+    return typed || LABELS[lang][key] || '';
   }
 
   function startClock() {

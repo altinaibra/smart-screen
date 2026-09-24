@@ -177,7 +177,6 @@ html, body {
   -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
 }
 .menu-head h1 { margin: 0; padding-top: .12em; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 11vmin; line-height: .9; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.menu-note { margin-bottom: 1.2vmin; margin-left: 3vmin; font-family: 'SS Mono', monospace; font-size: 2vmin; letter-spacing: .22em; text-transform: uppercase; color: #a39684; white-space: nowrap; }
 .menu-grid {
   -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; min-height: 0; margin: -1.2vmin;
   display: -webkit-box; display: -webkit-flex; display: flex;
@@ -238,7 +237,6 @@ html, body {
 #root.portrait .brand-info .col { border-left: 0; padding: 2vmin 0; }
 #root.portrait .h-tagline, #root.portrait .progress { display: none; }
 #root.portrait .menu-head { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; -webkit-box-align: start; -webkit-align-items: flex-start; align-items: flex-start; }
-#root.portrait .menu-note { margin: 1.4vmin 0 0; }
 #root.portrait .card { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; -webkit-box-align: stretch; -webkit-align-items: stretch; align-items: stretch; }
 #root.portrait .card-photo { width: 100%; height: auto; max-height: none; min-height: 0; -webkit-box-flex: 1; -webkit-flex: 1 1 0; flex: 1 1 0; }
 #root.portrait .card-info { padding: 2vmin 0 0; -webkit-box-flex: 0; -webkit-flex: 0 0 auto; flex: 0 0 auto; }
