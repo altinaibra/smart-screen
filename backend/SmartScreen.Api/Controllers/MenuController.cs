@@ -56,7 +56,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost("products")]
-    public async Task<ActionResult<ProductDto>> CreateProduct(SaveProductRequest req)
+    public async Task<ActionResult<ProductsDto>> CreateProduct(SaveProductRequest req)
     {
         var error = await ValidateAsync(req);
         if (error is not null) return BadRequest(new { message = error });
@@ -69,7 +69,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     }
 
     [HttpPut("products/{id:int}")]
-    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, SaveProductRequest req)
+    public async Task<ActionResult<ProductsDto>> UpdateProduct(int id, SaveProductRequest req)
     {
         var product = await db.Products.FindAsync(id);
         if (product is null) return NotFound();
@@ -125,6 +125,6 @@ public class MenuController(AppDbContext db) : ControllerBase
         p.SortOrder = req.SortOrder;
     }
 
-    private async Task<ProductDto> LoadProductAsync(int id) =>
+    private async Task<ProductsDto> LoadProductAsync(int id) =>
         (await db.Products.AsNoTracking().Include(p => p.ImageAsset).FirstAsync(p => p.Id == id)).ToDto();
 }
