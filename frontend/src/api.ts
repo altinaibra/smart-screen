@@ -1,3 +1,5 @@
+import i18n, { locale } from './i18n';
+
 const TOKEN_KEY = 'ss_admin_token';
 const USER_KEY = 'ss_admin_user';
 
@@ -26,7 +28,7 @@ async function errorMessage(res: Response) {
     if (body.errors) return Object.values(body.errors).flat().join(' ');
     if (body.title) return body.title as string;
   } catch { /* jo JSON */ }
-  return `Gabim ${res.status}`;
+  return i18n.t('errors.status', { status: res.status });
 }
 
 export async function api<T = void>(path: string, options: RequestInit & { json?: unknown } = {}): Promise<T> {
@@ -41,7 +43,7 @@ export async function api<T = void>(path: string, options: RequestInit & { json?
   const res = await fetch(`/api${path}`, { ...options, headers, body });
   if (res.status === 401 && !path.startsWith('/auth/login')) {
     onUnauthorized();
-    throw new Error('Sesioni skadoi. Hyni përsëri.');
+    throw new Error(i18n.t('errors.sessionExpired'));
   }
   if (!res.ok) throw new Error(await errorMessage(res));
   if (res.status === 204) return undefined as T;
@@ -58,13 +60,13 @@ export function uploadFile<T>(file: File, onProgress: (percent: number) => void)
     if (auth.token) xhr.setRequestHeader('Authorization', `Bearer ${auth.token}`);
     xhr.upload.onprogress = e => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.onload = () => {
-      if (xhr.status === 401) { onUnauthorized(); return reject(new Error('Sesioni skadoi.')); }
+      if (xhr.status === 401) { onUnauthorized(); return reject(new Error(i18n.t('errors.sessionExpired'))); }
       let data: any = null;
       try { data = JSON.parse(xhr.responseText); } catch { /* ignore */ }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data as T);
-      else reject(new Error(data?.message ?? `Gabim ${xhr.status}`));
+      else reject(new Error(data?.message ?? i18n.t('errors.status', { status: xhr.status })));
     };
-    xhr.onerror = () => reject(new Error('Gabim rrjeti gjatë ngarkimit.'));
+    xhr.onerror = () => reject(new Error(i18n.t('errors.network')));
     xhr.send(form);
   });
 }
@@ -83,10 +85,10 @@ export function formatDuration(seconds: number) {
 }
 
 export function timeAgo(iso?: string | null) {
-  if (!iso) return 'asnjëherë';
+  if (!iso) return i18n.t('time.never');
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'tani';
-  if (diff < 3600) return `${Math.floor(diff / 60)} min më parë`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} orë më parë`;
-  return new Date(iso).toLocaleString('sq-AL');
+  if (diff < 60) return i18n.t('time.now');
+  if (diff < 3600) return i18n.t('time.minutesAgo', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return i18n.t('time.hoursAgo', { count: Math.floor(diff / 3600) });
+  return new Date(iso).toLocaleString(locale());
 }

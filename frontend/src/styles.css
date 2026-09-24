@@ -248,3 +248,17 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
   .menu-layout, .slide-fields.media-fields, .product-form-top { flex-direction: column; }
   .category-list { width: 100%; }
 }
+
+/* ---------- Ikonat (src/assets/icons/*.svg) ---------- */
+.icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; vertical-align: -0.125em; flex-shrink: 0; }
+.icon svg { display: block; }
+.btn .icon, .link .icon { margin-right: 6px; }
+.icon-btn .icon { margin: 0; }
+.nav-icon .icon { font-size: 18px; }
+.lang-select { width: 100%; }
+.lang-row { display: flex; align-items: center; gap: 8px; color: var(--sidebar-text); }
+.lang-row .lang-select { margin-top: 0; }
+.login-lang { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+.settings-side { display: flex; flex-direction: column; gap: 16px; }
+.lang-row .lang-select { color: #1b1e24; }
+.tag .icon { margin-right: 4px; }

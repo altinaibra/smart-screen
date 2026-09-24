@@ -13,6 +13,7 @@ import PlaylistEditorPage from './pages/PlaylistEditorPage';
 import MenuPage from './pages/MenuPage';
 import SettingsPage from './pages/SettingsPage';
 import { queryClient } from './services/queryClient';
+import './i18n';
 import './styles.css';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {

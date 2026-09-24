@@ -1,11 +1,14 @@
 import { FormEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDuration } from '../api';
+import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import { useCreatePlaylist, useDeletePlaylist, useDuplicatePlaylist, usePlaylists } from '../services/Playlist/playlistQueries';
 import type { PlaylistSummary } from '../types';
 
 export default function PlaylistsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: items = [], error: loadError } = usePlaylists();
   const { mutateAsync: createPlaylist } = useCreatePlaylist();
@@ -28,23 +31,26 @@ export default function PlaylistsPage() {
   }
 
   async function remove(p: PlaylistSummary) {
-    if (!confirm(`Të fshihet playlist-a "${p.name}"?${p.screenCount ? ` Përdoret nga ${p.screenCount} ekran(e).` : ''}`)) return;
+    const used = p.screenCount ? t('playlists.usedByScreens', { count: p.screenCount }) : '';
+    if (!confirm(t('playlists.confirmDelete', { name: p.name }) + used)) return;
     await deletePlaylist(p.id).catch(e => setError(e.message));
   }
 
   return (
     <>
       <PageHeader
-        title="Playlistat"
-        subtitle="Radha e reklamave, fotove, videove dhe menuve që luhen në TV"
-        actions={<button className="btn primary" onClick={() => { setName(''); setCreating(true); }}>+ Playlist e re</button>}
+        title={t('playlists.title')}
+        subtitle={t('playlists.subtitle')}
+        actions={<button className="btn primary" onClick={() => { setName(''); setCreating(true); }}><Icon name="plus" />{t('playlists.new')}</button>}
       />
       <ErrorBox error={error ?? loadError?.message ?? null} />
 
-      {items.length === 0 ? <Empty>Nuk ka playlista.</Empty> : (
+      {items.length === 0 ? <Empty>{t('playlists.empty')}</Empty> : (
         <div className="card">
           <table className="table">
-            <thead><tr><th>Emri</th><th>Slide</th><th>Kohëzgjatja</th><th>Ekrane</th><th /></tr></thead>
+            <thead>
+              <tr><th>{t('common.name')}</th><th>{t('playlists.colSlides')}</th><th>{t('playlists.colDuration')}</th><th>{t('playlists.colScreens')}</th><th /></tr>
+            </thead>
             <tbody>
               {items.map(p => (
                 <tr key={p.id}>
@@ -56,9 +62,9 @@ export default function PlaylistsPage() {
                   <td>{formatDuration(p.totalDurationSeconds)}</td>
                   <td>{p.screenCount}</td>
                   <td className="right">
-                    <Link to={`/playlists/${p.id}`} className="btn">Ndrysho</Link>{' '}
-                    <button className="btn" onClick={() => duplicate(p)}>Kopjo</button>{' '}
-                    <button className="btn danger ghost" onClick={() => remove(p)}>Fshi</button>
+                    <Link to={`/playlists/${p.id}`} className="btn">{t('common.edit')}</Link>{' '}
+                    <button className="btn" onClick={() => duplicate(p)}><Icon name="copy" />{t('playlists.duplicate')}</button>{' '}
+                    <button className="btn danger ghost" onClick={() => remove(p)}>{t('common.delete')}</button>
                   </td>
                 </tr>
               ))}
@@ -68,10 +74,10 @@ export default function PlaylistsPage() {
       )}
 
       {creating && (
-        <Modal title="Playlist e re" onClose={() => setCreating(false)}
-          footer={<><button className="btn" onClick={() => setCreating(false)}>Anulo</button><button className="btn primary" form="new-pl">Krijo</button></>}>
+        <Modal title={t('playlists.new')} onClose={() => setCreating(false)}
+          footer={<><button className="btn" onClick={() => setCreating(false)}>{t('common.cancel')}</button><button className="btn primary" form="new-pl">{t('playlists.create')}</button></>}>
           <form id="new-pl" onSubmit={create}>
-            <Field label="Emri"><input value={name} onChange={e => setName(e.target.value)} placeholder="p.sh. Menuja e drekës" required autoFocus /></Field>
+            <Field label={t('common.name')}><input value={name} onChange={e => setName(e.target.value)} placeholder={t('playlists.namePlaceholder')} required autoFocus /></Field>
           </form>
         </Modal>
       )}

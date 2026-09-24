@@ -64,8 +64,10 @@ frontend/src/
 │   ├── Playlist/
 │   ├── Screen/
 │   └── Settings/
+├── i18n/                 # useTranslation: locales/sq.json, locales/en.json
+├── assets/icons/         # vetëm skedarë .svg (nga svgrepo.com) – <Icon name="plus" />
 ├── styles.css
-├── components/           # Layout, Modal, MediaPicker, ScreenPreview
+├── components/           # Layout, Modal, MediaPicker, ScreenPreview, Icon
 └── pages/                # Dashboard, Screens, Media, Playlists, PlaylistEditor, Menu, Settings, Login
 ```
 
@@ -74,6 +76,14 @@ Përdorimi në një faqe:
 const { data: currencies, isLoading: currenciesLoading } = useCurrencies();
 const { mutateAsync: setMainCurrency } = useSetMainCurrency();
 ```
+**Gjuhët (shqip / anglisht):** tekstet janë te `src/i18n/locales/sq.json` dhe `en.json`; në komponentë
+`const { t } = useTranslation();` → `t('menu.title')`. Gjuha zgjidhet te paneli (poshtë majtas), te
+**Cilësimet → Paneli → Gjuha** ose në faqen e hyrjes, dhe ruhet në shfletues.
+
+**Ikonat:** çdo ikonë është një skedar te `src/assets/icons/<emri>.svg` (nga https://www.svgrepo.com/).
+Thirret me `<Icon name="plus" />`; ngjyra ndjek tekstin. Emrat e ikonave janë te `components/Icon.tsx`
+(`iconFallbacks`) – derisa të shtohet skedari SVG, shfaqet simboli rezervë.
+
 Pas çdo ndryshimi (mutation) rifreskohen vetë query-t që varen prej tij (p.sh. ndërrimi i valutës kryesore
 rifreskon çmimet te Menuja).
 

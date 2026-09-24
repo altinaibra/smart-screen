@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /** Rezolucione tipike TV-sh për të parë si duket përmbajtja në madhësi të ndryshme. */
+/** `label` është çelës përkthimi: t(label). */
 export const resolutions = [
-  { label: 'Full HD 1920×1080', w: 1920, h: 1080 },
-  { label: 'HD 1280×720', w: 1280, h: 720 },
-  { label: '4K 3840×2160', w: 3840, h: 2160 },
-  { label: 'Vertikal 1080×1920', w: 1080, h: 1920 },
-  { label: 'Ultra-wide 2560×1080', w: 2560, h: 1080 },
+  { label: 'preview.fullHd', w: 1920, h: 1080 },
+  { label: 'preview.hd', w: 1280, h: 720 },
+  { label: 'preview.uhd', w: 3840, h: 2160 },
+  { label: 'preview.vertical', w: 1080, h: 1920 },
+  { label: 'preview.ultraWide', w: 2560, h: 1080 },
 ];
 
 /**

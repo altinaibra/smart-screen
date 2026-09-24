@@ -1,8 +1,11 @@
 import { ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import Icon from './Icon';
 
 export function Modal({ title, onClose, children, footer, wide }: {
   title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean;
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -14,7 +17,7 @@ export function Modal({ title, onClose, children, footer, wide }: {
       <div className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-label={title}>
         <div className="modal-header">
           <h3>{title}</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Mbyll">✕</button>
+          <button className="icon-btn" onClick={onClose} aria-label={t('common.close')} title={t('common.close')}><Icon name="close" /></button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}

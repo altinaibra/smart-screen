@@ -1,5 +1,7 @@
 import { DragEvent, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../api';
+import Icon from '../components/Icon';
 import { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, PageHeader } from '../components/ui';
 import { useDeleteMedia, useMediaList, useRenameMedia, useUploadMedia } from '../services/Media/mediaQueries';
@@ -9,6 +11,7 @@ interface Upload { id: number; name: string; progress: number; done?: boolean; e
 let uploadSeq = 0;
 
 export default function MediaPage() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<MediaType | ''>('');
   const { data: items = [], error: loadError } = useMediaList(filter || undefined);
   const { mutateAsync: uploadMedia } = useUploadMedia();
@@ -43,29 +46,29 @@ export default function MediaPage() {
   }
 
   async function rename(m: Media) {
-    const name = prompt('Emri i ri:', m.name);
+    const name = prompt(t('common.newName'), m.name);
     if (!name || name === m.name) return;
     await renameMedia({ id: m.id, name }).catch(e => setError(e.message));
   }
 
   async function remove(m: Media) {
-    if (!confirm(`Të fshihet "${m.name}"? Do të hiqet edhe nga playlistat dhe produktet.`)) return;
+    if (!confirm(t('media.confirmDelete', { name: m.name }))) return;
     await deleteMedia(m.id).catch(e => setError(e.message));
   }
 
   return (
     <>
       <PageHeader
-        title="Foto & Video"
-        subtitle="Reklamat, fotot e ushqimeve, logot dhe videot promocionale"
+        title={t('media.title')}
+        subtitle={t('media.subtitle')}
         actions={
           <>
             <select value={filter} onChange={e => setFilter(e.target.value as MediaType | '')}>
-              <option value="">Të gjitha</option>
-              <option value="Image">Foto</option>
-              <option value="Video">Video</option>
+              <option value="">{t('media.all')}</option>
+              <option value="Image">{t('media.images')}</option>
+              <option value="Video">{t('media.videos')}</option>
             </select>
-            <button className="btn primary" onClick={() => inputRef.current?.click()}>↑ Ngarko</button>
+            <button className="btn primary" onClick={() => inputRef.current?.click()}><Icon name="upload" />{t('media.upload')}</button>
           </>
         }
       />
@@ -78,8 +81,8 @@ export default function MediaPage() {
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
       >
-        <strong>Tërhiqni skedarët këtu</strong> ose klikoni për t'i zgjedhur
-        <div className="muted">JPG, PNG, WEBP, GIF · MP4, WEBM (deri 1 GB). Rekomandohet MP4 (H.264) për përputhshmëri me të gjitha TV-të.</div>
+        <strong>{t('media.dropTitle')}</strong> {t('media.dropOr')}
+        <div className="muted">{t('media.dropHint')}</div>
         <input ref={inputRef} type="file" multiple hidden accept="image/*,video/mp4,video/webm"
           onChange={e => { if (e.target.files) upload(e.target.files); e.target.value = ''; }} />
       </div>
@@ -97,18 +100,18 @@ export default function MediaPage() {
         </div>
       )}
 
-      {items.length === 0 ? <Empty>Nuk ka media ende.</Empty> : (
+      {items.length === 0 ? <Empty>{t('media.empty')}</Empty> : (
         <div className="media-grid">
           {items.map(m => (
             <div key={m.id} className="media-card">
               <a href={m.url} target="_blank" rel="noreferrer"><MediaThumb media={m} /></a>
-              <span className={`tag ${m.type === 'Video' ? 'purple' : 'blue'} media-type`}>{m.type === 'Video' ? 'Video' : 'Foto'}</span>
+              <span className={`tag ${m.type === 'Video' ? 'purple' : 'blue'} media-type`}>{m.type === 'Video' ? t('media.video') : t('media.image')}</span>
               <div className="media-name" title={m.name}>{m.name}</div>
               <div className="media-meta">
                 <span className="muted">{formatBytes(m.sizeBytes)}</span>
                 <span>
-                  <button className="link" onClick={() => rename(m)}>Riemërto</button>
-                  <button className="link text-danger" onClick={() => remove(m)}>Fshi</button>
+                  <button className="link" onClick={() => rename(m)}>{t('common.rename')}</button>
+                  <button className="link text-danger" onClick={() => remove(m)}>{t('common.delete')}</button>
                 </span>
               </div>
             </div>

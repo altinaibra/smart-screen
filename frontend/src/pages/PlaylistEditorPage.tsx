@@ -1,20 +1,23 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
+import i18n from '../i18n';
 import { formatDuration } from '../api';
+import Icon from '../components/Icon';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
 import ScreenPreview, { resolutions } from '../components/ScreenPreview';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
 import { useCategories } from '../services/Menu/menuQueries';
 import { usePlaylist, usePlaylistPreview, useUpdatePlaylist } from '../services/Playlist/playlistQueries';
-import { slideTypeLabels, type Category, type Media, type MediaType, type Orientation, type Playlist, type PlaylistItem, type SlideType } from '../types';
+import { slideTypes, type Category, type Media, type MediaType, type Orientation, type Playlist, type PlaylistItem, type SlideType } from '../types';
 
 const newItem = (type: SlideType): PlaylistItem => ({
   type,
   durationSeconds: type === 'Video' ? 0 : type === 'Menu' ? 12 : 10,
   isEnabled: true,
   fit: 'Cover',
-  title: type === 'Text' ? 'Titulli' : null,
-  text: type === 'Text' ? 'Teksti i njoftimit' : null,
+  title: type === 'Text' ? i18n.t('editor.defaultTitle') : null,
+  text: type === 'Text' ? i18n.t('editor.defaultText') : null,
 });
 
 export default function PlaylistEditorPage() {
@@ -28,6 +31,7 @@ export default function PlaylistEditorPage() {
 }
 
 function PlaylistEditor({ initial, categories }: { initial: Playlist; categories: Category[] }) {
+  const { t } = useTranslation();
   const [playlist, setPlaylist] = useState<Playlist>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -79,11 +83,13 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
     <>
       <PageHeader
         title={playlist.name}
-        subtitle={`${playlist.items.length} slide · ${formatDuration(total)} për cikël`}
+        subtitle={t('editor.summary', { count: playlist.items.length, duration: formatDuration(total) })}
         actions={
           <>
-            <Link to="/playlists" className="btn">← Kthehu</Link>
-            <button className="btn primary" onClick={save} disabled={!dirty}>{saved ? '✓ U ruajt' : 'Ruaj ndryshimet'}</button>
+            <Link to="/playlists" className="btn"><Icon name="arrow-left" />{t('common.back')}</Link>
+            <button className="btn primary" onClick={save} disabled={!dirty}>
+              {saved ? <><Icon name="check" />{t('common.saved')}</> : t('editor.saveChanges')}
+            </button>
           </>
         }
       />
@@ -93,8 +99,8 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
         <div className="editor-main">
           <div className="card">
             <div className="grid-2">
-              <Field label="Emri"><input value={playlist.name} onChange={e => { setPlaylist({ ...playlist, name: e.target.value }); setDirty(true); }} /></Field>
-              <Field label="Përshkrimi"><input value={playlist.description ?? ''} onChange={e => { setPlaylist({ ...playlist, description: e.target.value }); setDirty(true); }} /></Field>
+              <Field label={t('common.name')}><input value={playlist.name} onChange={e => { setPlaylist({ ...playlist, name: e.target.value }); setDirty(true); }} /></Field>
+              <Field label={t('common.description')}><input value={playlist.description ?? ''} onChange={e => { setPlaylist({ ...playlist, description: e.target.value }); setDirty(true); }} /></Field>
             </div>
           </div>
 
@@ -102,15 +108,15 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
             <div key={i} className={`card slide-item ${item.isEnabled ? '' : 'disabled'}`}>
               <div className="slide-item-head">
                 <span className="slide-index">{i + 1}</span>
-                <span className={`tag type-${item.type}`}>{slideTypeLabels[item.type]}</span>
+                <span className={`tag type-${item.type}`}>{t(`slideType.${item.type}`)}</span>
                 <label className="inline-check">
-                  <input type="checkbox" checked={item.isEnabled} onChange={e => update(i, { isEnabled: e.target.checked })} /> Aktiv
+                  <input type="checkbox" checked={item.isEnabled} onChange={e => update(i, { isEnabled: e.target.checked })} /> {t('editor.active')}
                 </label>
                 <div className="spacer" />
-                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} title="Lart">↑</button>
-                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === playlist.items.length - 1} title="Poshtë">↓</button>
-                <button className="icon-btn" onClick={() => setItems(items => [...items.slice(0, i + 1), { ...item, id: null }, ...items.slice(i + 1)])} title="Dyfisho">⧉</button>
-                <button className="icon-btn danger" onClick={() => setItems(items => items.filter((_, idx) => idx !== i))} title="Fshi">✕</button>
+                <button className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} title={t('editor.up')}><Icon name="arrow-up" /></button>
+                <button className="icon-btn" onClick={() => move(i, 1)} disabled={i === playlist.items.length - 1} title={t('editor.down')}><Icon name="arrow-down" /></button>
+                <button className="icon-btn" onClick={() => setItems(items => [...items.slice(0, i + 1), { ...item, id: null }, ...items.slice(i + 1)])} title={t('editor.duplicate')}><Icon name="copy" /></button>
+                <button className="icon-btn danger" onClick={() => setItems(items => items.filter((_, idx) => idx !== i))} title={t('common.delete')}><Icon name="close" /></button>
               </div>
               <SlideFields item={item} categories={categories}
                 onChange={patch => update(i, patch)}
@@ -119,9 +125,9 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
           ))}
 
           <div className="card add-slide">
-            <span className="muted">Shto slide:</span>
-            {(Object.keys(slideTypeLabels) as SlideType[]).map(t => (
-              <button key={t} className="btn" onClick={() => setItems(items => [...items, newItem(t)])}>+ {slideTypeLabels[t]}</button>
+            <span className="muted">{t('editor.addSlide')}</span>
+            {slideTypes.map(type => (
+              <button key={type} className="btn" onClick={() => setItems(items => [...items, newItem(type)])}><Icon name="plus" />{t(`slideType.${type}`)}</button>
             ))}
           </div>
         </div>
@@ -129,13 +135,13 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
         <div className="editor-side">
           <div className="card sticky">
             <div className="card-header">
-              <h2>Preview</h2>
+              <h2>{t('editor.preview')}</h2>
               <select value={resIndex} onChange={e => setResIndex(Number(e.target.value))}>
-                {resolutions.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}
+                {resolutions.map((r, i) => <option key={r.label} value={i}>{t(r.label)}</option>)}
               </select>
             </div>
             <ScreenPreview content={preview} resolution={resolution} />
-            <p className="muted small">{dirty ? 'Ruani ndryshimet për të përditësuar preview-në.' : 'Kështu do të duket në TV. Ndryshimet arrijnë te ekranet brenda ~15 sekondave.'}</p>
+            <p className="muted small">{dirty ? t('editor.previewDirty') : t('editor.previewHint')}</p>
           </div>
         </div>
       </div>
@@ -149,24 +155,25 @@ function SlideFields({ item, categories, onChange, onPick }: {
   item: PlaylistItem; categories: Category[];
   onChange: (patch: Partial<PlaylistItem>) => void; onPick: (type: MediaType) => void;
 }) {
+  const { t } = useTranslation();
   const duration = (
-    <Field label="Kohëzgjatja (sekonda)" hint={item.type === 'Video' ? '0 = luaj videon deri në fund' : undefined}>
+    <Field label={t('editor.duration')} hint={item.type === 'Video' ? t('editor.durationVideoHint') : undefined}>
       <input type="number" min={item.type === 'Video' ? 0 : 3} max={3600} value={item.durationSeconds}
         onChange={e => onChange({ durationSeconds: Number(e.target.value) })} />
     </Field>
   );
   const colors = (
     <>
-      <Field label="Ngjyra e sfondit">
+      <Field label={t('editor.bgColor')}>
         <div className="color-input">
           <input type="color" value={item.backgroundColor ?? '#c8102e'} onChange={e => onChange({ backgroundColor: e.target.value })} />
-          {item.backgroundColor && <button className="link" onClick={() => onChange({ backgroundColor: null })}>parazgjedhur</button>}
+          {item.backgroundColor && <button className="link" onClick={() => onChange({ backgroundColor: null })}>{t('editor.defaultColor')}</button>}
         </div>
       </Field>
-      <Field label="Ngjyra e tekstit">
+      <Field label={t('editor.textColor')}>
         <div className="color-input">
           <input type="color" value={item.textColor ?? '#ffffff'} onChange={e => onChange({ textColor: e.target.value })} />
-          {item.textColor && <button className="link" onClick={() => onChange({ textColor: null })}>parazgjedhur</button>}
+          {item.textColor && <button className="link" onClick={() => onChange({ textColor: null })}>{t('editor.defaultColor')}</button>}
         </div>
       </Field>
     </>
@@ -179,48 +186,48 @@ function SlideFields({ item, categories, onChange, onPick }: {
         <div className="slide-fields media-fields">
           <button className="thumb-btn" onClick={() => onPick(item.type as MediaType)}>
             <MediaThumb media={item.mediaAsset} />
-            <span>{item.mediaAsset ? 'Ndrysho' : `Zgjidh ${item.type === 'Image' ? 'foton' : 'videon'}`}</span>
+            <span>{item.mediaAsset ? t('editor.change') : item.type === 'Image' ? t('editor.pickImage') : t('editor.pickVideo')}</span>
           </button>
           <div className="grid-2 grow">
             {duration}
-            <Field label="Përshtatja">
+            <Field label={t('editor.fit')}>
               <select value={item.fit} onChange={e => onChange({ fit: e.target.value as PlaylistItem['fit'] })}>
-                <option value="Cover">Mbush ekranin (pret skajet)</option>
-                <option value="Contain">E plotë (me shirita)</option>
+                <option value="Cover">{t('editor.fitCover')}</option>
+                <option value="Contain">{t('editor.fitContain')}</option>
               </select>
             </Field>
-            <Field label="Titull mbi foto (opsional)"><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value || null })} /></Field>
-            <Field label="Nëntitull (opsional)"><input value={item.text ?? ''} onChange={e => onChange({ text: e.target.value || null })} /></Field>
+            <Field label={t('editor.overlayTitle')}><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value || null })} /></Field>
+            <Field label={t('editor.overlayText')}><input value={item.text ?? ''} onChange={e => onChange({ text: e.target.value || null })} /></Field>
           </div>
         </div>
       );
     case 'Menu':
       return (
         <div className="slide-fields grid-2">
-          <Field label="Kategoria">
+          <Field label={t('editor.category')}>
             <select value={item.menuCategoryId ?? ''} onChange={e => onChange({ menuCategoryId: e.target.value ? Number(e.target.value) : null })}>
-              <option value="">★ Produktet e veçuara (oferta)</option>
+              <option value="">★ {t('editor.featured')}</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name} ({c.products.length})</option>)}
             </select>
           </Field>
           {duration}
-          <Field label="Titulli (opsional)" hint="Bosh = emri i kategorisë"><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value || null })} /></Field>
+          <Field label={t('editor.menuTitle')} hint={t('editor.menuTitleHint')}><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value || null })} /></Field>
           {colors}
         </div>
       );
     case 'Text':
       return (
         <div className="slide-fields grid-2">
-          <Field label="Titulli"><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value })} /></Field>
+          <Field label={t('editor.title')}><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value })} /></Field>
           {duration}
-          <Field label="Teksti"><textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value })} /></Field>
+          <Field label={t('editor.text')}><textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value })} /></Field>
           <div className="grid-2">{colors}</div>
         </div>
       );
     case 'WebPage':
       return (
         <div className="slide-fields grid-2">
-          <Field label="URL" hint="Disa faqe nuk lejojnë shfaqjen brenda iframe."><input type="url" value={item.url ?? ''} placeholder="https://..." onChange={e => onChange({ url: e.target.value })} /></Field>
+          <Field label={t('editor.url')} hint={t('editor.urlHint')}><input type="url" value={item.url ?? ''} placeholder="https://..." onChange={e => onChange({ url: e.target.value })} /></Field>
           {duration}
         </div>
       );

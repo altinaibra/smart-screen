@@ -153,19 +153,5 @@ export interface Dashboard {
   screens: Screen[];
 }
 
-export const platformLabels: Record<ScreenPlatform, string> = {
-  Unknown: 'I panjohur',
-  LgWebOs: 'LG webOS',
-  SamsungTizen: 'Samsung Tizen',
-  AndroidTv: 'Android TV / Box',
-  SonyBravia: 'Sony Bravia',
-  Browser: 'Shfletues / PC',
-};
-
-export const slideTypeLabels: Record<SlideType, string> = {
-  Image: 'Foto',
-  Video: 'Video',
-  Menu: 'Menu me çmime',
-  Text: 'Tekst / Njoftim',
-  WebPage: 'Faqe web',
-};
+/** Etiketat përkthehen: t(`platform.${platform}`), t(`slideType.${type}`). */
+export const slideTypes: SlideType[] = ['Image', 'Video', 'Menu', 'Text', 'WebPage'];
