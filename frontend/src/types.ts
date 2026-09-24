@@ -3,6 +3,8 @@ export type Orientation = 'Landscape' | 'Portrait';
 export type MediaType = 'Image' | 'Video';
 export type SlideType = 'Image' | 'Video' | 'Menu' | 'Text' | 'WebPage' | 'Promo' | 'Combo' | 'Brand';
 export type MediaFit = 'Cover' | 'Contain';
+/** Ndryshon tekstet në TV (POROSI / REZERVO / KONTAKT) dhe emërtimet në panel. */
+export type BusinessType = 'restaurant' | 'barber' | 'shop';
 
 export interface Schedule {
   id?: number | null;
@@ -115,6 +117,7 @@ export interface Settings {
   phone?: string | null;
   socialHandle?: string | null;
   screenLanguage: 'sq' | 'en';
+  businessType: BusinessType;
 }
 
 export interface Currency {

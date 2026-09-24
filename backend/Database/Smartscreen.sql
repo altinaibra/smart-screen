@@ -115,6 +115,7 @@ CREATE TABLE [BusinessSettings] (
     [ClosingTime] nvarchar(5) NULL,
     [Phone] nvarchar(50) NULL,
     [SocialHandle] nvarchar(100) NULL,
+    [BusinessType] nvarchar(20) NOT NULL,
     [ScreenLanguage] nvarchar(5) NOT NULL,
     [LogoAssetId] int NULL,
     [PrimaryColor] nvarchar(2000) NOT NULL,

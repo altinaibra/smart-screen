@@ -25,12 +25,15 @@
   var BRAND = '<div class="brand"><img src="logo.svg" alt=""><div><div class="brand-title">Smart Screen</div>' +
               '<div class="brand-tag">DIGITAL SIGNAGE</div></div></div>';
 
-  // Tekstet që shfaqen në TV (gjuha zgjidhet te Cilësimet → Ekrani).
+  // Tekstet që shfaqen në TV (gjuha dhe lloji i biznesit zgjidhen te Cilësimet).
+  // "order_barber" etj. zëvendësojnë "order" sipas llojit të biznesit.
   var LABELS = {
     sq: { open: 'Hapur', closed: 'Mbyllur', only: 'Vetëm', prices: 'Çmimet në {c}', vat: 'TVSH e përfshirë',
-          hours: 'Orari', order: 'Porosi', follow: 'Ndiqni', soldOut: 'E mbaruar', photo: 'Foto' },
+          hours: 'Orari', order: 'Porosi', order_barber: 'Rezervo', order_shop: 'Kontakt',
+          follow: 'Ndiqni', soldOut: 'E mbaruar', soldOut_barber: 'Jo sot', photo: 'Foto' },
     en: { open: 'Open', closed: 'Closed', only: 'Only', prices: 'Prices in {c}', vat: 'VAT included',
-          hours: 'Hours', order: 'Order', follow: 'Follow', soldOut: 'Sold out', photo: 'Photo' }
+          hours: 'Hours', order: 'Order', order_barber: 'Book', order_shop: 'Contact',
+          follow: 'Follow', soldOut: 'Sold out', soldOut_barber: 'Not today', photo: 'Photo' }
   };
   var CREAM = '#f3e9d8';
   var INK = '#1a1411';
@@ -668,7 +671,8 @@
 
   function label(settings, key) {
     var lang = settings && settings.screenLanguage === 'en' ? 'en' : 'sq';
-    return LABELS[lang][key];
+    var typed = LABELS[lang][key + '_' + (settings && settings.businessType)];
+    return typed || LABELS[lang][key];
   }
 
   function startClock() {

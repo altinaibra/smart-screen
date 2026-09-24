@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../queryClient';
 import { getSettings, updateSettings } from './settingsMethods';
-import type { Settings } from '../../types';
+import type { BusinessType, Settings } from '../../types';
 
 export const settingsKeys = {
   all: ['settings'] as const,
@@ -10,6 +10,12 @@ export const settingsKeys = {
 /** `currency` është gjithmonë simboli i valutës kryesore (isMainCurrency). */
 export function useSettings() {
   return useQuery({ queryKey: settingsKeys.all, queryFn: getSettings });
+}
+
+/** Lloji i biznesit, për emërtimet që ndryshojnë: t('nav.menu', { context: businessType }). */
+export function useBusinessType(): BusinessType {
+  const { data } = useSettings();
+  return data?.businessType ?? 'restaurant';
 }
 
 export function useUpdateSettings() {

@@ -72,7 +72,7 @@ public class PlayerContentService(AppDbContext db)
         var main = await MainCurrency.GetAsync(db);
         var settings = new PlayerSettingsDto(
             s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, main?.Symbol ?? s.Currency, s.ShowTicker, s.TickerText, s.ShowClock,
-            s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name);
+            s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name, s.BusinessType);
 
         // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
         var ids = new List<int>();

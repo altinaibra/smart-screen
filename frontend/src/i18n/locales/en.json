@@ -67,7 +67,9 @@
     "openPlayer": "Open player",
     "logout": "Log out",
     "currencies": "Currencies",
-    "paymentMethods": "Payment methods"
+    "paymentMethods": "Payment methods",
+    "menu_barber": "Services & Prices",
+    "menu_shop": "Products & Prices"
   },
   "login": {
     "subtitle": "Manage your screens and ads",
@@ -90,7 +92,9 @@
     "colPlatform": "Platform",
     "colResolution": "Resolution",
     "colPlaylist": "Playlist",
-    "colLastSeen": "Last seen"
+    "colLastSeen": "Last seen",
+    "products_barber": "Services",
+    "products_shop": "Products"
   },
   "screens": {
     "title": "Screens (TV)",
@@ -294,7 +298,18 @@
     "editCategory": "Edit category",
     "newCategory": "New category",
     "categoryPlaceholder": "e.g. Pizza, Salads, Desserts",
-    "noMainCurrency": "No currency is set as main (<b>isMainCurrency</b>), so prices are shown without a currency. Choose the main currency in <link>Settings → Currency</link>."
+    "noMainCurrency": "No currency is set as main (<b>isMainCurrency</b>), so prices are shown without a currency. Choose the main currency in <link>Settings → Currency</link>.",
+    "title_barber": "Services & Prices",
+    "title_shop": "Products & Prices",
+    "subtitle_barber": "Haircuts, shaves and packages shown on the TVs. Price changes appear straight away.",
+    "subtitle_shop": "Products and deals shown on the TVs. Price changes appear straight away.",
+    "addProduct_barber": "Service",
+    "noProducts_barber": "There are no services in this category.",
+    "colProduct_barber": "Service",
+    "editProduct_barber": "Edit service",
+    "newProduct_barber": "New service",
+    "categoryPlaceholder_barber": "e.g. Haircuts, Beard, Packages",
+    "categoryPlaceholder_shop": "e.g. Sunglasses, Watches, Bags"
   },
   "settings": {
     "title": "Settings",
@@ -338,7 +353,12 @@
     "social": "Social handle",
     "design": "TV design",
     "screenLanguage": "TV language",
-    "screenLanguageHint": "OPEN, ONLY, HOURS…"
+    "screenLanguageHint": "OPEN, ONLY, HOURS…",
+    "businessType": "Business type",
+    "businessTypeHint": "Changes the TV wording (ORDER / BOOK / CONTACT), the panel labels and suggests a colour",
+    "type_restaurant": "Restaurant",
+    "type_barber": "Barber",
+    "type_shop": "Accessories"
   },
   "currencies": {
     "title": "Currencies",

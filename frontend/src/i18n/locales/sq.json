@@ -67,7 +67,9 @@
     "openPlayer": "Hap player-in",
     "logout": "Dil",
     "currencies": "Valutat",
-    "paymentMethods": "Mënyrat e pagesës"
+    "paymentMethods": "Mënyrat e pagesës",
+    "menu_barber": "Shërbimet & Çmimet",
+    "menu_shop": "Produktet & Çmimet"
   },
   "login": {
     "subtitle": "Menaxhimi i ekraneve dhe reklamave",
@@ -90,7 +92,9 @@
     "colPlatform": "Platforma",
     "colResolution": "Rezolucioni",
     "colPlaylist": "Playlist-a",
-    "colLastSeen": "Parë së fundi"
+    "colLastSeen": "Parë së fundi",
+    "products_barber": "Shërbime",
+    "products_shop": "Produkte"
   },
   "screens": {
     "title": "Ekranet (TV)",
@@ -294,7 +298,18 @@
     "editCategory": "Ndrysho kategorinë",
     "newCategory": "Kategori e re",
     "categoryPlaceholder": "p.sh. Pica, Sallata, Ëmbëlsira",
-    "noMainCurrency": "Asnjë valutë nuk është kryesore (<b>isMainCurrency</b>), prandaj çmimet shfaqen pa monedhë. Zgjidhni valutën kryesore te <link>Cilësimet → Monedha</link>."
+    "noMainCurrency": "Asnjë valutë nuk është kryesore (<b>isMainCurrency</b>), prandaj çmimet shfaqen pa monedhë. Zgjidhni valutën kryesore te <link>Cilësimet → Monedha</link>.",
+    "title_barber": "Shërbimet & Çmimet",
+    "title_shop": "Produktet & Çmimet",
+    "subtitle_barber": "Qethjet, rruajtjet dhe paketat që shfaqen në TV. Ndryshimet e çmimeve dalin menjëherë.",
+    "subtitle_shop": "Produktet dhe ofertat që shfaqen në TV. Ndryshimet e çmimeve dalin menjëherë.",
+    "addProduct_barber": "Shërbim",
+    "noProducts_barber": "Nuk ka shërbime në këtë kategori.",
+    "colProduct_barber": "Shërbimi",
+    "editProduct_barber": "Ndrysho shërbimin",
+    "newProduct_barber": "Shërbim i ri",
+    "categoryPlaceholder_barber": "p.sh. Qethje, Mjekër, Paketa",
+    "categoryPlaceholder_shop": "p.sh. Syze, Ora, Çanta"
   },
   "settings": {
     "title": "Cilësimet",
@@ -338,7 +353,12 @@
     "social": "Rrjeti social",
     "design": "Dizajni i TV-së",
     "screenLanguage": "Gjuha në TV",
-    "screenLanguageHint": "HAPUR, VETËM, ORARI…"
+    "screenLanguageHint": "HAPUR, VETËM, ORARI…",
+    "businessType": "Lloji i biznesit",
+    "businessTypeHint": "Ndryshon tekstet në TV (POROSI / REZERVO / KONTAKT), emërtimet në panel dhe sugjeron ngjyrën",
+    "type_restaurant": "Restorant",
+    "type_barber": "Berber",
+    "type_shop": "Aksesore"
   },
   "currencies": {
     "title": "Valutat",

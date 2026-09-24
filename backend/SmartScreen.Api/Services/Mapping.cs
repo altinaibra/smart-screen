@@ -37,7 +37,7 @@ public static class Mapping
     public static SettingsDto ToDto(this BusinessSettings s, string currency) => new(
         s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency,
         s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId,
-        s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage);
+        s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, s.BusinessType);
 
     public static CurrencyDto ToDto(this Currency c) => new(
         c.CurrencyId, c.CurrencyCode, c.CurrencyName, c.CurrencySymbol, c.ExchangeRate,

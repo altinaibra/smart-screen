@@ -8,7 +8,14 @@ import { ErrorBox, Field, PageHeader } from '../components/ui';
 import { useChangePassword } from '../services/Auth/authQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
-import type { Settings } from '../types';
+import type { BusinessType, Settings } from '../types';
+
+/** Llojet e biznesit dhe ngjyra që sugjerohet për secilin (si në dizajn). */
+const businessTypes: { type: BusinessType; color: string }[] = [
+  { type: 'restaurant', color: '#e8452f' },
+  { type: 'barber', color: '#2f7bf5' },
+  { type: 'shop', color: '#d63a7a' },
+];
 
 /** Ngjyrat e gatshme të dizajnit (mund të zgjidhet edhe çdo ngjyrë tjetër). */
 const themeColors = ['#e8452f', '#2f7bf5', '#1fa36b', '#d63a7a', '#f08a24', '#7b4ff0'];
@@ -56,6 +63,18 @@ function SettingsForm({ initial }: { initial: Settings }) {
       <div className="settings-layout">
         <form className="card" onSubmit={submit}>
           <h2>{t('settings.business')}</h2>
+          <div className="field">
+            <span className="field-label">{t('settings.businessType')}</span>
+            <div className="segmented">
+              {businessTypes.map(b => (
+                <button key={b.type} type="button" className={s.businessType === b.type ? 'active' : ''}
+                  onClick={() => set({ businessType: b.type, primaryColor: b.color })}>
+                  {t(`settings.type_${b.type}`)}
+                </button>
+              ))}
+            </div>
+            <span className="field-hint">{t('settings.businessTypeHint')}</span>
+          </div>
           <div className="grid-2">
             <Field label={t('settings.businessName')}><input value={s.businessName} onChange={e => set({ businessName: e.target.value })} required /></Field>
             <Field label={t('settings.currency')} hint={t('settings.currencyHint')}>

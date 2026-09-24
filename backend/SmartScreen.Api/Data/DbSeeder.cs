@@ -68,6 +68,7 @@ public static class DbSeeder
         ("BusinessSettings", "Phone", "nvarchar(50) NULL", "TEXT NULL"),
         ("BusinessSettings", "SocialHandle", "nvarchar(100) NULL", "TEXT NULL"),
         ("BusinessSettings", "ScreenLanguage", "nvarchar(5) NOT NULL CONSTRAINT [DF_BusinessSettings_ScreenLanguage] DEFAULT N'sq'", "TEXT NOT NULL DEFAULT 'sq'"),
+        ("BusinessSettings", "BusinessType", "nvarchar(20) NOT NULL CONSTRAINT [DF_BusinessSettings_BusinessType] DEFAULT N'restaurant'", "TEXT NOT NULL DEFAULT 'restaurant'"),
         ("PlaylistItems", "Badge", "nvarchar(100) NULL", "TEXT NULL"),
         ("PlaylistItems", "Price", "decimal(12,2) NULL", "TEXT NULL"),
     ];

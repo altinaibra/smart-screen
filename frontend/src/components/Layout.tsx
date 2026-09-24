@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { auth } from '../api';
 import { queryClient } from '../services/queryClient';
+import { useBusinessType } from '../services/Settings/settingsQueries';
 import Icon, { type IconName } from './Icon';
 import LanguageSelect from './LanguageSelect';
 import Logo from './Logo';
@@ -20,6 +21,7 @@ const links: { to: string; label: string; icon: IconName; end?: boolean }[] = [
 export default function Layout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const businessType = useBusinessType();
 
   return (
     <div className="app">
@@ -31,7 +33,7 @@ export default function Layout() {
           {links.map(l => (
             <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
               <span className="nav-icon"><Icon name={l.icon} /></span>
-              {t(l.label)}
+              {t(l.label, { context: businessType })}
             </NavLink>
           ))}
         </nav>

@@ -43,6 +43,7 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
         s.Phone = Clean(req.Phone);
         s.SocialHandle = Clean(req.SocialHandle);
         s.ScreenLanguage = req.ScreenLanguage == "en" ? "en" : "sq";
+        s.BusinessType = req.BusinessType is "barber" or "shop" ? req.BusinessType : "restaurant";
         s.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 

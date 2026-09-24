@@ -18,6 +18,9 @@ public class BusinessSettings
     public string? Phone { get; set; }
     public string? SocialHandle { get; set; }
 
+    /// <summary>Lloji i biznesit: "restaurant", "barber" ose "shop" – ndryshon tekstet (p.sh. POROSI / REZERVO) dhe emërtimet në panel.</summary>
+    public string BusinessType { get; set; } = "restaurant";
+
     /// <summary>Gjuha e teksteve të TV-së (HAPUR, VETËM, ORARI...): "sq" ose "en".</summary>
     public string ScreenLanguage { get; set; } = "sq";
     public int? LogoAssetId { get; set; }

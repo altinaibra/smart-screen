@@ -82,6 +82,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.Phone).HasMaxLength(50);
             e.Property(s => s.SocialHandle).HasMaxLength(100);
             e.Property(s => s.ScreenLanguage).HasMaxLength(5);
+            e.Property(s => s.BusinessType).HasMaxLength(20);
         });
 
         b.Entity<PlaylistItem>(e =>

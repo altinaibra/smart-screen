@@ -8,12 +8,14 @@ import {
   useCategories, useDeleteCategory, useDeleteProduct, useSaveCategory, useSaveProduct, useSetProductAvailability,
 } from '../services/Menu/menuQueries';
 import { useMainCurrency } from '../services/Currency/currencyQueries';
+import { useBusinessType } from '../services/Settings/settingsQueries';
 import type { Category, Media, Product } from '../types';
 
 type ProductForm = Omit<Product, 'id' | 'price' | 'oldPrice'> & { id?: number; price: string; oldPrice: string };
 
 export default function MenuPage() {
   const { t } = useTranslation();
+  const context = useBusinessType();
   const { data: categories = [], error: loadError } = useCategories();
   // Valuta kryesore (isMainCurrency) nga tabela Currencies – rifreskohet vetë kur ndërrohet valuta.
   const { data: mainCurrency, isSuccess: currenciesLoaded } = useMainCurrency();
@@ -52,8 +54,8 @@ export default function MenuPage() {
   return (
     <>
       <PageHeader
-        title={t('menu.title')}
-        subtitle={t('menu.subtitle')}
+        title={t('menu.title', { context })}
+        subtitle={t('menu.subtitle', { context })}
         actions={<button className="btn" onClick={() => setCategory({ name: '', sortOrder: categories.length + 1 })}><Icon name="plus" />{t('menu.addCategory')}</button>}
       />
       <ErrorBox error={error ?? loadError?.message ?? null} />
@@ -80,12 +82,12 @@ export default function MenuPage() {
                 <div className="actions">
                   <button className="btn" onClick={() => setCategory({ id: current.id, name: current.name, sortOrder: current.sortOrder })}>{t('common.rename')}</button>
                   <button className="btn danger ghost" onClick={() => removeCategory(current)}>{t('menu.deleteCategory')}</button>
-                  <button className="btn primary" onClick={openNewProduct}><Icon name="plus" />{t('menu.addProduct')}</button>
+                  <button className="btn primary" onClick={openNewProduct}><Icon name="plus" />{t('menu.addProduct', { context })}</button>
                 </div>
               </div>
-              {current.products.length === 0 ? <Empty>{t('menu.noProducts')}</Empty> : (
+              {current.products.length === 0 ? <Empty>{t('menu.noProducts', { context })}</Empty> : (
                 <table className="table">
-                  <thead><tr><th /><th>{t('menu.colProduct')}</th><th>{t('menu.colPrice')}</th><th>{t('menu.colStatus')}</th><th /></tr></thead>
+                  <thead><tr><th /><th>{t('menu.colProduct', { context })}</th><th>{t('menu.colPrice')}</th><th>{t('menu.colStatus')}</th><th /></tr></thead>
                   <tbody>
                     {current.products.map(p => (
                       <tr key={p.id} className={p.isAvailable ? '' : 'faded'}>
@@ -127,6 +129,7 @@ function ProductModal({ form: initial, categories, currency, onClose, onDone }: 
   form: ProductForm; categories: Category[]; currency: string; onClose: () => void; onDone: () => void;
 }) {
   const { t } = useTranslation();
+  const context = useBusinessType();
   const [form, setForm] = useState(initial);
   const [picking, setPicking] = useState(false);
   const [image, setImage] = useState<Media | null>(null);
@@ -142,7 +145,7 @@ function ProductModal({ form: initial, categories, currency, onClose, onDone }: 
   const imageUrl = image?.url ?? form.imageUrl;
 
   return (
-    <Modal title={form.id ? t('menu.editProduct') : t('menu.newProduct')} onClose={onClose}
+    <Modal title={form.id ? t('menu.editProduct', { context }) : t('menu.newProduct', { context })} onClose={onClose}
       footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="product-form">{t('common.save')}</button></>}>
       <form id="product-form" onSubmit={submit}>
         <ErrorBox error={error?.message ?? null} />
@@ -181,6 +184,7 @@ function CategoryModal({ form: initial, onClose, onDone }: {
   form: { id?: number; name: string; sortOrder: number }; onClose: () => void; onDone: (id?: number) => void;
 }) {
   const { t } = useTranslation();
+  const context = useBusinessType();
   const [form, setForm] = useState(initial);
   const { mutate: saveCategory, error } = useSaveCategory();
 
@@ -194,7 +198,7 @@ function CategoryModal({ form: initial, onClose, onDone }: {
       footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="cat-form">{t('common.save')}</button></>}>
       <form id="cat-form" onSubmit={submit}>
         <ErrorBox error={error?.message ?? null} />
-        <Field label={t('common.name')}><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t('menu.categoryPlaceholder')} required autoFocus /></Field>
+        <Field label={t('common.name')}><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t('menu.categoryPlaceholder', { context })} required autoFocus /></Field>
         <Field label={t('common.sortOrder')}><input type="number" value={form.sortOrder} onChange={e => setForm({ ...form, sortOrder: Number(e.target.value) })} /></Field>
       </form>
     </Modal>
