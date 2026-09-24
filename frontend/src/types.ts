@@ -157,8 +157,11 @@ export interface LoginResponse {
   role: UserRole;
 }
 
-/** Admin = sheh dhe menaxhon gjithçka; User = vetëm bizneset/ekranet që i janë dhënë. */
-export type UserRole = 'Admin' | 'User';
+/**
+ * Owner = pronari i aplikacionit (sheh të gjithë klientët); Admin = administratori i një klienti;
+ * User = vetëm bizneset/ekranet që i janë dhënë.
+ */
+export type UserRole = 'Owner' | 'Admin' | 'User';
 
 /** fullAccess = false kur përdoruesi kontrollon vetëm disa ekrane të biznesit. */
 export interface Business {
@@ -174,8 +177,27 @@ export interface Me {
   id: number;
   username: string;
   role: UserRole;
+  /** Menaxhon bizneset dhe përdoruesit (pronari ose administratori i klientit). */
   isAdmin: boolean;
+  isOwner: boolean;
+  /** Klienti aktiv; për pronarin null derisa të hyjë në një klient. */
+  client: { id: number; name: string } | null;
   businesses: Business[];
+}
+
+export interface Client {
+  id: number;
+  name: string;
+  contactPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  businessCount: number;
+  userCount: number;
+  screenCount: number;
+  screensOnline: number;
 }
 
 /** businessIds = qasje e plotë; screenIds = ekrane të veçanta në biznese të tjera. */

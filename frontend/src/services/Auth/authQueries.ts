@@ -8,6 +8,7 @@ export function useLogin() {
     mutationFn: ({ username, password }: { username: string; password: string }) => login(username, password),
     onSuccess: res => {
       queryClient.clear(); // të dhënat e përdoruesit të mëparshëm
+      auth.clear();
       auth.save(res.token, res.username);
     },
   });

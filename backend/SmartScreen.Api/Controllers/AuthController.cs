@@ -21,6 +21,8 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
         var user = await db.Users.FirstOrDefaultAsync(u => u.Username == req.Username.Trim());
         if (user is null || hasher.VerifyHashedPassword(user, user.PasswordHash, req.Password) == PasswordVerificationResult.Failed)
             return Unauthorized(new { message = "Përdoruesi ose fjalëkalimi është i gabuar." });
+        if (!user.IsOwner && !await db.Clients.AnyAsync(c => c.Id == user.ClientId && c.IsActive))
+            return Unauthorized(new { message = "Llogaria është çaktivizuar. Kontaktoni furnitorin e aplikacionit." });
 
         var (token, expires) = tokens.CreateToken(user);
         return new LoginResponse(token, user.Username, expires, user.Role);
@@ -33,7 +35,11 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
     {
         var user = await BusinessAccess.LoadUserAsync(db, User);
         if (user is null) return Unauthorized();
-        return new MeDto(user.Id, user.Username, user.Role, user.IsAdmin, await BusinessesController.ListAsync(db, user));
+        var clientId = await BusinessAccess.ClientIdAsync(db, user, Request);
+        var client = clientId is null ? null
+            : await db.Clients.Where(c => c.Id == clientId).Select(c => new ClientRefDto(c.Id, c.Name)).FirstAsync();
+        return new MeDto(user.Id, user.Username, user.Role, user.IsAdmin, user.IsOwner, client,
+            await BusinessesController.ListAsync(db, user, clientId));
     }
 
     [HttpPut("password")]

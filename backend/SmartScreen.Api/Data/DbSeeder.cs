@@ -19,7 +19,8 @@ public static class DbSeeder
 
         if (!await db.Users.AnyAsync())
         {
-            var user = new AppUser { Username = config["Admin:Username"] ?? "admin", Role = AppUser.AdminRole };
+            // Përdoruesi i parë është pronari i aplikacionit: krijon klientët dhe hyn te secili.
+            var user = new AppUser { Username = config["Admin:Username"] ?? "admin", Role = AppUser.OwnerRole };
             user.PasswordHash = hasher.HashPassword(user, config["Admin:Password"] ?? "Admin123!");
             db.Users.Add(user);
         }
@@ -60,23 +61,46 @@ public static class DbSeeder
     }
 
     /// <summary>
-    /// Para bizneseve të shumta gjithçka i përkiste një biznesi të vetëm. Këtu sigurohet që ekziston
-    /// të paktën një biznes dhe të dhënat pa biznes (BusinessId = 0 / null) i kalojnë biznesit të parë.
-    /// Pastaj indekset unike të kodeve (valuta, mënyra pagese) bëhen unike brenda çdo biznesi.
+    /// Para klientëve dhe bizneseve të shumta gjithçka i përkiste një biznesi të vetëm. Të dhënat e vjetra
+    /// (BusinessId = 0 / null, ClientId = 0) i kalojnë biznesit dhe klientit të parë; administratori i vjetër
+    /// bëhet pronar (Owner). Pastaj indekset unike të kodeve (valuta, mënyra pagese) bëhen unike brenda biznesit.
     /// </summary>
     private static async Task AssignLegacyDataAsync(AppDbContext db)
     {
-        if (!await db.BusinessSettings.AnyAsync())
-        {
-            db.BusinessSettings.Add(new BusinessSettings());
-            await db.SaveChangesAsync();
-        }
-        var first = await db.BusinessSettings.MinAsync(b => b.Id);
+        // Administratori i vjetër (pa klient) = pronari i aplikacionit.
+        await db.Users.Where(u => u.Role == AppUser.AdminRole && u.ClientId == null)
+            .ExecuteUpdateAsync(u => u.SetProperty(x => x.Role, AppUser.OwnerRole));
 
-        foreach (var table in new[] { "Playlists", "MediaAssets", "MenuCategories", "Currencies", "PaymentMethods" })
-            await db.Database.ExecuteSqlRawAsync($"UPDATE \"{table}\" SET \"BusinessId\" = {{0}} WHERE \"BusinessId\" = 0", first);
-        await db.Database.ExecuteSqlRawAsync(
-            "UPDATE \"Screens\" SET \"BusinessId\" = {0} WHERE \"BusinessId\" IS NULL AND \"IsPaired\" = {1}", first, true);
+        var hasLegacyData = await db.Playlists.AnyAsync(p => p.BusinessId == 0) || await db.MediaAssets.AnyAsync(m => m.BusinessId == 0)
+            || await db.MenuCategories.AnyAsync(c => c.BusinessId == 0) || await db.Currencies.AnyAsync(c => c.BusinessId == 0)
+            || await db.PaymentMethods.AnyAsync(p => p.BusinessId == 0) || await db.Screens.AnyAsync(s => s.IsPaired && s.BusinessId == null)
+            || await db.BusinessSettings.AnyAsync(b => b.ClientId == 0)
+            || await db.Users.AnyAsync(u => u.Role != AppUser.OwnerRole && u.ClientId == null);
+        if (hasLegacyData)
+        {
+            var firstClient = await db.Clients.OrderBy(c => c.Id).FirstOrDefaultAsync();
+            if (firstClient is null)
+            {
+                var name = await db.BusinessSettings.OrderBy(b => b.Id).Select(b => b.BusinessName).FirstOrDefaultAsync();
+                firstClient = new Client { Name = name ?? "Klienti 1" };
+                db.Clients.Add(firstClient);
+                await db.SaveChangesAsync();
+            }
+            await db.BusinessSettings.Where(b => b.ClientId == 0).ExecuteUpdateAsync(u => u.SetProperty(b => b.ClientId, firstClient.Id));
+            await db.Users.Where(u => u.Role != AppUser.OwnerRole && u.ClientId == null)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.ClientId, firstClient.Id));
+
+            if (!await db.BusinessSettings.AnyAsync())
+            {
+                db.BusinessSettings.Add(new BusinessSettings { ClientId = firstClient.Id });
+                await db.SaveChangesAsync();
+            }
+            var first = await db.BusinessSettings.MinAsync(b => b.Id);
+            foreach (var table in new[] { "Playlists", "MediaAssets", "MenuCategories", "Currencies", "PaymentMethods" })
+                await db.Database.ExecuteSqlRawAsync($"UPDATE \"{table}\" SET \"BusinessId\" = {{0}} WHERE \"BusinessId\" = 0", first);
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE \"Screens\" SET \"BusinessId\" = {0} WHERE \"BusinessId\" IS NULL AND \"IsPaired\" = {1}", first, true);
+        }
 
         foreach (var (table, oldIndex, newIndex, columns, unique) in BusinessIndexes)
         {
@@ -108,6 +132,8 @@ public static class DbSeeder
         ("Playlists", null, "IX_Playlists_BusinessId", ["BusinessId"], false),
         ("MediaAssets", null, "IX_MediaAssets_BusinessId", ["BusinessId"], false),
         ("MenuCategories", null, "IX_MenuCategories_BusinessId", ["BusinessId"], false),
+        ("BusinessSettings", null, "IX_BusinessSettings_ClientId", ["ClientId"], false),
+        ("Users", null, "IX_Users_ClientId", ["ClientId"], false),
     ];
 
     /// <summary>Kolonat e shtuara më vonë në tabelat ekzistuese (tabela, kolona, tipi SQL Server, tipi SQLite).</summary>
@@ -123,6 +149,9 @@ public static class DbSeeder
         ("BusinessSettings", "BusinessType", "nvarchar(20) NOT NULL CONSTRAINT [DF_BusinessSettings_BusinessType] DEFAULT N'restaurant'", "TEXT NOT NULL DEFAULT 'restaurant'"),
         ("PlaylistItems", "Badge", "nvarchar(100) NULL", "TEXT NULL"),
         ("PlaylistItems", "Price", "decimal(12,2) NULL", "TEXT NULL"),
+        // Klientët: 0 / null = të dhëna të vjetra, i kalojnë klientit të parë (AssignLegacyDataAsync).
+        ("BusinessSettings", "ClientId", "int NOT NULL CONSTRAINT [DF_BusinessSettings_ClientId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("Users", "ClientId", "int NULL", "INTEGER NULL"),
         // Bizneset e shumta: 0 / null = të dhëna të vjetra, i kalojnë biznesit të parë (AssignLegacyDataAsync).
         ("Screens", "BusinessId", "int NULL", "INTEGER NULL"),
         ("Playlists", "BusinessId", "int NOT NULL CONSTRAINT [DF_Playlists_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
@@ -212,6 +241,32 @@ public static class DbSeeder
                 "EntryDate" TEXT NOT NULL,
                 "FiscalType" INTEGER NOT NULL,
                 "RowVersion" BLOB NULL
+            );
+            """),
+        ("Clients",
+            """
+            CREATE TABLE [Clients] (
+                [Id] int NOT NULL IDENTITY,
+                [Name] nvarchar(150) NOT NULL,
+                [ContactPerson] nvarchar(150) NULL,
+                [Phone] nvarchar(50) NULL,
+                [Email] nvarchar(150) NULL,
+                [Notes] nvarchar(2000) NULL,
+                [IsActive] bit NOT NULL,
+                [CreatedAt] datetime2 NOT NULL,
+                CONSTRAINT [PK_Clients] PRIMARY KEY ([Id])
+            );
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS "Clients" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_Clients" PRIMARY KEY AUTOINCREMENT,
+                "Name" TEXT NOT NULL,
+                "ContactPerson" TEXT NULL,
+                "Phone" TEXT NULL,
+                "Email" TEXT NULL,
+                "Notes" TEXT NULL,
+                "IsActive" INTEGER NOT NULL,
+                "CreatedAt" TEXT NOT NULL
             );
             """),
         ("UserBusinesses",

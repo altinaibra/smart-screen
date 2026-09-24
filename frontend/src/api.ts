@@ -3,6 +3,7 @@ import i18n, { locale } from './i18n';
 const TOKEN_KEY = 'ss_admin_token';
 const USER_KEY = 'ss_admin_user';
 const BUSINESS_KEY = 'ss_business_id';
+const CLIENT_KEY = 'ss_client_id';
 
 export const auth = {
   get token() { return localStorage.getItem(TOKEN_KEY); },
@@ -14,6 +15,16 @@ export const auth = {
   clear() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(CLIENT_KEY);
+  },
+  /** Klienti në të cilin ka hyrë pronari (X-Client-Id). Për përdoruesit e tjerë nuk përdoret. */
+  get clientId(): number | null {
+    const id = Number(localStorage.getItem(CLIENT_KEY));
+    return id > 0 ? id : null;
+  },
+  set clientId(id: number | null) {
+    if (id) localStorage.setItem(CLIENT_KEY, String(id));
+    else localStorage.removeItem(CLIENT_KEY);
   },
   /** Biznesi i zgjedhur në panel; dërgohet me çdo kërkesë (X-Business-Id). */
   get businessId(): number | null {
@@ -29,6 +40,7 @@ export const auth = {
 function setAuthHeaders(set: (name: string, value: string) => void) {
   if (auth.token) set('Authorization', `Bearer ${auth.token}`);
   if (auth.businessId) set('X-Business-Id', String(auth.businessId));
+  if (auth.clientId) set('X-Client-Id', String(auth.clientId));
 }
 
 function onUnauthorized() {

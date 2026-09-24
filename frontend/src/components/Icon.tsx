@@ -18,6 +18,7 @@ export const iconFallbacks = {
   settings: '⚙',
   business: '⌂',
   users: '👥',
+  clients: '◫',
   'external-link': '↗',
   close: '✕',
   plus: '+',

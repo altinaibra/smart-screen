@@ -7,4 +7,5 @@ public record BusinessDto(int Id, string Name, string BusinessType, string? Logo
 
 public record CreateBusinessRequest([Required, MaxLength(100)] string Name, string BusinessType = "restaurant");
 
-public record MeDto(int Id, string Username, string Role, bool IsAdmin, List<BusinessDto> Businesses);
+/// <summary>Client = klienti aktiv (për pronarin null derisa të hyjë në një klient).</summary>
+public record MeDto(int Id, string Username, string Role, bool IsAdmin, bool IsOwner, ClientRefDto? Client, List<BusinessDto> Businesses);

@@ -8,65 +8,56 @@ using SmartScreen.Api.Services;
 
 namespace SmartScreen.Api.Controllers;
 
-/// <summary>Bizneset (restorant, berber, dyqan...). Secili ka ekranet, reklamat dhe menunë e vet.</summary>
+/// <summary>Bizneset e klientit (restorant, berber, dyqan...). Secili ka ekranet, reklamat dhe menunë e vet.</summary>
 [ApiController]
 [Route("api/businesses")]
 [Authorize]
 public class BusinessesController(AppDbContext db) : ControllerBase
 {
-    /// <summary>Bizneset që sheh përdoruesi aktual.</summary>
+    /// <summary>Bizneset që sheh përdoruesi aktual në klientin aktiv.</summary>
     [HttpGet]
     public async Task<ActionResult<List<BusinessDto>>> GetAll()
     {
         var user = await BusinessAccess.LoadUserAsync(db, User);
         if (user is null) return Unauthorized();
-        return await ListAsync(db, user);
+        return await ListAsync(db, user, await BusinessAccess.ClientIdAsync(db, user, Request));
     }
 
     [HttpPost]
     [AdminOnly]
     public async Task<ActionResult<BusinessDto>> Create(CreateBusinessRequest req)
     {
-        var business = new BusinessSettings
-        {
-            BusinessName = req.Name.Trim(),
-            BusinessType = req.BusinessType is "barber" or "shop" ? req.BusinessType : "restaurant",
-        };
+        var business = NewBusiness(BusinessAccess.CurrentClientId(HttpContext), req.Name, req.BusinessType);
         db.BusinessSettings.Add(business);
         await db.SaveChangesAsync();
         return new BusinessDto(business.Id, business.BusinessName, business.BusinessType, null, true, 0);
     }
 
-    /// <summary>Fshin biznesin me gjithë ekranet, playlistat, median, menunë, valutat dhe mënyrat e pagesës.</summary>
     [HttpDelete("{id:int}")]
     [AdminOnly]
     public async Task<IActionResult> Delete(int id)
     {
-        var business = await db.BusinessSettings.FindAsync(id);
-        if (business is null) return NotFound();
-        if (await db.BusinessSettings.CountAsync() == 1)
+        var clientId = BusinessAccess.CurrentClientId(HttpContext);
+        if (!await db.BusinessSettings.AnyAsync(b => b.Id == id && b.ClientId == clientId)) return NotFound();
+        if (await db.BusinessSettings.CountAsync(b => b.ClientId == clientId) == 1)
             return BadRequest(new { message = "Biznesi i fundit nuk mund të fshihet." });
 
-        // Lidhjet me biznesin janë NoAction (SQL Server), prandaj të dhënat fshihen këtu me radhë.
-        // Oraret, slide-t, produktet dhe copat e medias fshihen vetë (ON DELETE CASCADE).
         await using var tx = await db.Database.BeginTransactionAsync();
-        await db.Screens.Where(s => s.BusinessId == id).ExecuteDeleteAsync();
-        await db.Playlists.Where(p => p.BusinessId == id).ExecuteDeleteAsync();
-        await db.MenuCategories.Where(c => c.BusinessId == id).ExecuteDeleteAsync();
-        business.LogoAssetId = null;
-        await db.SaveChangesAsync();
-        await db.MediaAssets.Where(m => m.BusinessId == id).ExecuteDeleteAsync();
-        await db.Currencies.Where(c => c.BusinessId == id).ExecuteDeleteAsync();
-        await db.PaymentMethods.Where(p => p.BusinessId == id).ExecuteDeleteAsync();
-        db.BusinessSettings.Remove(business);
-        await db.SaveChangesAsync();
+        await BusinessCleanup.DeleteAsync(db, id);
         await tx.CommitAsync();
         return NoContent();
     }
 
-    internal static async Task<List<BusinessDto>> ListAsync(AppDbContext db, AppUser user)
+    internal static BusinessSettings NewBusiness(int clientId, string name, string? type) => new()
     {
-        var access = await BusinessAccess.AccessibleAsync(db, user.Id, user.IsAdmin);
+        ClientId = clientId,
+        BusinessName = name.Trim(),
+        BusinessType = type is "barber" or "shop" ? type : "restaurant",
+    };
+
+    internal static async Task<List<BusinessDto>> ListAsync(AppDbContext db, AppUser user, int? clientId)
+    {
+        var access = await BusinessAccess.AccessibleAsync(db, user, clientId);
         var ids = access.Keys.ToList();
         var businesses = await db.BusinessSettings.AsNoTracking().Include(b => b.LogoAsset)
             .Where(b => ids.Contains(b.Id)).OrderBy(b => b.BusinessName).ToListAsync();

@@ -7,6 +7,9 @@ namespace SmartScreen.Api.Models;
 public class BusinessSettings
 {
     public int Id { get; set; }
+    /// <summary>Klienti të cilit i përket biznesi.</summary>
+    public int ClientId { get; set; }
+    public Client? Client { get; set; }
     public string BusinessName { get; set; } = "Smart Screen";
 
     /// <summary>Teksti i vogël anash emrit në krye të ekranit, p.sh. "BURGER &amp; GRILL".</summary>

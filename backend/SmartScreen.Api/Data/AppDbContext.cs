@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<Client> Clients => Set<Client>();
     public DbSet<UserBusiness> UserBusinesses => Set<UserBusiness>();
     public DbSet<UserScreen> UserScreens => Set<UserScreen>();
 
@@ -36,7 +37,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(u => u.Username).HasMaxLength(100);
             e.Property(u => u.Role).HasMaxLength(20);
             e.Ignore(u => u.IsAdmin);
+            e.Ignore(u => u.IsOwner);
+            e.HasOne(u => u.Client).WithMany().HasForeignKey(u => u.ClientId).OnDelete(DeleteBehavior.NoAction);
         });
+
+        b.Entity<Client>(e =>
+        {
+            e.Property(c => c.Name).HasMaxLength(150);
+            e.Property(c => c.ContactPerson).HasMaxLength(150);
+            e.Property(c => c.Phone).HasMaxLength(50);
+            e.Property(c => c.Email).HasMaxLength(150);
+        });
+
+        // Bizneset e klientit fshihen në kod (ClientsController.Delete).
+        b.Entity<BusinessSettings>().HasOne(x => x.Client).WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.NoAction);
 
         b.Entity<UserBusiness>(e =>
         {
