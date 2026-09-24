@@ -271,7 +271,8 @@
     "featuredCheck": "Featured (shown under \"Deals\")",
     "editCategory": "Edit category",
     "newCategory": "New category",
-    "categoryPlaceholder": "e.g. Pizza, Salads, Desserts"
+    "categoryPlaceholder": "e.g. Pizza, Salads, Desserts",
+    "noMainCurrency": "No currency is set as main (<b>isMainCurrency</b>), so prices are shown without a currency. Choose the main currency in <link>Settings → Currency</link>."
   },
   "settings": {
     "title": "Settings",

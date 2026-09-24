@@ -271,7 +271,8 @@
     "featuredCheck": "E veçuar (shfaqet te \"Ofertat\")",
     "editCategory": "Ndrysho kategorinë",
     "newCategory": "Kategori e re",
-    "categoryPlaceholder": "p.sh. Pica, Sallata, Ëmbëlsira"
+    "categoryPlaceholder": "p.sh. Pica, Sallata, Ëmbëlsira",
+    "noMainCurrency": "Asnjë valutë nuk është kryesore (<b>isMainCurrency</b>), prandaj çmimet shfaqen pa monedhë. Zgjidhni valutën kryesore te <link>Cilësimet → Monedha</link>."
   },
   "settings": {
     "title": "Cilësimet",

@@ -25,11 +25,11 @@ export function useCurrency(id: number) {
   return useQuery({ queryKey: currencyKeys.detail(id), queryFn: () => getCurrency(id), enabled: id > 0 });
 }
 
-/** Valuta me isMainCurrency = true. */
+/** Valuta me isMainCurrency = true (null nëse asnjë valutë nuk është kryesore). */
 export function useMainCurrency() {
   return useQuery({
-    queryKey: currencyKeys.list(true),
-    queryFn: () => getCurrencies(true),
+    queryKey: currencyKeys.list(),
+    queryFn: () => getCurrencies(),
     select: list => list.find(c => c.isMainCurrency) ?? null,
   });
 }

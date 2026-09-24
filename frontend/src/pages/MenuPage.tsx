@@ -1,12 +1,13 @@
 import { FormEvent, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import {
   useCategories, useDeleteCategory, useDeleteProduct, useSaveCategory, useSaveProduct, useSetProductAvailability,
 } from '../services/Menu/menuQueries';
-import { useSettings } from '../services/Settings/settingsQueries';
+import { useMainCurrency } from '../services/Currency/currencyQueries';
 import type { Category, Media, Product } from '../types';
 
 type ProductForm = Omit<Product, 'id' | 'price' | 'oldPrice'> & { id?: number; price: string; oldPrice: string };
@@ -14,9 +15,9 @@ type ProductForm = Omit<Product, 'id' | 'price' | 'oldPrice'> & { id?: number; p
 export default function MenuPage() {
   const { t } = useTranslation();
   const { data: categories = [], error: loadError } = useCategories();
-  // Simboli i valutës kryesore (isMainCurrency) – rifreskohet vetë kur ndërrohet valuta.
-  const { data: settings } = useSettings();
-  const currency = settings?.currency ?? '';
+  // Valuta kryesore (isMainCurrency) nga tabela Currencies – rifreskohet vetë kur ndërrohet valuta.
+  const { data: mainCurrency, isSuccess: currenciesLoaded } = useMainCurrency();
+  const currency = mainCurrency?.currencySymbol ?? '';
   const [chosen, setChosen] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductForm | null>(null);
@@ -56,6 +57,9 @@ export default function MenuPage() {
         actions={<button className="btn" onClick={() => setCategory({ name: '', sortOrder: categories.length + 1 })}><Icon name="plus" />{t('menu.addCategory')}</button>}
       />
       <ErrorBox error={error ?? loadError?.message ?? null} />
+      {currenciesLoaded && !mainCurrency && (
+        <div className="alert error"><Trans i18nKey="menu.noMainCurrency" components={{ b: <b />, link: <Link to="/settings" /> }} /></div>
+      )}
 
       <div className="menu-layout">
         <div className="card category-list">
@@ -113,7 +117,7 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {product && <ProductModal form={product} categories={categories} currency={currency} onClose={() => setProduct(null)} onDone={() => setProduct(null)} />}
+      {product && <ProductModal form={product} categories={categories} currency={mainCurrency ? `${mainCurrency.currencyCode} ${mainCurrency.currencySymbol}` : ''} onClose={() => setProduct(null)} onDone={() => setProduct(null)} />}
       {category && <CategoryModal form={category} onClose={() => setCategory(null)} onDone={id => { setCategory(null); if (id) setChosen(id); }} />}
     </>
   );
