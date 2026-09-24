@@ -24,7 +24,9 @@
     "playlist": "Playlist",
     "online": "Online",
     "offline": "Offline",
-    "newName": "New name:"
+    "newName": "New name:",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "time": {
     "never": "never",
@@ -60,7 +62,9 @@
     "menu": "Menu & Prices",
     "settings": "Settings",
     "openPlayer": "Open player",
-    "logout": "Log out"
+    "logout": "Log out",
+    "currencies": "Currencies",
+    "paymentMethods": "Payment methods"
   },
   "login": {
     "subtitle": "Manage your screens and ads",
@@ -303,6 +307,45 @@
     "currentPassword": "Current password",
     "newPassword": "New password",
     "newPasswordHint": "At least 6 characters",
-    "change": "Change"
+    "change": "Change",
+    "noCurrencies": "No currencies yet. Add them under <link>Currencies</link>."
+  },
+  "currencies": {
+    "title": "Currencies",
+    "subtitle": "Currencies and exchange rates. The main currency is shown with prices in the panel and on the TVs.",
+    "add": "Currency",
+    "new": "New currency",
+    "edit": "Edit currency",
+    "empty": "No currencies yet. Add the first one (e.g. EUR or LEK) – it becomes the main currency.",
+    "code": "Code",
+    "codeHint": "e.g. EUR, LEK, USD",
+    "symbol": "Symbol",
+    "exchangeRate": "Exchange rate",
+    "exchangeRateHint": "Units per 1 unit of the main currency (main = 1.000)",
+    "fiscalType": "Fiscal type",
+    "fiscalTypeHint": "Code used for fiscalisation; -1 = not used",
+    "status": "Status",
+    "entryDate": "Entry date",
+    "main": "Main",
+    "isMain": "Main currency (isMainCurrency)",
+    "makeMain": "Make main",
+    "confirmDelete": "Delete currency {{code}}?"
+  },
+  "paymentMethods": {
+    "title": "Payment methods",
+    "subtitle": "Cash, card, bank transfer and other ways to pay.",
+    "add": "Payment method",
+    "new": "New payment method",
+    "edit": "Edit payment method",
+    "empty": "No payment methods yet. Add the first one (e.g. CASH – Cash).",
+    "code": "Code",
+    "codeHint": "e.g. CASH, CARD, BANK",
+    "fiscalType": "Fiscal type",
+    "fiscalTypeHint": "Code used for fiscalisation; -1 = not used",
+    "status": "Status",
+    "entryDate": "Entry date",
+    "default": "Default",
+    "isDefault": "Default (isDefault)",
+    "confirmDelete": "Delete \"{{name}}\"?"
   }
 }

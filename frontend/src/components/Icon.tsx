@@ -23,6 +23,8 @@ export const iconFallbacks = {
   playlists: '▶',
   media: '▣',
   menu: '☰',
+  currency: '¤',
+  payment: '▤',
   settings: '⚙',
   'external-link': '↗',
   close: '✕',

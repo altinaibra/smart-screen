@@ -12,6 +12,8 @@ const links: { to: string; label: string; icon: IconName; end?: boolean }[] = [
   { to: '/playlists', label: 'nav.playlists', icon: 'playlists' },
   { to: '/media', label: 'nav.media', icon: 'media' },
   { to: '/menu', label: 'nav.menu', icon: 'menu' },
+  { to: '/currencies', label: 'nav.currencies', icon: 'currency' },
+  { to: '/payment-methods', label: 'nav.paymentMethods', icon: 'payment' },
   { to: '/settings', label: 'nav.settings', icon: 'settings' },
 ];
 

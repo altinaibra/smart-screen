@@ -24,7 +24,9 @@
     "playlist": "Playlist-a",
     "online": "Online",
     "offline": "Offline",
-    "newName": "Emri i ri:"
+    "newName": "Emri i ri:",
+    "active": "Aktiv",
+    "inactive": "Joaktiv"
   },
   "time": {
     "never": "asnjëherë",
@@ -60,7 +62,9 @@
     "menu": "Menuja & Çmimet",
     "settings": "Cilësimet",
     "openPlayer": "Hap player-in",
-    "logout": "Dil"
+    "logout": "Dil",
+    "currencies": "Valutat",
+    "paymentMethods": "Mënyrat e pagesës"
   },
   "login": {
     "subtitle": "Menaxhimi i ekraneve dhe reklamave",
@@ -303,6 +307,45 @@
     "currentPassword": "Fjalëkalimi aktual",
     "newPassword": "Fjalëkalimi i ri",
     "newPasswordHint": "Të paktën 6 karaktere",
-    "change": "Ndrysho"
+    "change": "Ndrysho",
+    "noCurrencies": "Nuk ka valuta. Shtojini te <link>Valutat</link>."
+  },
+  "currencies": {
+    "title": "Valutat",
+    "subtitle": "Valutat dhe kurset e këmbimit. Valuta kryesore shfaqet te çmimet në panel dhe në TV.",
+    "add": "Valutë",
+    "new": "Valutë e re",
+    "edit": "Ndrysho valutën",
+    "empty": "Nuk ka valuta. Shtoni valutën e parë (p.sh. EUR ose LEK) – ajo bëhet valuta kryesore.",
+    "code": "Kodi",
+    "codeHint": "p.sh. EUR, LEK, USD",
+    "symbol": "Simboli",
+    "exchangeRate": "Kursi",
+    "exchangeRateHint": "Sa njësi = 1 njësi e valutës kryesore (kryesorja = 1.000)",
+    "fiscalType": "Lloji fiskal",
+    "fiscalTypeHint": "Kodi për fiskalizimin; -1 = nuk përdoret",
+    "status": "Statusi",
+    "entryDate": "Regjistruar",
+    "main": "Kryesore",
+    "isMain": "Valuta kryesore (isMainCurrency)",
+    "makeMain": "Bëje kryesore",
+    "confirmDelete": "Të fshihet valuta {{code}}?"
+  },
+  "paymentMethods": {
+    "title": "Mënyrat e pagesës",
+    "subtitle": "Para në dorë, kartë, transfertë bankare dhe mënyra të tjera pagese.",
+    "add": "Mënyrë pagese",
+    "new": "Mënyrë e re pagese",
+    "edit": "Ndrysho mënyrën e pagesës",
+    "empty": "Nuk ka mënyra pagese. Shtoni të parën (p.sh. CASH – Para në dorë).",
+    "code": "Kodi",
+    "codeHint": "p.sh. CASH, CARD, BANK",
+    "fiscalType": "Lloji fiskal",
+    "fiscalTypeHint": "Kodi për fiskalizimin; -1 = nuk përdoret",
+    "status": "Statusi",
+    "entryDate": "Regjistruar",
+    "default": "E parazgjedhur",
+    "isDefault": "E parazgjedhur (isDefault)",
+    "confirmDelete": "Të fshihet \"{{name}}\"?"
   }
 }

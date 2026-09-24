@@ -9,7 +9,7 @@ public class BusinessSettings
     public MediaAsset? LogoAsset { get; set; }
     public string PrimaryColor { get; set; } = "#c8102e";
     public string AccentColor { get; set; } = "#ffc72c";
-    public string Currency { get; set; } = "L";
+    public string Currency { get; set; } = "";
     public bool ShowTicker { get; set; } = true;
     public string? TickerText { get; set; }
     public bool ShowClock { get; set; } = true;

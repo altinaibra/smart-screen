@@ -21,7 +21,8 @@ Hapni `backend/SmartScreen.sln` në Visual Studio dhe shtypni **F5**, ose:
 dotnet run --project backend/SmartScreen.Api
 ```
 - Swagger: **http://localhost:5080/swagger**
-- Databaza krijohet automatikisht me të dhëna demo (menu burgerash + playlist).
+- Databaza krijohet automatikisht bosh – vetëm me përdoruesin admin. Menunë, valutat, mënyrat e pagesës,
+  playlistat dhe cilësimet i shtoni vetë nga paneli dhe ruhen në tabela.
 - Hyrja: **admin / Admin123!** (ndryshojeni te Cilësimet).
 
 ### 2. Frontend-i (React)
@@ -95,7 +96,9 @@ rifreskon çmimet te Menuja).
 - **Playlistat** – slide: Foto, Video, Menu me çmime, Tekst/Njoftim, Faqe web; renditje, kohëzgjatje,
   **preview live** në rezolucione të ndryshme (720p, 1080p, 4K, vertikal).
 - **Menuja** – kategori, produkte, çmime, oferta (çmim i vjetër → % zbritje), "E mbaruar" me një klik.
-- **Cilësimet** – emri, logo, ngjyrat e markës, monedha, ora, shiriti i lajmeve, zona kohore.
+- **Valutat** – kodi, emri, simboli, kursi, lloji fiskal; valuta kryesore (isMainCurrency) shfaqet te çmimet.
+- **Mënyrat e pagesës** – kodi, emri, renditja, lloji fiskal, e parazgjedhura.
+- **Cilësimet** – emri, logo, ngjyrat e markës, monedha, ora, shiriti i lajmeve, zona kohore, gjuha e panelit.
 
 Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në.
 
@@ -135,7 +138,8 @@ Te `backend/SmartScreen.Api/appsettings.json`:
 1. Në SSMS krijoni databazën `Smartscreen` (ose lëreni skriptin ta krijojë).
 2. *(Opsionale)* Hapni `backend/Database/Smartscreen.sql` në SSMS dhe shtypni **Execute** – krijon tabelat.
    Nëse e kapërceni, aplikacioni i krijon tabelat vetë kur databaza është bosh.
-3. Nisni backend-in – përdoruesi admin, cilësimet dhe menuja demo shtohen automatikisht.
+3. Nisni backend-in – krijohet vetëm përdoruesi admin. Pastaj te paneli shtoni **Valutat** (e para bëhet kryesore),
+   **Mënyrat e pagesës**, **Menunë** dhe **Cilësimet**.
 
 - Nëse SQL Server është instancë me emër (p.sh. `SQLEXPRESS`), përdorni `Server=localhost\\SQLEXPRESS`.
 - Në IIS, Application Pool-i lidhet me identitetin e vet: në SSMS shtoni login `IIS AppPool\SmartScreen`

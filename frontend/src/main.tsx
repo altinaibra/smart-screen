@@ -12,6 +12,8 @@ import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistEditorPage from './pages/PlaylistEditorPage';
 import MenuPage from './pages/MenuPage';
 import SettingsPage from './pages/SettingsPage';
+import CurrenciesPage from './pages/CurrenciesPage';
+import PaymentMethodsPage from './pages/PaymentMethodsPage';
 import { queryClient } from './services/queryClient';
 import './i18n';
 import './styles.css';
@@ -33,6 +35,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="playlists" element={<PlaylistsPage />} />
             <Route path="playlists/:id" element={<PlaylistEditorPage />} />
             <Route path="menu" element={<MenuPage />} />
+            <Route path="currencies" element={<CurrenciesPage />} />
+            <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

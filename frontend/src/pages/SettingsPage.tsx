@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
@@ -61,7 +62,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
                     <option key={c.currencyId} value={c.currencyId}>{c.currencyCode} – {c.currencyName} ({c.currencySymbol})</option>
                   ))}
                 </select>
-              ) : <input value={s.currency} disabled />}
+              ) : <div className="muted"><Trans i18nKey="settings.noCurrencies" components={{ link: <Link to="/currencies" /> }} /></div>}
             </Field>
           </div>
           <Field label={t('settings.logo')}>
