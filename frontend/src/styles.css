@@ -57,6 +57,12 @@ code { background: #f1f2f4; padding: 1px 6px; border-radius: 4px; font-size: 12.
 .business-switch { display: flex; flex-direction: column; gap: 4px; margin: 0 20px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.45); }
 .business-switch select { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12); color: #fff; font-size: 14px; font-weight: 600; letter-spacing: normal; text-transform: none; }
 .business-switch select option { color: var(--text); background: #fff; }
+.client-banner { display: flex; flex-direction: column; gap: 2px; margin: 0 12px 10px; padding: 10px 12px; border-radius: 8px;
+  background: rgba(255,199,44,.1); border: 1px solid rgba(255,199,44,.25); color: #fff; }
+.client-banner span { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #ffc72c; }
+.client-banner strong { font-size: 14px; }
+.client-banner .link { align-self: flex-start; padding: 0; margin-top: 4px; color: var(--sidebar-text); font-size: 13px; }
+.client-banner .link:hover { color: #fff; }
 .nav-section { margin: 14px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.4); }
 .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 10px; }
 .sidebar-footer a { color: var(--sidebar-text); }
@@ -270,6 +276,8 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
 .login-lang { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
 .settings-side { display: flex; flex-direction: column; gap: 16px; }
 .settings-side.narrow { max-width: 480px; }
+.clients-search { max-width: 320px; margin-bottom: 12px; }
+.form-section { margin: 18px 0 10px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 14px; }
 
 /* ---------- Bizneset / Përdoruesit ---------- */
 .business-logo { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; vertical-align: middle; margin-right: 8px; }

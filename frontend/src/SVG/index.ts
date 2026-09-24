@@ -39,4 +39,5 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   eye: EyeIcon,
   'eye-off': EyeOffIcon,
   users: UsersIcon,
+  clients: BusinessIcon, // klientët: e njëjta ikonë si bizneset
 };

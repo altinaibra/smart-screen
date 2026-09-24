@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../api';
 import { queryClient } from '../services/queryClient';
-import { switchBusiness, useCurrentBusiness, useMe } from '../services/Business/businessQueries';
+import { enterClient, switchBusiness, useCurrentBusiness, useMe } from '../services/Business/businessQueries';
 import Icon, { type IconName } from './Icon';
 import LanguageSelect from './LanguageSelect';
 import Logo from './Logo';
@@ -22,10 +22,15 @@ const links: NavItem[] = [
   { to: '/settings', label: 'nav.settings', icon: 'settings' },
 ];
 
-// Vetëm për administratorin.
+// Vetëm për administratorin (pronari brenda një klienti ose administratori i klientit).
 const adminLinks: NavItem[] = [
   { to: '/businesses', label: 'nav.businesses', icon: 'business' },
   { to: '/users', label: 'nav.users', icon: 'users' },
+];
+
+// Vetëm për pronarin e aplikacionit.
+const ownerLinks: NavItem[] = [
+  { to: '/clients', label: 'nav.clients', icon: 'clients' },
 ];
 
 export default function Layout() {
@@ -37,11 +42,21 @@ export default function Layout() {
 
   const logout = () => { auth.clear(); queryClient.clear(); navigate('/login'); };
 
+  // Pronari pa klient të zgjedhur sheh vetëm listën e klientëve.
+  const ownerHome = !!me?.isOwner && !me.client;
+
   // Faqet ngarkohen vetëm pasi dihet biznesi, që kërkesat të shkojnë te biznesi i duhur.
   let page = <Outlet />;
   if (!me) page = <ErrorBox error={error?.message ?? null} />;
+  else if (ownerHome && location.pathname !== '/clients') page = <Navigate to="/clients" replace />;
+  else if (ownerHome) page = <Outlet />;
   else if (!business && !me.isAdmin) page = <div className="empty">{t('businesses.noAccess')}</div>;
-  else if (isBlocked(location.pathname, me.isAdmin, business?.fullAccess ?? false)) page = <Navigate to="/" replace />;
+  else if (isBlocked(location.pathname, me, business?.fullAccess ?? false)) page = <Navigate to="/" replace />;
+
+  async function backToClients() {
+    await enterClient(null);
+    navigate('/clients');
+  }
 
   async function changeBusiness(id: number) {
     await switchBusiness(id);
@@ -57,6 +72,13 @@ export default function Layout() {
         <div className="brand">
           <Logo size={36} withText tagline />
         </div>
+        {me?.isOwner && me.client && (
+          <div className="client-banner">
+            <span>{t('clients.client')}</span>
+            <strong>{me.client.name}</strong>
+            <button className="link" onClick={backToClients}><Icon name="arrow-left" /> {t('clients.back')}</button>
+          </div>
+        )}
         {me && business && (me.businesses.length > 1 || me.isAdmin) && (
           <label className="business-switch">
             <span>{t('businesses.current')}</span>
@@ -68,8 +90,9 @@ export default function Layout() {
           </label>
         )}
         <nav>
-          {business && visible.map(l => <Link key={l.to} item={l} context={business.businessType} />)}
-          {me?.isAdmin && (
+          {ownerHome && ownerLinks.map(l => <Link key={l.to} item={l} />)}
+          {!ownerHome && business && visible.map(l => <Link key={l.to} item={l} context={business.businessType} />)}
+          {me?.isAdmin && !ownerHome && (
             <>
               <div className="nav-section">{t('nav.administration')}</div>
               {adminLinks.map(l => <Link key={l.to} item={l} />)}
@@ -105,8 +128,9 @@ function Link({ item, context }: { item: NavItem; context?: string }) {
 }
 
 /** Faqet që përdoruesi nuk i sheh (hapur p.sh. nga një link i vjetër) → kthehet te paneli. */
-function isBlocked(path: string, isAdmin: boolean, fullAccess: boolean) {
+function isBlocked(path: string, me: { isAdmin: boolean; isOwner: boolean }, fullAccess: boolean) {
   const matches = (items: NavItem[]) => items.some(l => l.to !== '/' && path.startsWith(l.to));
-  if (matches(adminLinks)) return !isAdmin;
+  if (matches(ownerLinks)) return !me.isOwner;
+  if (matches(adminLinks)) return !me.isAdmin;
   return !fullAccess && matches(links.filter(l => l.fullAccess));
 }

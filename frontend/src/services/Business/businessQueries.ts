@@ -31,6 +31,16 @@ export function switchBusiness(id: number) {
   return queryClient.resetQueries({ predicate: q => q.queryKey[0] !== meKeys.all[0] });
 }
 
+/** Pronari hyn në një klient (ose del, me null): gjithë paneli ngarkohet sërish për atë klient. */
+export function enterClient(id: number | null) {
+  auth.clientId = id;
+  auth.businessId = null;
+  // Të dhënat e klientit të mëparshëm hiqen (jo ringarkohen, që faqja që po mbyllet të mos i kërkojë pa klient).
+  // Lista e klientëve i përket pronarit dhe mbetet.
+  queryClient.removeQueries({ predicate: q => q.queryKey[0] !== meKeys.all[0] && q.queryKey[0] !== 'clients' });
+  return queryClient.resetQueries({ queryKey: meKeys.all });
+}
+
 const invalidateMe = () => queryClient.invalidateQueries({ queryKey: meKeys.all });
 
 export function useCreateBusiness() {

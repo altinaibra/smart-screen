@@ -74,7 +74,8 @@
     "menu_shop": "Produktet & Çmimet",
     "businesses": "Bizneset",
     "users": "Përdoruesit",
-    "administration": "Administrimi"
+    "administration": "Administrimi",
+    "clients": "Klientët"
   },
   "login": {
     "subtitle": "Menaxhimi i ekraneve dhe reklamave",
@@ -432,7 +433,7 @@
     "you": "ju",
     "role_Admin": "Administrator",
     "role_User": "Përdorues",
-    "roleHint_Admin": "Sheh dhe menaxhon të gjitha bizneset dhe përdoruesit.",
+    "roleHint_Admin": "Menaxhon të gjitha bizneset dhe përdoruesit e këtij klienti.",
     "roleHint_User": "Sheh vetëm bizneset dhe ekranet e zgjedhura më poshtë.",
     "allBusinesses": "Të gjitha bizneset",
     "noAccess": "Pa qasje",
@@ -443,5 +444,36 @@
     "noScreens": "Ky biznes nuk ka ende ekrane.",
     "passwordKeep": "Lëreni bosh që fjalëkalimi të mbetet i njëjtë.",
     "confirmDelete": "Të fshihet përdoruesi \"{{name}}\"?"
+  },
+  "clients": {
+    "title": "Klientët",
+    "subtitle": "Klientët që përdorin aplikacionin. Kyçuni te një klient për të menaxhuar ekranet dhe reklamat e tij.",
+    "add": "Shto klient",
+    "new": "Klient i ri",
+    "edit": "Ndrysho klientin",
+    "empty": "Ende nuk ka klientë. Shtoni të parin.",
+    "search": "Kërko klientë...",
+    "client": "Klienti",
+    "contact": "Kontakti",
+    "businesses": "Biznese",
+    "screens": "Ekrane",
+    "users": "Përdorues",
+    "status": "Statusi",
+    "since": "Që nga",
+    "online": "{{count}} online",
+    "enter": "Kyçu",
+    "back": "Klientët",
+    "name": "Emri i klientit",
+    "contactPerson": "Personi kontaktues",
+    "phone": "Telefoni",
+    "email": "Email",
+    "notes": "Shënime",
+    "notesHint": "I shihni vetëm ju (p.sh. kontrata, pagesa).",
+    "firstBusiness": "Biznesi i parë",
+    "businessNameHint": "Bosh = njësoj si emri i klientit.",
+    "adminAccount": "Llogaria e administratorit të klientit",
+    "adminHint": "Klienti hyn me këtë llogari dhe sheh vetëm bizneset, ekranet dhe përdoruesit e vet.",
+    "activeHint": "Joaktiv: përdoruesit e klientit nuk mund të hyjnë (p.sh. abonimi i papaguar).",
+    "confirmDelete": "Të fshihet klienti \"{{name}}\"? Do të fshihen të gjitha bizneset, ekranet, playlistat, fotot, videot dhe përdoruesit e tij."
   }
 }

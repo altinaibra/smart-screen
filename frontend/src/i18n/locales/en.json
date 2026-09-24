@@ -74,7 +74,8 @@
     "menu_shop": "Products & Prices",
     "businesses": "Businesses",
     "users": "Users",
-    "administration": "Administration"
+    "administration": "Administration",
+    "clients": "Clients"
   },
   "login": {
     "subtitle": "Manage your screens and ads",
@@ -432,7 +433,7 @@
     "you": "you",
     "role_Admin": "Administrator",
     "role_User": "User",
-    "roleHint_Admin": "Sees and manages all businesses and users.",
+    "roleHint_Admin": "Manages all businesses and users of this client.",
     "roleHint_User": "Sees only the businesses and screens chosen below.",
     "allBusinesses": "All businesses",
     "noAccess": "No access",
@@ -443,5 +444,36 @@
     "noScreens": "This business has no screens yet.",
     "passwordKeep": "Leave empty to keep the current password.",
     "confirmDelete": "Delete user \"{{name}}\"?"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Customers who use the app. Log in to a client to manage their screens and ads.",
+    "add": "Add client",
+    "new": "New client",
+    "edit": "Edit client",
+    "empty": "No clients yet. Add the first one.",
+    "search": "Search clients...",
+    "client": "Client",
+    "contact": "Contact",
+    "businesses": "Businesses",
+    "screens": "Screens",
+    "users": "Users",
+    "status": "Status",
+    "since": "Since",
+    "online": "{{count}} online",
+    "enter": "Log in",
+    "back": "Clients",
+    "name": "Client name",
+    "contactPerson": "Contact person",
+    "phone": "Phone",
+    "email": "Email",
+    "notes": "Notes",
+    "notesHint": "Only you see this (e.g. contract, payment).",
+    "firstBusiness": "First business",
+    "businessNameHint": "Empty = same as the client name.",
+    "adminAccount": "Client administrator account",
+    "adminHint": "The client logs in with this account and sees only their own businesses, screens and users.",
+    "activeHint": "Inactive: the client's users cannot log in (e.g. unpaid subscription).",
+    "confirmDelete": "Delete client \"{{name}}\"? All their businesses, screens, playlists, photos, videos and users will be deleted."
   }
 }
