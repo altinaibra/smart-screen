@@ -216,6 +216,38 @@ Ose në Visual Studio: klik i djathtë te **SmartScreen.Api → Publish → Fold
 **Përditësimet:** kur publikoni sërish në të njëjtën dosje, të dhënat në SQL Server nuk preken (me SQLite: `smartscreen.db` nuk preket). Mos zgjidhni
 "Delete all existing files" në Visual Studio, ose ruani një kopje të tyre para publikimit.
 
+## Aplikacioni Desktop (Electron) – pa localhost, pa instalime
+Dosja `electron/` e paketon **gjithë sistemin (backend .NET + frontend React) në një instalues**
+`Smart Screen Setup 1.0.0.exe`. Përdoruesi e instalon, e hap nga Start Menu / Desktop dhe paneli hapet
+në dritaren e vet – pa shfletues, pa `npm`, pa .NET e pa IIS.
+
+Si punon: aplikacioni nis në sfond serverin .NET (i paketuar te `resources\server`), pret derisa të jetë
+gati dhe e hap panelin në dritare. Kur mbyllet dritarja, mbyllet edhe serveri. TV-të lidhen si më parë te
+`http://<IP-e-kompjuterit>:5080/player/` (derisa aplikacioni është i hapur).
+
+Të dhënat (databaza, fotot/videot, `server.log`) ruhen te `%APPDATA%\Smart Screen` dhe nuk fshihen kur
+përditësoni aplikacionin. Çelësi JWT krijohet automatikisht për çdo instalim.
+
+**Kërkesat** (vetëm në kompjuterin ku ndërtoni): [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+dhe [Node.js 18+](https://nodejs.org).
+
+**Ndërtimi** (Command Prompt, nga dosja kryesore):
+```cmd
+publish-desktop.cmd
+```
+Instaluesi del te `electron\dist\Smart Screen Setup 1.0.0.exe`.
+
+Ose hap pas hapi:
+```cmd
+dotnet publish backend\SmartScreen.Api -c Release -r win-x64 --self-contained true -o electron\server
+cd electron
+npm install
+npm run dist
+```
+Për ta provuar pa instalues (pas `dotnet publish` më sipër): `cd electron && npm start`.
+
+> Herën e parë Windows Firewall pyet për portin 5080 – zgjidhni **Allow**, që TV-të ta gjejnë serverin.
+
 ## Siguria në prodhim
 - Ndryshoni `Jwt:Key` dhe fjalëkalimin e adminit te `appsettings.json`.
 - Përdorni HTTPS (p.sh. pas IIS ose Nginx).
