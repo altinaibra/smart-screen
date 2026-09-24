@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal } from './ui';
 
 // Zëvendëson window.confirm() me një modal në mes të faqes.
 // Përdorimi: if (!(await confirmDialog(t('...')))) return;
@@ -28,21 +27,28 @@ export function ConfirmHost() {
 
   useEffect(() => { if (req) okRef.current?.focus(); }, [req]);
 
+  useEffect(() => {
+    if (!req) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { req.resolve(false); setReq(null); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [req]);
+
   if (!req) return null;
   const close = (ok: boolean) => { req.resolve(ok); setReq(null); };
 
   return (
-    <Modal
-      title={req.title ?? t('common.confirmTitle')}
-      onClose={() => close(false)}
-      footer={<>
-        <button className="btn" onClick={() => close(false)}>{t('common.cancel')}</button>
-        <button ref={okRef} className={`btn ${req.danger ? 'danger' : 'primary'}`} onClick={() => close(true)}>
-          {req.confirmText ?? (req.danger ? t('common.delete') : t('common.confirm'))}
-        </button>
-      </>}
-    >
-      <p className="confirm-message">{req.message}</p>
-    </Modal>
+    <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && close(false)}>
+      <div className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+        <h3 id="confirm-title">{req.title ?? t('common.confirmTitle')}</h3>
+        <p id="confirm-message">{req.message}</p>
+        <div className="confirm-actions">
+          <button className="btn" onClick={() => close(false)}>{t('common.cancel')}</button>
+          <button ref={okRef} className={`btn ${req.danger ? 'danger' : 'primary'}`} onClick={() => close(true)}>
+            {req.confirmText ?? (req.danger ? t('common.delete') : t('common.confirm'))}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

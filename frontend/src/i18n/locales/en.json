@@ -1,7 +1,7 @@
 {
   "common": {
     "confirm": "Confirm",
-    "confirmTitle": "Are you sure?",
+    "confirmTitle": "Confirm deletion",
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",
