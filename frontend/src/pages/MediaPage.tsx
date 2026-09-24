@@ -1,25 +1,23 @@
-import { DragEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { api, formatBytes, uploadFile } from '../api';
+import { DragEvent, useRef, useState } from 'react';
+import { formatBytes } from '../api';
 import { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, PageHeader } from '../components/ui';
+import { useDeleteMedia, useMediaList, useRenameMedia, useUploadMedia } from '../services/Media/mediaQueries';
 import type { Media, MediaType } from '../types';
 
 interface Upload { id: number; name: string; progress: number; done?: boolean; error?: string }
 let uploadSeq = 0;
 
 export default function MediaPage() {
-  const [items, setItems] = useState<Media[]>([]);
   const [filter, setFilter] = useState<MediaType | ''>('');
+  const { data: items = [], error: loadError } = useMediaList(filter || undefined);
+  const { mutateAsync: uploadMedia } = useUploadMedia();
+  const { mutateAsync: renameMedia } = useRenameMedia();
+  const { mutateAsync: deleteMedia } = useDeleteMedia();
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const load = useCallback(() => {
-    api<Media[]>(`/media${filter ? `?type=${filter}` : ''}`).then(setItems).catch(e => setError(e.message));
-  }, [filter]);
-
-  useEffect(load, [load]);
 
   async function upload(files: FileList | File[]) {
     const list = Array.from(files).map(file => ({ file, id: ++uploadSeq }));
@@ -28,13 +26,12 @@ export default function MediaPage() {
 
     await Promise.all(list.map(async ({ file, id }) => {
       try {
-        await uploadFile<Media>(file, progress => patch(id, { progress }));
+        await uploadMedia({ file, onProgress: progress => patch(id, { progress }) });
         patch(id, { progress: 100, done: true });
       } catch (e) {
         patch(id, { error: (e as Error).message });
       }
     }));
-    load();
     const finished = new Set(list.map(x => x.id));
     setTimeout(() => setUploads(u => u.filter(x => !(finished.has(x.id) && x.done))), 2000);
   }
@@ -48,14 +45,12 @@ export default function MediaPage() {
   async function rename(m: Media) {
     const name = prompt('Emri i ri:', m.name);
     if (!name || name === m.name) return;
-    await api(`/media/${m.id}`, { method: 'PUT', json: { name } }).catch(e => setError(e.message));
-    load();
+    await renameMedia({ id: m.id, name }).catch(e => setError(e.message));
   }
 
   async function remove(m: Media) {
     if (!confirm(`Të fshihet "${m.name}"? Do të hiqet edhe nga playlistat dhe produktet.`)) return;
-    await api(`/media/${m.id}`, { method: 'DELETE' }).catch(e => setError(e.message));
-    load();
+    await deleteMedia(m.id).catch(e => setError(e.message));
   }
 
   return (
@@ -74,7 +69,7 @@ export default function MediaPage() {
           </>
         }
       />
-      <ErrorBox error={error} />
+      <ErrorBox error={error ?? loadError?.message ?? null} />
 
       <div
         className={`dropzone ${dragging ? 'over' : ''}`}

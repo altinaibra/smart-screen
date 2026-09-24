@@ -43,15 +43,39 @@ dhe shërbehet direkt nga .NET në **http://localhost:5080/**.
 > TV-ja dhe serveri duhet të jenë në të njëjtin rrjet. Lejoni portin 5080 në Windows Firewall.
 
 ## Struktura e frontend-it
+Të dhënat nga API merren me **TanStack Query** (`@tanstack/react-query`). Për çdo entitet ka një dosje
+te `services/` me dy skedarë:
+- `xMethods.ts` – thirrjet te API-ja (fetch), p.sh. `getCurrencies()`, `setMainCurrency(id)`
+- `xQueries.ts` – hook-et e TanStack (`useQuery` / `useMutation`) dhe çelësat e cache-it, p.sh. `useCurrencies()`
+
 ```
 frontend/src/
-├── main.tsx              # Rrugët (routes)
-├── api.ts                # Thirrjet te API-ja + token JWT
+├── main.tsx              # Rrugët (routes) + QueryClientProvider
+├── api.ts                # Klienti HTTP + token JWT
 ├── types.ts              # Tipet TypeScript (si DTO-të në .NET)
+├── services/
+│   ├── queryClient.ts
+│   ├── Auth/             # authMethods.ts, authQueries.ts
+│   ├── Currency/         # currencyMethods.ts, currencyQueries.ts
+│   ├── Dashboard/
+│   ├── Media/
+│   ├── Menu/             # kategoritë dhe produktet
+│   ├── PaymentMethod/
+│   ├── Playlist/
+│   ├── Screen/
+│   └── Settings/
 ├── styles.css
 ├── components/           # Layout, Modal, MediaPicker, ScreenPreview
 └── pages/                # Dashboard, Screens, Media, Playlists, PlaylistEditor, Menu, Settings, Login
 ```
+
+Përdorimi në një faqe:
+```tsx
+const { data: currencies, isLoading: currenciesLoading } = useCurrencies();
+const { mutateAsync: setMainCurrency } = useSetMainCurrency();
+```
+Pas çdo ndryshimi (mutation) rifreskohen vetë query-t që varen prej tij (p.sh. ndërrimi i valutës kryesore
+rifreskon çmimet te Menuja).
 
 ## Çfarë mund të bëni
 - **Ekranet** – çiftim me kod, statusi online/offline, platforma dhe rezolucioni i zbuluar automatikisht,

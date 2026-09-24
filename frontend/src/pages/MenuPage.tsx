@@ -1,49 +1,44 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { api } from '../api';
+import { FormEvent, useState } from 'react';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
-import type { Category, Media, Product, Settings } from '../types';
+import {
+  useCategories, useDeleteCategory, useDeleteProduct, useSaveCategory, useSaveProduct, useSetProductAvailability,
+} from '../services/Menu/menuQueries';
+import { useSettings } from '../services/Settings/settingsQueries';
+import type { Category, Media, Product } from '../types';
 
 type ProductForm = Omit<Product, 'id' | 'price' | 'oldPrice'> & { id?: number; price: string; oldPrice: string };
 
 export default function MenuPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [currency, setCurrency] = useState('');
+  const { data: categories = [], error: loadError } = useCategories();
+  // Simboli i valutës kryesore (isMainCurrency) – rifreskohet vetë kur ndërrohet valuta.
+  const { data: settings } = useSettings();
+  const currency = settings?.currency ?? '';
+  const [chosen, setChosen] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductForm | null>(null);
   const [category, setCategory] = useState<{ id?: number; name: string; sortOrder: number } | null>(null);
 
-  const load = useCallback(() => {
-    api<Category[]>('/menu/categories').then(c => {
-      setCategories(c);
-      setSelected(s => (s && c.some(x => x.id === s) ? s : c[0]?.id ?? null));
-    }).catch(e => setError(e.message));
-  }, []);
+  const { mutateAsync: setAvailability } = useSetProductAvailability();
+  const { mutateAsync: deleteProduct } = useDeleteProduct();
+  const { mutateAsync: deleteCategory } = useDeleteCategory();
 
-  useEffect(() => {
-    load();
-    api<Settings>('/settings').then(s => setCurrency(s.currency)).catch(() => {});
-  }, [load]);
-
+  // Kategoria e zgjedhur; nëse fshihet (ose s'është zgjedhur), merret e para.
+  const selected = chosen && categories.some(c => c.id === chosen) ? chosen : categories[0]?.id ?? null;
   const current = categories.find(c => c.id === selected);
 
   async function toggleAvailable(p: Product) {
-    await api(`/menu/products/${p.id}/availability`, { method: 'PATCH', json: { isAvailable: !p.isAvailable } })
-      .catch(e => setError(e.message));
-    load();
+    await setAvailability({ id: p.id, isAvailable: !p.isAvailable }).catch(e => setError(e.message));
   }
 
   async function removeProduct(p: Product) {
     if (!confirm(`Të fshihet "${p.name}"?`)) return;
-    await api(`/menu/products/${p.id}`, { method: 'DELETE' }).catch(e => setError(e.message));
-    load();
+    await deleteProduct(p.id).catch(e => setError(e.message));
   }
 
   async function removeCategory(c: Category) {
     if (!confirm(`Të fshihet kategoria "${c.name}" me gjithë ${c.products.length} produktet?`)) return;
-    await api(`/menu/categories/${c.id}`, { method: 'DELETE' }).catch(e => setError(e.message));
-    load();
+    await deleteCategory(c.id).catch(e => setError(e.message));
   }
 
   const openNewProduct = () => current && setProduct({
@@ -58,13 +53,13 @@ export default function MenuPage() {
         subtitle="Ushqimet, pijet dhe ofertat që shfaqen në slide-t e menusë. Ndryshimet e çmimeve dalin menjëherë në TV."
         actions={<button className="btn" onClick={() => setCategory({ name: '', sortOrder: categories.length + 1 })}>+ Kategori</button>}
       />
-      <ErrorBox error={error} />
+      <ErrorBox error={error ?? loadError?.message ?? null} />
 
       <div className="menu-layout">
         <div className="card category-list">
           {categories.length === 0 && <p className="muted">Nuk ka kategori.</p>}
           {categories.map(c => (
-            <button key={c.id} className={`category-item ${c.id === selected ? 'active' : ''}`} onClick={() => setSelected(c.id)}>
+            <button key={c.id} className={`category-item ${c.id === selected ? 'active' : ''}`} onClick={() => setChosen(c.id)}>
               <span>{c.name}</span>
               <span className="count">{c.products.length}</span>
             </button>
@@ -116,8 +111,8 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {product && <ProductModal form={product} categories={categories} currency={currency} onClose={() => setProduct(null)} onDone={() => { setProduct(null); load(); }} />}
-      {category && <CategoryModal form={category} onClose={() => setCategory(null)} onDone={id => { setCategory(null); if (id) setSelected(id); load(); }} />}
+      {product && <ProductModal form={product} categories={categories} currency={currency} onClose={() => setProduct(null)} onDone={() => setProduct(null)} />}
+      {category && <CategoryModal form={category} onClose={() => setCategory(null)} onDone={id => { setCategory(null); if (id) setChosen(id); }} />}
     </>
   );
 }
@@ -128,16 +123,13 @@ function ProductModal({ form: initial, categories, currency, onClose, onDone }: 
   const [form, setForm] = useState(initial);
   const [picking, setPicking] = useState(false);
   const [image, setImage] = useState<Media | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { mutate: saveProduct, error } = useSaveProduct();
   const set = (patch: Partial<ProductForm>) => setForm(f => ({ ...f, ...patch }));
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
     const body = { ...form, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : null };
-    try {
-      await api(form.id ? `/menu/products/${form.id}` : '/menu/products', { method: form.id ? 'PUT' : 'POST', json: body });
-      onDone();
-    } catch (err) { setError((err as Error).message); }
+    saveProduct(body, { onSuccess: onDone });
   }
 
   const imageUrl = image?.url ?? form.imageUrl;
@@ -146,7 +138,7 @@ function ProductModal({ form: initial, categories, currency, onClose, onDone }: 
     <Modal title={form.id ? 'Ndrysho produktin' : 'Produkt i ri'} onClose={onClose}
       footer={<><button className="btn" onClick={onClose}>Anulo</button><button className="btn primary" form="product-form">Ruaj</button></>}>
       <form id="product-form" onSubmit={submit}>
-        <ErrorBox error={error} />
+        <ErrorBox error={error?.message ?? null} />
         <div className="product-form-top">
           <button type="button" className="thumb-btn" onClick={() => setPicking(true)}>
             {imageUrl ? <img className="thumb" src={imageUrl} alt="" /> : <MediaThumb media={null} />}
@@ -182,23 +174,18 @@ function CategoryModal({ form: initial, onClose, onDone }: {
   form: { id?: number; name: string; sortOrder: number }; onClose: () => void; onDone: (id?: number) => void;
 }) {
   const [form, setForm] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
+  const { mutate: saveCategory, error } = useSaveCategory();
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    try {
-      const res = await api<Category>(form.id ? `/menu/categories/${form.id}` : '/menu/categories', {
-        method: form.id ? 'PUT' : 'POST', json: form,
-      });
-      onDone(res.id);
-    } catch (err) { setError((err as Error).message); }
+    saveCategory(form, { onSuccess: res => onDone(res.id) });
   }
 
   return (
     <Modal title={form.id ? 'Ndrysho kategorinë' : 'Kategori e re'} onClose={onClose}
       footer={<><button className="btn" onClick={onClose}>Anulo</button><button className="btn primary" form="cat-form">Ruaj</button></>}>
       <form id="cat-form" onSubmit={submit}>
-        <ErrorBox error={error} />
+        <ErrorBox error={error?.message ?? null} />
         <Field label="Emri"><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="p.sh. Pica, Sallata, Ëmbëlsira" required autoFocus /></Field>
         <Field label="Renditja"><input type="number" value={form.sortOrder} onChange={e => setForm({ ...form, sortOrder: Number(e.target.value) })} /></Field>
       </form>

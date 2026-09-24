@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { auth } from '../api';
+import { queryClient } from '../services/queryClient';
 import Logo from './Logo';
 
 const links = [
@@ -32,7 +33,7 @@ export default function Layout() {
           <a href="/player/" target="_blank" rel="noreferrer">Hap player-in ↗</a>
           <div className="user">
             <span>{auth.username}</span>
-            <button className="link" onClick={() => { auth.clear(); navigate('/login'); }}>Dil</button>
+            <button className="link" onClick={() => { auth.clear(); queryClient.clear(); navigate('/login'); }}>Dil</button>
           </div>
         </div>
       </aside>

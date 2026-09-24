@@ -1,39 +1,33 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { api, timeAgo } from '../api';
+import { FormEvent, useState } from 'react';
+import { timeAgo } from '../api';
 import TvSetupGuide from '../components/TvSetupGuide';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { usePlaylists } from '../services/Playlist/playlistQueries';
+import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
 import { platformLabels, type Orientation, type PlaylistSummary, type Schedule, type Screen } from '../types';
 
 const days = ['Di', 'Hë', 'Ma', 'Më', 'En', 'Pr', 'Sh']; // bit 0 = e diel
 
 export default function ScreensPage() {
-  const [screens, setScreens] = useState<Screen[]>([]);
-  const [playlists, setPlaylists] = useState<PlaylistSummary[]>([]);
+  const { data: screens = [], error: loadError } = useScreens();
+  const { data: playlists = [] } = usePlaylists();
+  const { mutateAsync: reloadScreen } = useReloadScreen();
+  const { mutateAsync: deleteScreen } = useDeleteScreen();
   const [error, setError] = useState<string | null>(null);
   const [pairing, setPairing] = useState(false);
   const [editing, setEditing] = useState<Screen | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    api<Screen[]>('/screens').then(setScreens).catch(e => setError(e.message));
-  }, []);
-
-  useEffect(() => {
-    load();
-    api<PlaylistSummary[]>('/playlists').then(setPlaylists).catch(() => {});
-    const t = setInterval(load, 15000);
-    return () => clearInterval(t);
-  }, [load]);
-
   async function reload(s: Screen) {
-    await api(`/screens/${s.id}/reload`, { method: 'POST' });
+    try {
+      await reloadScreen(s.id);
+    } catch (e) { setError((e as Error).message); return; }
     setNotice(`"${s.name}" do të rifreskohet brenda ~15 sekondave.`);
   }
 
   async function remove(s: Screen) {
     if (!confirm(`Të fshihet ekrani "${s.name}"? TV-ja do të shfaqë një kod të ri çiftimi.`)) return;
-    await api(`/screens/${s.id}`, { method: 'DELETE' }).catch(e => setError(e.message));
-    load();
+    await deleteScreen(s.id).catch(e => setError(e.message));
   }
 
   return (
@@ -43,7 +37,7 @@ export default function ScreensPage() {
         subtitle="LG, Samsung, Android TV, Sony dhe çdo monitor me shfletues"
         actions={<button className="btn primary" onClick={() => setPairing(true)}>+ Shto ekran</button>}
       />
-      <ErrorBox error={error} />
+      <ErrorBox error={error ?? loadError?.message ?? null} />
       {notice && <div className="alert info" onClick={() => setNotice(null)}>{notice}</div>}
 
       <TvSetupGuide />
@@ -80,8 +74,8 @@ export default function ScreensPage() {
         </div>
       )}
 
-      {pairing && <PairModal playlists={playlists} onClose={() => setPairing(false)} onDone={() => { setPairing(false); load(); }} />}
-      {editing && <EditModal screen={editing} playlists={playlists} onClose={() => setEditing(null)} onDone={() => { setEditing(null); load(); }} />}
+      {pairing && <PairModal playlists={playlists} onClose={() => setPairing(false)} onDone={() => setPairing(false)} />}
+      {editing && <EditModal screen={editing} playlists={playlists} onClose={() => setEditing(null)} onDone={() => setEditing(null)} />}
     </>
   );
 }
@@ -92,24 +86,21 @@ function PairModal({ playlists, onClose, onDone }: { playlists: PlaylistSummary[
   const [location, setLocation] = useState('');
   const [playlistId, setPlaylistId] = useState<string>(playlists[0]?.id.toString() ?? '');
   const [orientation, setOrientation] = useState<Orientation>('Landscape');
-  const [error, setError] = useState<string | null>(null);
+  const { mutate: pairScreen, error } = usePairScreen();
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    try {
-      await api('/screens/pair', {
-        method: 'POST',
-        json: { pairingCode: code, name, location, defaultPlaylistId: playlistId ? Number(playlistId) : null, orientation },
-      });
-      onDone();
-    } catch (err) { setError((err as Error).message); }
+    pairScreen(
+      { pairingCode: code, name, location, defaultPlaylistId: playlistId ? Number(playlistId) : null, orientation },
+      { onSuccess: onDone },
+    );
   }
 
   return (
     <Modal title="Shto ekran të ri" onClose={onClose}
       footer={<><button className="btn" onClick={onClose}>Anulo</button><button className="btn primary" form="pair-form">Lidh ekranin</button></>}>
       <form id="pair-form" onSubmit={submit}>
-        <ErrorBox error={error} />
+        <ErrorBox error={error?.message ?? null} />
         <Field label="Kodi që shfaqet në TV">
           <input className="code-input" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="123456" inputMode="numeric" required autoFocus />
@@ -147,27 +138,24 @@ function EditModal({ screen, playlists, onClose, onDone }: {
   const [playlistId, setPlaylistId] = useState(screen.defaultPlaylistId?.toString() ?? '');
   const [orientation, setOrientation] = useState<Orientation>(screen.orientation);
   const [schedules, setSchedules] = useState<Schedule[]>(screen.schedules);
-  const [error, setError] = useState<string | null>(null);
+  const { mutate: updateScreen, error } = useUpdateScreen();
 
   const updateSchedule = (i: number, patch: Partial<Schedule>) =>
     setSchedules(list => list.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    try {
-      await api(`/screens/${screen.id}`, {
-        method: 'PUT',
-        json: { name, location, defaultPlaylistId: playlistId ? Number(playlistId) : null, orientation, schedules },
-      });
-      onDone();
-    } catch (err) { setError((err as Error).message); }
+    updateScreen(
+      { id: screen.id, name, location, defaultPlaylistId: playlistId ? Number(playlistId) : null, orientation, schedules },
+      { onSuccess: onDone },
+    );
   }
 
   return (
     <Modal title={`Ndrysho: ${screen.name}`} onClose={onClose} wide
       footer={<><button className="btn" onClick={onClose}>Anulo</button><button className="btn primary" form="edit-form">Ruaj</button></>}>
       <form id="edit-form" onSubmit={submit}>
-        <ErrorBox error={error} />
+        <ErrorBox error={error?.message ?? null} />
         <div className="grid-2">
           <Field label="Emri"><input value={name} onChange={e => setName(e.target.value)} required /></Field>
           <Field label="Vendndodhja"><input value={location} onChange={e => setLocation(e.target.value)} /></Field>

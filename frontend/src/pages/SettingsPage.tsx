@@ -1,28 +1,32 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { api } from '../api';
+import { FormEvent, useState } from 'react';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
-import type { Currency, Settings } from '../types';
+import { useChangePassword } from '../services/Auth/authQueries';
+import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
+import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
+import type { Settings } from '../types';
 
 const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
 
 export default function SettingsPage() {
-  const [s, setS] = useState<Settings | null>(null);
+  const { data, error } = useSettings();
+  if (!data) return <ErrorBox error={error?.message ?? null} />;
+  // Formulari punon me një kopje lokale; rifreskimet e query-t nuk prishin ndryshimet e paruajtura.
+  return <SettingsForm initial={data} />;
+}
+
+function SettingsForm({ initial }: { initial: Settings }) {
+  const [s, setS] = useState<Settings>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [mainId, setMainId] = useState<number | null>(null);
+  const { data: currencies = [] } = useCurrencies(true);
+  const [chosenMainId, setChosenMainId] = useState<number | null>(null);
+  const { mutateAsync: setMainCurrency } = useSetMainCurrency();
+  const { mutateAsync: updateSettings } = useUpdateSettings();
 
-  useEffect(() => {
-    api<Settings>('/settings').then(setS).catch(e => setError(e.message));
-    api<Currency[]>('/currencies?status=true').then(list => {
-      setCurrencies(list);
-      setMainId(list.find(c => c.isMainCurrency)?.currencyId ?? null);
-    }).catch(e => setError(e.message));
-  }, []);
-
-  if (!s) return <ErrorBox error={error} />;
+  const currentMainId = currencies.find(c => c.isMainCurrency)?.currencyId ?? null;
+  const mainId = chosenMainId ?? currentMainId;
   const set = (patch: Partial<Settings>) => { setS({ ...s, ...patch }); setSaved(false); };
 
   async function submit(e: FormEvent) {
@@ -30,12 +34,9 @@ export default function SettingsPage() {
     setError(null);
     try {
       // Monedha që shfaqet te çmimet është gjithmonë valuta kryesore (isMainCurrency).
-      const main = currencies.find(c => c.isMainCurrency);
-      if (mainId !== null && mainId !== main?.currencyId) {
-        await api(`/currencies/${mainId}/main`, { method: 'PUT' });
-        setCurrencies(currencies.map(c => ({ ...c, isMainCurrency: c.currencyId === mainId })));
-      }
-      setS(await api<Settings>('/settings', { method: 'PUT', json: s }));
+      if (mainId !== null && mainId !== currentMainId) await setMainCurrency(mainId);
+      setChosenMainId(null);
+      setS(await updateSettings(s));
       setSaved(true);
     } catch (err) { setError((err as Error).message); }
   }
@@ -51,7 +52,7 @@ export default function SettingsPage() {
             <Field label="Emri i biznesit"><input value={s.businessName} onChange={e => set({ businessName: e.target.value })} required /></Field>
             <Field label="Monedha" hint="Valuta kryesore – shfaqet te çmimet në panel dhe në TV">
               {currencies.length > 0 ? (
-                <select value={mainId ?? ''} onChange={e => { setMainId(Number(e.target.value)); setSaved(false); }}>
+                <select value={mainId ?? ''} onChange={e => { setChosenMainId(Number(e.target.value)); setSaved(false); }}>
                   {currencies.map(c => (
                     <option key={c.currencyId} value={c.currencyId}>{c.currencyCode} – {c.currencyName} ({c.currencySymbol})</option>
                   ))}
@@ -102,14 +103,14 @@ function PasswordCard() {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const { mutate: changePassword } = useChangePassword();
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    try {
-      await api('/auth/password', { method: 'PUT', json: { currentPassword: current, newPassword: next } });
-      setMsg({ ok: true, text: 'Fjalëkalimi u ndryshua.' });
-      setCurrent(''); setNext('');
-    } catch (err) { setMsg({ ok: false, text: (err as Error).message }); }
+    changePassword({ currentPassword: current, newPassword: next }, {
+      onSuccess: () => { setMsg({ ok: true, text: 'Fjalëkalimi u ndryshua.' }); setCurrent(''); setNext(''); },
+      onError: err => setMsg({ ok: false, text: err.message }),
+    });
   }
 
   return (

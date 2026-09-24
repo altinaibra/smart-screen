@@ -121,6 +121,29 @@ export interface Currency {
   rowVersion?: string | null;
 }
 
+export interface PaymentMethod {
+  paymentMethodId: number;
+  paymentMethodCode: string;
+  paymentMethodName: string;
+  status: boolean;
+  isDefault: boolean;
+  sortOrder: number;
+  entryDate: string;
+  fiscalType: number;
+  rowVersion?: string | null;
+}
+
+export interface ServerInfo {
+  addresses: string[];
+  port: number;
+}
+
+export interface LoginResponse {
+  token: string;
+  username: string;
+  expiresAt: string;
+}
+
 export interface Dashboard {
   screensTotal: number;
   screensOnline: number;

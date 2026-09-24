@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { useMediaList } from '../services/Media/mediaQueries';
 import type { Media, MediaType } from '../types';
 import { Empty, Modal } from './ui';
 
@@ -13,15 +12,11 @@ export function MediaThumb({ media, className }: { media?: Media | null; classNa
 export default function MediaPicker({ type, onSelect, onClose }: {
   type: MediaType; onSelect: (m: Media) => void; onClose: () => void;
 }) {
-  const [items, setItems] = useState<Media[] | null>(null);
-
-  useEffect(() => {
-    api<Media[]>(`/media?type=${type}`).then(setItems).catch(() => setItems([]));
-  }, [type]);
+  const { data: items, isLoading } = useMediaList(type);
 
   return (
     <Modal title={type === 'Image' ? 'Zgjidh foto' : 'Zgjidh video'} onClose={onClose} wide>
-      {items === null && <p className="muted">Duke ngarkuar...</p>}
+      {isLoading && <p className="muted">Duke ngarkuar...</p>}
       {items?.length === 0 && <Empty>Nuk ka {type === 'Image' ? 'foto' : 'video'}. Ngarkoni te faqja "Foto & Video".</Empty>}
       <div className="media-grid small">
         {items?.map(m => (

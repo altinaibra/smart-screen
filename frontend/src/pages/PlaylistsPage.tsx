@@ -1,38 +1,35 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, formatDuration } from '../api';
+import { formatDuration } from '../api';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
-import type { Playlist, PlaylistSummary } from '../types';
+import { useCreatePlaylist, useDeletePlaylist, useDuplicatePlaylist, usePlaylists } from '../services/Playlist/playlistQueries';
+import type { PlaylistSummary } from '../types';
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<PlaylistSummary[]>([]);
+  const { data: items = [], error: loadError } = usePlaylists();
+  const { mutateAsync: createPlaylist } = useCreatePlaylist();
+  const { mutateAsync: duplicatePlaylist } = useDuplicatePlaylist();
+  const { mutateAsync: deletePlaylist } = useDeletePlaylist();
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
 
-  const load = useCallback(() => {
-    api<PlaylistSummary[]>('/playlists').then(setItems).catch(e => setError(e.message));
-  }, []);
-  useEffect(load, [load]);
-
   async function create(e: FormEvent) {
     e.preventDefault();
     try {
-      const p = await api<Playlist>('/playlists', { method: 'POST', json: { name, items: [] } });
+      const p = await createPlaylist({ name, items: [] });
       navigate(`/playlists/${p.id}`);
     } catch (err) { setError((err as Error).message); }
   }
 
   async function duplicate(p: PlaylistSummary) {
-    await api(`/playlists/${p.id}/duplicate`, { method: 'POST' }).catch(e => setError(e.message));
-    load();
+    await duplicatePlaylist(p.id).catch(e => setError(e.message));
   }
 
   async function remove(p: PlaylistSummary) {
     if (!confirm(`Të fshihet playlist-a "${p.name}"?${p.screenCount ? ` Përdoret nga ${p.screenCount} ekran(e).` : ''}`)) return;
-    await api(`/playlists/${p.id}`, { method: 'DELETE' }).catch(e => setError(e.message));
-    load();
+    await deletePlaylist(p.id).catch(e => setError(e.message));
   }
 
   return (
@@ -42,7 +39,7 @@ export default function PlaylistsPage() {
         subtitle="Radha e reklamave, fotove, videove dhe menuve që luhen në TV"
         actions={<button className="btn primary" onClick={() => { setName(''); setCreating(true); }}>+ Playlist e re</button>}
       />
-      <ErrorBox error={error} />
+      <ErrorBox error={error ?? loadError?.message ?? null} />
 
       {items.length === 0 ? <Empty>Nuk ka playlista.</Empty> : (
         <div className="card">

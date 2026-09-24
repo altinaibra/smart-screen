@@ -1,31 +1,18 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, auth } from '../api';
 import Logo from '../components/Logo';
 import { ErrorBox, Field } from '../components/ui';
+import { useLogin } from '../services/Auth/authQueries';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { mutate: login, isPending: busy, error } = useLogin();
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await api<{ token: string; username: string }>('/auth/login', {
-        method: 'POST', json: { username, password },
-      });
-      auth.save(res.token, res.username);
-      navigate('/');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    login({ username, password }, { onSuccess: () => navigate('/') });
   }
 
   return (
@@ -34,7 +21,7 @@ export default function LoginPage() {
         <div className="login-logo"><Logo size={72} /></div>
         <h1 className="login-title">Smart Screen</h1>
         <p className="muted login-sub">Menaxhimi i ekraneve dhe reklamave</p>
-        <ErrorBox error={error} />
+        <ErrorBox error={error?.message ?? null} />
         <Field label="Përdoruesi">
           <input value={username} onChange={e => setUsername(e.target.value)} autoFocus required />
         </Field>

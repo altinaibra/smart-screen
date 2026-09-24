@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api, formatDuration } from '../api';
+import { formatDuration } from '../api';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
 import ScreenPreview, { resolutions } from '../components/ScreenPreview';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
+import { useCategories } from '../services/Menu/menuQueries';
+import { usePlaylist, usePlaylistPreview, useUpdatePlaylist } from '../services/Playlist/playlistQueries';
 import { slideTypeLabels, type Category, type Media, type MediaType, type Orientation, type Playlist, type PlaylistItem, type SlideType } from '../types';
 
 const newItem = (type: SlideType): PlaylistItem => ({
@@ -16,37 +18,36 @@ const newItem = (type: SlideType): PlaylistItem => ({
 });
 
 export default function PlaylistEditorPage() {
-  const { id } = useParams();
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const id = Number(useParams().id);
+  const { data, error } = usePlaylist(id);
+  const { data: categories = [] } = useCategories();
+
+  if (!data) return <ErrorBox error={error?.message ?? null} />;
+  // Redaktimi bëhet në një kopje lokale; rifreskimet e query-t nuk prishin ndryshimet e paruajtura.
+  return <PlaylistEditor key={data.id} initial={data} categories={categories} />;
+}
+
+function PlaylistEditor({ initial, categories }: { initial: Playlist; categories: Category[] }) {
+  const [playlist, setPlaylist] = useState<Playlist>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [picker, setPicker] = useState<{ index: number; type: MediaType } | null>(null);
-  const [preview, setPreview] = useState<unknown>(null);
   const [resIndex, setResIndex] = useState(0);
+  const { mutateAsync: updatePlaylist } = useUpdatePlaylist();
 
   const resolution = resolutions[resIndex];
   const orientation: Orientation = resolution.h > resolution.w ? 'Portrait' : 'Landscape';
 
-  useEffect(() => {
-    api<Playlist>(`/playlists/${id}`).then(setPlaylist).catch(e => setError(e.message));
-    api<Category[]>('/menu/categories').then(setCategories).catch(() => {});
-  }, [id]);
-
-  const loadPreview = () => api(`/playlists/${id}/preview?orientation=${orientation}`).then(setPreview).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadPreview(); }, [id, orientation]);
+  const { data: preview = null } = usePlaylistPreview(playlist.id, orientation);
 
   const total = useMemo(
-    () => playlist?.items.filter(i => i.isEnabled).reduce((s, i) => s + i.durationSeconds, 0) ?? 0,
+    () => playlist.items.filter(i => i.isEnabled).reduce((s, i) => s + i.durationSeconds, 0),
     [playlist],
   );
 
-  if (!playlist) return <ErrorBox error={error} />;
-
   const setItems = (fn: (items: PlaylistItem[]) => PlaylistItem[]) => {
-    setPlaylist(p => (p ? { ...p, items: fn(p.items) } : p));
+    setPlaylist(p => ({ ...p, items: fn(p.items) }));
     setDirty(true);
     setSaved(false);
   };
@@ -60,22 +61,18 @@ export default function PlaylistEditorPage() {
   });
 
   async function save() {
-    if (!playlist) return;
     setError(null);
     try {
-      const res = await api<Playlist>(`/playlists/${playlist.id}`, {
-        method: 'PUT',
-        json: { name: playlist.name, description: playlist.description, items: playlist.items },
-      });
+      // onSuccess rifreskon edhe preview-në dhe listat e playlistave/ekraneve.
+      const res = await updatePlaylist({ id: playlist.id, name: playlist.name, description: playlist.description, items: playlist.items });
       setPlaylist(res);
       setDirty(false);
       setSaved(true);
-      loadPreview();
     } catch (e) { setError((e as Error).message); }
   }
 
   function onPick(m: Media) {
-    if (picker) update(picker.index, { mediaAssetId: m.id, mediaAsset: m, title: playlist?.items[picker.index].title });
+    if (picker) update(picker.index, { mediaAssetId: m.id, mediaAsset: m, title: playlist.items[picker.index].title });
   }
 
   return (

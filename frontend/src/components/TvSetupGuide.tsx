@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
-import { api } from '../api';
-
-type ServerInfo = { addresses: string[]; port: number };
+import { useState } from 'react';
+import { useServerInfo } from '../services/Screen/screenQueries';
 
 type Platform = { id: string; label: string; needs: string; steps: (url: string, server: string) => JSX.Element };
 
@@ -79,13 +77,9 @@ const platforms: Platform[] = [
 ];
 
 export default function TvSetupGuide() {
-  const [info, setInfo] = useState<ServerInfo | null>(null);
+  const { data: info } = useServerInfo();
   const [tab, setTab] = useState(platforms[0].id);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    api<ServerInfo>('/server-info').then(setInfo).catch(() => {});
-  }, []);
 
   const fallback = `${location.protocol}//${location.hostname}:5080`;
   const servers = info?.addresses.length ? info.addresses : [fallback];

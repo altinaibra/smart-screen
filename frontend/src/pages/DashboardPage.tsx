@@ -1,24 +1,16 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, timeAgo } from '../api';
+import { timeAgo } from '../api';
 import { Empty, ErrorBox, PageHeader } from '../components/ui';
-import { platformLabels, type Dashboard } from '../types';
+import { useDashboard } from '../services/Dashboard/dashboardQueries';
+import { platformLabels } from '../types';
 
 export default function DashboardPage() {
-  const [data, setData] = useState<Dashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = () => api<Dashboard>('/dashboard').then(setData).catch(e => setError(e.message));
-    load();
-    const t = setInterval(load, 15000);
-    return () => clearInterval(t);
-  }, []);
+  const { data, error } = useDashboard();
 
   return (
     <>
       <PageHeader title="Paneli" subtitle="Pasqyrë e ekraneve dhe përmbajtjes" />
-      <ErrorBox error={error} />
+      <ErrorBox error={error?.message ?? null} />
       {data && (
         <>
           <div className="stats">
