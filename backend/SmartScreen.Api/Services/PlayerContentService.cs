@@ -9,7 +9,7 @@ using SmartScreen.Api.Models;
 namespace SmartScreen.Api.Services;
 
 /// <summary>Ndërton përmbajtjen që shfaq player-i në TV (playlist + menu + cilësimet e biznesit).</summary>
-public class PlayerContentService(AppDbContext db)
+public partial class PlayerContentService(AppDbContext db)
 {
     private static readonly JsonSerializerOptions HashJson = new(JsonSerializerDefaults.Web);
 
@@ -70,8 +70,9 @@ public class PlayerContentService(AppDbContext db)
         Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
         var main = await MainCurrency.GetAsync(db);
+        var currency = main?.Symbol ?? s.Currency;
         var settings = new PlayerSettingsDto(
-            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, main?.Symbol ?? s.Currency, s.ShowTicker, s.TickerText, s.ShowClock,
+            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, WithCurrency(s.TickerText, currency), s.ShowClock,
             s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name, s.BusinessType);
 
         // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
@@ -89,7 +90,7 @@ public class PlayerContentService(AppDbContext db)
 
         var built = new List<PlayerPlaylistDto>();
         foreach (var playlist in playlists)
-            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist)));
+            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, currency)));
 
         var playlistDto = built.FirstOrDefault(p => p.Id == playlistId);
 
@@ -107,7 +108,7 @@ public class PlayerContentService(AppDbContext db)
         return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto, offline);
     }
 
-    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist)
+    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, string currency)
     {
         var items = playlist.Items.Where(i => i.IsEnabled).OrderBy(i => i.SortOrder).ToList();
 
@@ -145,11 +146,21 @@ public class PlayerContentService(AppDbContext db)
             }
 
             var duration = i.Type == SlideType.Video ? Math.Max(0, i.DurationSeconds) : Math.Max(3, i.DurationSeconds);
-            slides.Add(new PlayerSlideDto(i.Id, i.Type, duration, i.Title, i.Text, mediaUrl, i.Url,
-                i.BackgroundColor, i.TextColor, i.Fit, menu, i.Badge, i.Price));
+            slides.Add(new PlayerSlideDto(i.Id, i.Type, duration, WithCurrency(i.Title, currency), WithCurrency(i.Text, currency), mediaUrl, i.Url,
+                i.BackgroundColor, i.TextColor, i.Fit, menu, WithCurrency(i.Badge, currency), i.Price));
         }
         return slides;
     }
+
+    /// <summary>
+    /// {valuta} / {currency} në tekste (shiriti, titujt, njoftimet) -> simboli i valutës kryesore,
+    /// p.sh. "Menu Classic vetëm 6.50{valuta}" -> "Menu Classic vetëm 6.50€". Ndryshon vetë kur ndërrohet valuta.
+    /// </summary>
+    public static string? WithCurrency(string? text, string currency) =>
+        string.IsNullOrEmpty(text) ? text : CurrencyToken().Replace(text, currency);
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\{\s*(valuta|currency)\s*\}", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+    private static partial System.Text.RegularExpressions.Regex CurrencyToken();
 
     private static string ComputeVersion(PlayerScreenDto screen, PlayerSettingsDto settings, PlayerPlaylistDto? playlist, PlayerOfflineDto? offline)
     {

@@ -258,7 +258,8 @@
     "price": "Price (optional)",
     "priceHint": "Shown in the yellow \"ONLY …\" circle",
     "removePhoto": "Remove photo",
-    "brandHint": "Shows the logo, name, slogan, hours, phone and social handle from Settings."
+    "brandHint": "Shows the logo, name, slogan, hours, phone and social handle from Settings.",
+    "currencyHint": "{valuta} = main currency symbol"
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -358,7 +359,8 @@
     "businessTypeHint": "Changes the TV wording (ORDER / BOOK / CONTACT), the panel labels and suggests a colour",
     "type_restaurant": "Restaurant",
     "type_barber": "Barber",
-    "type_shop": "Accessories"
+    "type_shop": "Accessories",
+    "tickerHint": "Separate sentences with • or a new line. For the currency write {valuta}, e.g. \"Menu Classic only 6.50{valuta}\" → 6.50{{symbol}} (follows the main currency)."
   },
   "currencies": {
     "title": "Currencies",

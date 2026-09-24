@@ -144,7 +144,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
           <label className="inline-check"><input type="checkbox" checked={s.showClock} onChange={e => set({ showClock: e.target.checked })} /> {t('settings.showClock')}</label>
           <label className="inline-check"><input type="checkbox" checked={s.showTicker} onChange={e => set({ showTicker: e.target.checked })} /> {t('settings.showTicker')}</label>
           {s.showTicker && (
-            <Field label={t('settings.tickerText')}><textarea rows={2} value={s.tickerText ?? ''} onChange={e => set({ tickerText: e.target.value })} /></Field>
+            <Field label={t('settings.tickerText')} hint={t('settings.tickerHint', { symbol: s.currency || '€' })}><textarea rows={2} value={s.tickerText ?? ''} onChange={e => set({ tickerText: e.target.value })} /></Field>
           )}
           <Field label={t('settings.timeZone')} hint={t('settings.timeZoneHint')}>
             <select value={s.timeZoneId} onChange={e => set({ timeZoneId: e.target.value })}>

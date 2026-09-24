@@ -258,7 +258,8 @@
     "price": "Çmimi (opsional)",
     "priceHint": "Shfaqet në rrethin e verdhë \"VETËM …\"",
     "removePhoto": "Hiq foton",
-    "brandHint": "Shfaq logon, emrin, sloganin, orarin, telefonin dhe rrjetin social nga Cilësimet."
+    "brandHint": "Shfaq logon, emrin, sloganin, orarin, telefonin dhe rrjetin social nga Cilësimet.",
+    "currencyHint": "{valuta} = simboli i valutës kryesore"
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -358,7 +359,8 @@
     "businessTypeHint": "Ndryshon tekstet në TV (POROSI / REZERVO / KONTAKT), emërtimet në panel dhe sugjeron ngjyrën",
     "type_restaurant": "Restorant",
     "type_barber": "Berber",
-    "type_shop": "Aksesore"
+    "type_shop": "Aksesore",
+    "tickerHint": "Ndani fjalitë me • ose rresht të ri. Për monedhën shkruani {valuta}, p.sh. \"Menu Classic vetëm 6.50{valuta}\" → 6.50{{symbol}} (ndjek valutën kryesore)."
   },
   "currencies": {
     "title": "Valutat",

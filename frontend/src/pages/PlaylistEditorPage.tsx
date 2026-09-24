@@ -224,7 +224,7 @@ function SlideFields({ item, categories, onChange, onPick }: {
         <div className="slide-fields grid-2">
           <Field label={t('editor.title')}><input value={item.title ?? ''} onChange={e => onChange({ title: e.target.value })} /></Field>
           {duration}
-          <Field label={t('editor.text')}><textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value })} /></Field>
+          <Field label={t('editor.text')} hint={t('editor.currencyHint')}><textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value })} /></Field>
           <div className="grid-2">{colors}</div>
         </div>
       );
@@ -256,7 +256,7 @@ function SlideFields({ item, categories, onChange, onPick }: {
             <Field label={t('editor.title')} hint={t('editor.heroTitleHint')}>
               <textarea rows={2} value={item.title ?? ''} onChange={e => onChange({ title: e.target.value })} />
             </Field>
-            <Field label={item.type === 'Promo' ? t('editor.text') : t('editor.items')} hint={item.type === 'Combo' ? t('editor.itemsHint') : undefined}>
+            <Field label={item.type === 'Promo' ? t('editor.text') : t('editor.items')} hint={item.type === 'Combo' ? `${t('editor.itemsHint')} · ${t('editor.currencyHint')}` : t('editor.currencyHint')}>
               <textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value || null })} />
             </Field>
             <Field label={t('editor.price')} hint={t('editor.priceHint')}>
