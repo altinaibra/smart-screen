@@ -1,10 +1,11 @@
 import type React from 'react';
 import LogOutIcon from './LogOutIcon';
+import PaymentMethodIcon from './PaymentMethodIcon';
 import SettingsIcon from './SettingsIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { LogOutIcon, SettingsIcon };
+export { LogOutIcon, PaymentMethodIcon, SettingsIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -14,4 +15,5 @@ export { LogOutIcon, SettingsIcon };
 export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   logout: LogOutIcon,
   settings: SettingsIcon,
+  payment: PaymentMethodIcon,
 };
