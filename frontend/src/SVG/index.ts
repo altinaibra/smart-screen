@@ -18,4 +18,5 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   settings: SettingsIcon,
   payment: PaymentMethodIcon,
   currency: CurrencyIcon,
+  menu: CurrencyIcon, // e njëjta ikonë si Valutat (kartëmonedhë)
 };
