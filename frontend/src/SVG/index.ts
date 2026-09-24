@@ -2,6 +2,7 @@ import type React from 'react';
 import CurrencyIcon from './CurrencyIcon';
 import DashboardIcon from './DashboardIcon';
 import DownloadIcon from './DownloadIcon';
+import ExternalLinkIcon from './ExternalLinkIcon';
 import LogOutIcon from './LogOutIcon';
 import MediaIcon from './MediaIcon';
 import PaymentMethodIcon from './PaymentMethodIcon';
@@ -11,7 +12,7 @@ import SettingsIcon from './SettingsIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { CurrencyIcon, DashboardIcon, DownloadIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon };
+export { CurrencyIcon, DashboardIcon, DownloadIcon, ExternalLinkIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -25,6 +26,7 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   playlists: PlaylistIcon,
   screens: ScreenIcon,
   download: DownloadIcon,
+  'external-link': ExternalLinkIcon,
   settings: SettingsIcon,
   payment: PaymentMethodIcon,
   currency: CurrencyIcon,
