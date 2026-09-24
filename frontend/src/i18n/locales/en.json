@@ -26,7 +26,9 @@
     "offline": "Offline",
     "newName": "New name:",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "time": {
     "never": "never",

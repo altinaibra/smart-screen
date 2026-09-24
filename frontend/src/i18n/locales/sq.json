@@ -26,7 +26,9 @@
     "offline": "Offline",
     "newName": "Emri i ri:",
     "active": "Aktiv",
-    "inactive": "Joaktiv"
+    "inactive": "Joaktiv",
+    "showPassword": "Shfaq fjalëkalimin",
+    "hidePassword": "Fshih fjalëkalimin"
   },
   "time": {
     "never": "asnjëherë",

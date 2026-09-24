@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { locale } from '../i18n';
 import Icon from '../components/Icon';
-import { ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { ErrorBox, Field, Modal, PageHeader, PasswordInput } from '../components/ui';
 import { useMe } from '../services/Business/businessQueries';
 import { useAccessOptions, useCreateUser, useDeleteUser, useUpdateUser, useUsers } from '../services/User/userQueries';
 import type { AccessOption, User, UserRole } from '../types';
@@ -111,7 +111,7 @@ function UserModal({ user, options, onClose }: { user: User | null; options: Acc
             <input value={username} maxLength={100} onChange={e => setUsername(e.target.value)} required autoFocus autoComplete="off" />
           </Field>
           <Field label={t('login.password')} hint={user ? t('users.passwordKeep') : t('settings.newPasswordHint')}>
-            <input type="password" value={password} minLength={6} onChange={e => setPassword(e.target.value)} required={!user} autoComplete="new-password" />
+            <PasswordInput value={password} minLength={6} onChange={e => setPassword(e.target.value)} required={!user} autoComplete="new-password" />
           </Field>
         </div>
 

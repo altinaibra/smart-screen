@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import LanguageSelect from '../components/LanguageSelect';
 import MediaPicker from '../components/MediaPicker';
-import { ErrorBox, Field, PageHeader } from '../components/ui';
+import { ErrorBox, Field, PageHeader, PasswordInput } from '../components/ui';
 import { useChangePassword } from '../services/Auth/authQueries';
 import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
@@ -212,8 +212,8 @@ function PasswordCard() {
     <form className="card" onSubmit={submit}>
       <h2>{t('settings.changePassword')}</h2>
       {msg && <div className={`alert ${msg.ok ? 'info' : 'error'}`}>{msg.text}</div>}
-      <Field label={t('settings.currentPassword')}><input type="password" value={current} onChange={e => setCurrent(e.target.value)} required /></Field>
-      <Field label={t('settings.newPassword')} hint={t('settings.newPasswordHint')}><input type="password" minLength={6} value={next} onChange={e => setNext(e.target.value)} required /></Field>
+      <Field label={t('settings.currentPassword')}><PasswordInput value={current} onChange={e => setCurrent(e.target.value)} required /></Field>
+      <Field label={t('settings.newPassword')} hint={t('settings.newPasswordHint')}><PasswordInput minLength={6} value={next} onChange={e => setNext(e.target.value)} required /></Field>
       <div className="form-actions"><button className="btn">{t('settings.change')}</button></div>
     </form>
   );
