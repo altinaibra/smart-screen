@@ -1,5 +1,7 @@
 {
   "common": {
+    "confirm": "Confirm",
+    "confirmTitle": "Confirm deletion",
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",

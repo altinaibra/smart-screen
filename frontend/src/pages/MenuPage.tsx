@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import {
   useCategories, useDeleteCategory, useDeleteProduct, useSaveCategory, useSaveProduct, useSetProductAvailability,
 } from '../services/Menu/menuQueries';
@@ -37,12 +38,12 @@ export default function MenuPage() {
   }
 
   async function removeProduct(p: Product) {
-    if (!confirm(t('menu.confirmDeleteProduct', { name: p.name }))) return;
+    if (!(await confirmDialog(t('menu.confirmDeleteProduct', { name: p.name })))) return;
     await deleteProduct(p.id).catch(e => setError(e.message));
   }
 
   async function removeCategory(c: Category) {
-    if (!confirm(t('menu.confirmDeleteCategory', { name: c.name, count: c.products.length }))) return;
+    if (!(await confirmDialog(t('menu.confirmDeleteCategory', { name: c.name, count: c.products.length })))) return;
     await deleteCategory(c.id).catch(e => setError(e.message));
   }
 

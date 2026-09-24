@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { locale } from '../i18n';
 import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import type { SavePaymentMethodRequest } from '../services/PaymentMethod/paymentMethodMethods';
 import {
   useCreatePaymentMethod, useDeletePaymentMethod, usePaymentMethods, useUpdatePaymentMethod,
@@ -19,7 +20,7 @@ export default function PaymentMethodsPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function remove(m: PaymentMethod) {
-    if (!confirm(t('paymentMethods.confirmDelete', { name: m.paymentMethodName }))) return;
+    if (!(await confirmDialog(t('paymentMethods.confirmDelete', { name: m.paymentMethodName })))) return;
     setError(null);
     await deletePaymentMethod(m.paymentMethodId).catch(e => setError(e.message));
   }

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { formatDuration } from '../api';
 import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { confirmDialog } from '../components/ConfirmDialog';
 import { useCreatePlaylist, useDeletePlaylist, useDuplicatePlaylist, usePlaylists } from '../services/Playlist/playlistQueries';
 import type { PlaylistSummary } from '../types';
 
@@ -32,7 +33,7 @@ export default function PlaylistsPage() {
 
   async function remove(p: PlaylistSummary) {
     const used = p.screenCount ? t('playlists.usedByScreens', { count: p.screenCount }) : '';
-    if (!confirm(t('playlists.confirmDelete', { name: p.name }) + used)) return;
+    if (!(await confirmDialog(t('playlists.confirmDelete', { name: p.name }) + used))) return;
     await deletePlaylist(p.id).catch(e => setError(e.message));
   }
 
