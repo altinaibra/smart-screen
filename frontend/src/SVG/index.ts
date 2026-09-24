@@ -1,4 +1,5 @@
 import type React from 'react';
+import BusinessIcon from './BusinessIcon';
 import CurrencyIcon from './CurrencyIcon';
 import DashboardIcon from './DashboardIcon';
 import DownloadIcon from './DownloadIcon';
@@ -9,10 +10,11 @@ import PaymentMethodIcon from './PaymentMethodIcon';
 import PlaylistIcon from './PlaylistIcon';
 import ScreenIcon from './ScreenIcon';
 import SettingsIcon from './SettingsIcon';
+import UsersIcon from './UsersIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { CurrencyIcon, DashboardIcon, DownloadIcon, ExternalLinkIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon };
+export { BusinessIcon, CurrencyIcon, DashboardIcon, DownloadIcon, ExternalLinkIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon, UsersIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -31,4 +33,6 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   payment: PaymentMethodIcon,
   currency: CurrencyIcon,
   menu: CurrencyIcon, // e njëjta ikonë si Valutat (kartëmonedhë)
+  business: BusinessIcon,
+  users: UsersIcon,
 };

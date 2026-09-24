@@ -69,7 +69,10 @@
     "currencies": "Currencies",
     "paymentMethods": "Payment methods",
     "menu_barber": "Services & Prices",
-    "menu_shop": "Products & Prices"
+    "menu_shop": "Products & Prices",
+    "businesses": "Businesses",
+    "users": "Users",
+    "administration": "Administration"
   },
   "login": {
     "subtitle": "Manage your screens and ads",
@@ -399,5 +402,44 @@
     "default": "Default",
     "isDefault": "Default (isDefault)",
     "confirmDelete": "Delete \"{{name}}\"?"
+  },
+  "businesses": {
+    "title": "Businesses",
+    "subtitle": "Each business has its own screens, ads, menu and settings",
+    "add": "Add business",
+    "new": "New business",
+    "open": "Open",
+    "selected": "Selected",
+    "screens": "Screens",
+    "current": "Business",
+    "screensOnly": "selected screens",
+    "newHint": "After saving you can add the logo, colors and opening hours in Settings.",
+    "confirmDelete": "Delete business \"{{name}}\"? All its screens, playlists, photos, videos and menu will be deleted.",
+    "noAccess": "You do not have access to any business yet. Ask the administrator to give you access."
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Who can sign in and which businesses or screens they control",
+    "add": "Add user",
+    "new": "New user",
+    "edit": "Edit user",
+    "username": "Username",
+    "role": "Role",
+    "access": "Access",
+    "created": "Created",
+    "you": "you",
+    "role_Admin": "Administrator",
+    "role_User": "User",
+    "roleHint_Admin": "Sees and manages all businesses and users.",
+    "roleHint_User": "Sees only the businesses and screens chosen below.",
+    "allBusinesses": "All businesses",
+    "noAccess": "No access",
+    "access_none": "No access",
+    "access_full": "Full access",
+    "access_screens": "Selected screens only",
+    "accessHint": "Full access: screens, ads, menu and settings of the business. Selected screens only: only those screens plus the business playlists and photos/videos.",
+    "noScreens": "This business has no screens yet.",
+    "passwordKeep": "Leave empty to keep the current password.",
+    "confirmDelete": "Delete user \"{{name}}\"?"
   }
 }

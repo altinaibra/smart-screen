@@ -2,6 +2,7 @@ import i18n, { locale } from './i18n';
 
 const TOKEN_KEY = 'ss_admin_token';
 const USER_KEY = 'ss_admin_user';
+const BUSINESS_KEY = 'ss_business_id';
 
 export const auth = {
   get token() { return localStorage.getItem(TOKEN_KEY); },
@@ -14,7 +15,21 @@ export const auth = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   },
+  /** Biznesi i zgjedhur në panel; dërgohet me çdo kërkesë (X-Business-Id). */
+  get businessId(): number | null {
+    const id = Number(localStorage.getItem(BUSINESS_KEY));
+    return id > 0 ? id : null;
+  },
+  set businessId(id: number | null) {
+    if (id) localStorage.setItem(BUSINESS_KEY, String(id));
+    else localStorage.removeItem(BUSINESS_KEY);
+  },
 };
+
+function setAuthHeaders(set: (name: string, value: string) => void) {
+  if (auth.token) set('Authorization', `Bearer ${auth.token}`);
+  if (auth.businessId) set('X-Business-Id', String(auth.businessId));
+}
 
 function onUnauthorized() {
   auth.clear();
@@ -33,7 +48,7 @@ async function errorMessage(res: Response) {
 
 export async function api<T = void>(path: string, options: RequestInit & { json?: unknown } = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  if (auth.token) headers.set('Authorization', `Bearer ${auth.token}`);
+  setAuthHeaders((name, value) => headers.set(name, value));
   let body = options.body;
   if (options.json !== undefined) {
     headers.set('Content-Type', 'application/json');
@@ -57,7 +72,7 @@ export function uploadFile<T>(file: File, onProgress: (percent: number) => void)
     const form = new FormData();
     form.append('file', file);
     xhr.open('POST', '/api/media');
-    if (auth.token) xhr.setRequestHeader('Authorization', `Bearer ${auth.token}`);
+    setAuthHeaders((name, value) => xhr.setRequestHeader(name, value));
     xhr.upload.onprogress = e => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.onload = () => {
       if (xhr.status === 401) { onUnauthorized(); return reject(new Error(i18n.t('errors.sessionExpired'))); }

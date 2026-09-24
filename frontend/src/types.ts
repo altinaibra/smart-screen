@@ -154,6 +154,44 @@ export interface LoginResponse {
   token: string;
   username: string;
   expiresAt: string;
+  role: UserRole;
+}
+
+/** Admin = sheh dhe menaxhon gjithçka; User = vetëm bizneset/ekranet që i janë dhënë. */
+export type UserRole = 'Admin' | 'User';
+
+/** fullAccess = false kur përdoruesi kontrollon vetëm disa ekrane të biznesit. */
+export interface Business {
+  id: number;
+  name: string;
+  businessType: BusinessType;
+  logoUrl?: string | null;
+  fullAccess: boolean;
+  screenCount: number;
+}
+
+export interface Me {
+  id: number;
+  username: string;
+  role: UserRole;
+  isAdmin: boolean;
+  businesses: Business[];
+}
+
+/** businessIds = qasje e plotë; screenIds = ekrane të veçanta në biznese të tjera. */
+export interface User {
+  id: number;
+  username: string;
+  role: UserRole;
+  createdAt: string;
+  businessIds: number[];
+  screenIds: number[];
+}
+
+export interface AccessOption {
+  id: number;
+  name: string;
+  screens: { id: number; name: string; location?: string | null }[];
 }
 
 export interface Dashboard {

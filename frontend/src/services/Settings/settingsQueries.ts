@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../queryClient';
+import { meKeys } from '../Business/businessQueries';
 import { getSettings, updateSettings } from './settingsMethods';
 import type { BusinessType, Settings } from '../../types';
 
@@ -21,6 +22,10 @@ export function useBusinessType(): BusinessType {
 export function useUpdateSettings() {
   return useMutation({
     mutationFn: (settings: Settings) => updateSettings(settings),
-    onSuccess: data => queryClient.setQueryData(settingsKeys.all, data),
+    onSuccess: data => {
+      queryClient.setQueryData(settingsKeys.all, data);
+      // Emri dhe lloji i biznesit shfaqen edhe në zgjedhjen e biznesit.
+      return queryClient.invalidateQueries({ queryKey: meKeys.all });
+    },
   });
 }

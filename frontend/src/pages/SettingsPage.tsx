@@ -6,6 +6,7 @@ import LanguageSelect from '../components/LanguageSelect';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader } from '../components/ui';
 import { useChangePassword } from '../services/Auth/authQueries';
+import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
 import type { BusinessType, Settings } from '../types';
@@ -23,7 +24,18 @@ const themeColors = ['#e8452f', '#2f7bf5', '#1fa36b', '#d63a7a', '#f08a24', '#7b
 const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+  const fullAccess = useCurrentBusiness()?.fullAccess ?? false;
   const { data, error } = useSettings();
+  // Pa qasje të plotë në biznes: vetëm gjuha e panelit dhe fjalëkalimi.
+  if (!fullAccess) {
+    return (
+      <>
+        <PageHeader title={t('settings.title')} />
+        <div className="settings-side narrow"><LanguageCard /><PasswordCard /></div>
+      </>
+    );
+  }
   if (!data) return <ErrorBox error={error?.message ?? null} />;
   // Formulari punon me një kopje lokale; rifreskimet e query-t nuk prishin ndryshimet e paruajtura.
   return <SettingsForm initial={data} />;

@@ -2,6 +2,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../api';
 import { Empty, ErrorBox, PageHeader } from '../components/ui';
+import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { useDashboard } from '../services/Dashboard/dashboardQueries';
 import { useBusinessType } from '../services/Settings/settingsQueries';
 
@@ -9,6 +10,7 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const { data, error } = useDashboard();
   const context = useBusinessType();
+  const fullAccess = useCurrentBusiness()?.fullAccess ?? false;
 
   return (
     <>
@@ -20,7 +22,7 @@ export default function DashboardPage() {
             <Stat label={t('dashboard.screensOnline')} value={`${data.screensOnline} / ${data.screensTotal}`} to="/screens" />
             <Stat label={t('dashboard.playlists')} value={data.playlistCount} to="/playlists" />
             <Stat label={t('dashboard.media')} value={data.mediaCount} to="/media" />
-            <Stat label={t('dashboard.products', { context })} value={data.productCount} to="/menu" />
+            {fullAccess && <Stat label={t('dashboard.products', { context })} value={data.productCount} to="/menu" />}
           </div>
 
           <div className="card">

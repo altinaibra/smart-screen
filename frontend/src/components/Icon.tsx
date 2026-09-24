@@ -16,6 +16,8 @@ export const iconFallbacks = {
   currency: '¤',
   payment: '▤',
   settings: '⚙',
+  business: '⌂',
+  users: '👥',
   'external-link': '↗',
   close: '✕',
   plus: '+',

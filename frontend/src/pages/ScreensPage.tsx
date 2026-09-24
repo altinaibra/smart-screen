@@ -4,6 +4,7 @@ import { timeAgo } from '../api';
 import Icon from '../components/Icon';
 import TvSetupGuide from '../components/TvSetupGuide';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { usePlaylists } from '../services/Playlist/playlistQueries';
 import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
 import type { Orientation, PlaylistSummary, Schedule, Screen } from '../types';
@@ -12,6 +13,8 @@ export default function ScreensPage() {
   const { t } = useTranslation();
   const { data: screens = [], error: loadError } = useScreens();
   const { data: playlists = [] } = usePlaylists();
+  // Pa qasje të plotë (vetëm disa ekrane): nuk shtohen dhe nuk fshihen ekrane.
+  const fullAccess = useCurrentBusiness()?.fullAccess ?? false;
   const { mutateAsync: reloadScreen } = useReloadScreen();
   const { mutateAsync: deleteScreen } = useDeleteScreen();
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +39,12 @@ export default function ScreensPage() {
       <PageHeader
         title={t('screens.title')}
         subtitle={t('screens.subtitle')}
-        actions={<button className="btn primary" onClick={() => setPairing(true)}><Icon name="plus" />{t('screens.add')}</button>}
+        actions={fullAccess && <button className="btn primary" onClick={() => setPairing(true)}><Icon name="plus" />{t('screens.add')}</button>}
       />
       <ErrorBox error={error ?? loadError?.message ?? null} />
       {notice && <div className="alert info" onClick={() => setNotice(null)}>{notice}</div>}
 
-      <TvSetupGuide />
+      {fullAccess && <TvSetupGuide />}
 
       {screens.length === 0 ? (
         <Empty>{t('screens.empty')}</Empty>
@@ -68,7 +71,7 @@ export default function ScreensPage() {
               <div className="row-actions">
                 <button className="btn" onClick={() => setEditing(s)}>{t('common.edit')}</button>
                 <button className="btn" onClick={() => reload(s)}>{t('screens.reloadTv')}</button>
-                <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>
+                {fullAccess && <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>}
               </div>
             </div>
           ))}
