@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import TvSetupGuide from '../components/TvSetupGuide';
 import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import { usePlaylists } from '../services/Playlist/playlistQueries';
-import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useServerInfo, useUpdateScreen } from '../services/Screen/screenQueries';
+import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
 import type { Orientation, PlaylistSummary, Schedule, Screen } from '../types';
 
 export default function ScreensPage() {
@@ -18,16 +18,6 @@ export default function ScreensPage() {
   const [pairing, setPairing] = useState(false);
   const [editing, setEditing] = useState<Screen | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const { data: info } = useServerInfo();
-  const server = info?.addresses[0] ?? `${location.protocol}//${location.hostname}:5080`;
-
-  function copyLink(s: Screen) {
-    navigator.clipboard?.writeText(`${server}/player/?device=${s.deviceKey}`).then(() => {
-      setCopiedId(s.id);
-      setTimeout(() => setCopiedId(null), 1500);
-    });
-  }
 
   async function reload(s: Screen) {
     try {
@@ -78,11 +68,6 @@ export default function ScreensPage() {
               <div className="row-actions">
                 <button className="btn" onClick={() => setEditing(s)}>{t('common.edit')}</button>
                 <button className="btn" onClick={() => reload(s)}>{t('screens.reloadTv')}</button>
-                <a className="btn" href={`/player/?device=${encodeURIComponent(s.deviceKey)}`} target="_blank" rel="noreferrer"
-                  title={t('screens.openPlayerHint')}>{t('screens.openPlayer')} <Icon name="external-link" /></a>
-                <button className="btn" onClick={() => copyLink(s)} title={t('screens.openPlayerHint')}>
-                  {copiedId === s.id ? t('screens.linkCopied') : t('screens.copyLink')}
-                </button>
                 <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>
               </div>
             </div>

@@ -30,7 +30,6 @@ export interface Screen {
   lastSeenAt?: string | null;
   createdAt: string;
   schedules: Schedule[];
-  deviceKey: string;
 }
 
 export interface Media {

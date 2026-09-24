@@ -179,7 +179,7 @@ app.MapGet("/api/server-info", (HttpContext ctx) =>
 app.MapGet("/downloads/smart-screen-player.cmd", (HttpContext ctx) =>
 {
     var origin = ServerAddresses(ctx).FirstOrDefault() ?? $"http://localhost:{ctx.Connection.LocalPort}";
-    var url = origin + "/player/?pair=1";
+    var url = origin + "/player/";
     var script = string.Join("\r\n",
         "@echo off",
         "rem Smart Screen Player - hap player-in ne ekran te plote. Mbyllja: Alt+F4",

@@ -12,12 +12,7 @@
  * playlist-a sipas orarit zgjidhet këtu me orën e pajisjes, dhe foto/videot vijnë nga cache-i
  * i pajisjes (Service Worker sw.js në shfletues/PC, ose cache-i në disk i aplikacionit Android).
  *
- * Parametra opsionalë në URL: ?server=http://ip:5080  ?device=<key>  ?preview=1  ?pair=1
- *
- * Kodi i çiftimit shfaqet vetëm kur player-i hapet nga paneli ("Hap player-in" -> ?pair=1),
- * në TV (webOS, Tizen, Android TV...) ose nga Player-i për Windows. Në një shfletues të zakonshëm
- * pa ?pair=1 nuk krijohet ekran i ri: shfaqet "Ekrani nuk është i lidhur".
- * ?device=<key> (butoni "Hap player-in" te karta e ekranit) e lidh këtë shfletues me atë ekran.
+ * Parametra opsionalë në URL: ?server=http://ip:5080  ?device=<key>  ?preview=1
  */
 (function () {
   'use strict';
@@ -45,14 +40,6 @@
 
   var params = parseQuery(location.search);
   var isPreview = params.preview === '1';
-  var urlDevice = params.device || null;
-  var canPair = params.pair === '1' || isTvDevice();
-
-  // Lidhja me një ekran ekzistues nga paneli: harro përmbajtjen e ekranit të mëparshëm.
-  if (urlDevice && !isPreview && urlDevice !== store('ss_device_key')) {
-    store('ss_content', null);
-    store('ss_device_key', urlDevice);
-  }
   var SERVER = (params.server || window.SMART_SCREEN_SERVER || '').replace(/\/+$/, '');
 
   var root = $('root');
@@ -61,7 +48,7 @@
   var activeLayer = 0;
 
   var state = {
-    deviceKey: urlDevice || store('ss_device_key'),
+    deviceKey: params.device || store('ss_device_key'),
     content: null,     // përmbajtja që po luhet
     pending: null,     // përmbajtje e re që pret fundin e slide-it
     version: null,
@@ -93,8 +80,6 @@
       return;
     }
 
-    if (!state.deviceKey && !canPair) { showNotConnected(); return; }
-
     var cached = store('ss_content');
     if (cached) {
       try {
@@ -104,8 +89,7 @@
     }
     if (!state.content) showOverlay('' + BRAND + '<div class="label">Duke u lidhur me serverin...</div>');
 
-    // Pa të drejtë çiftimi nuk regjistrohemi (register krijon ekran të ri nëse çelësi s'ekziston).
-    if (canPair) register(); else poll();
+    register();
   }
 
   function register() {
@@ -132,7 +116,7 @@
         store('ss_device_key', null);
         store('ss_content', null);
         stopPlayback();
-        if (canPair && !urlDevice) register(); else showNotConnected();
+        register();
         return;
       }
       if (err) setOnline(false);
@@ -147,7 +131,7 @@
     if (!c.paired) {
       stopPlayback();
       store('ss_content', null);
-      if (canPair) showPairing(c.pairingCode); else showNotConnected();
+      showPairing(c.pairingCode);
       return;
     }
 
@@ -715,15 +699,6 @@
     );
   }
 
-  function showNotConnected() {
-    showOverlay(
-      BRAND +
-      '<div class="label">Ekrani nuk është i lidhur</div>' +
-      '<div class="hint">Hapni panelin e administrimit &rarr; <b>Ekranet</b> dhe klikoni <b>Hap player-in</b> te ekrani që doni. ' +
-      'Për një ekran të ri: <b>Hap player-in</b> poshtë në menu.</div>'
-    );
-  }
-
   function showIdle(settings) {
     settings = settings || {};
     var html = '';
@@ -881,13 +856,6 @@
       else window.localStorage.setItem(key, value);
     } catch (e) { /* localStorage i padisponueshëm */ }
     return null;
-  }
-
-  // TV-të dhe aplikacionet tona (Android) çiftohen gjithmonë vetë, pa ?pair=1.
-  function isTvDevice() {
-    if (window.SmartScreenNative) return true;
-    var ua = navigator.userAgent.toLowerCase();
-    return /web0s|webos|netcast|tizen|smart-?tv|bravia|android|hbbtv|crkey/.test(ua);
   }
 
   function detectPlatform() {
