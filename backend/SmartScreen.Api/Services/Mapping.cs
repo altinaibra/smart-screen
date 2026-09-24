@@ -22,7 +22,7 @@ public static class Mapping
 
     public static PlaylistItemDto ToDto(this PlaylistItem i) => new(
         i.Id, i.Type, i.DurationSeconds, i.IsEnabled, i.Title, i.Text, i.Url, i.BackgroundColor, i.TextColor, i.Fit,
-        i.MediaAssetId, i.MediaAsset?.ToDto(), i.MenuCategoryId);
+        i.MediaAssetId, i.MediaAsset?.ToDto(), i.MenuCategoryId, i.Badge, i.Price);
 
     public static PlaylistDto ToDto(this Playlist p) => new(
         p.Id, p.Name, p.Description, p.UpdatedAt, p.Items.OrderBy(i => i.SortOrder).Select(i => i.ToDto()).ToList());
@@ -36,7 +36,8 @@ public static class Mapping
 
     public static SettingsDto ToDto(this BusinessSettings s, string currency) => new(
         s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency,
-        s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId);
+        s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId,
+        s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage);
 
     public static CurrencyDto ToDto(this Currency c) => new(
         c.CurrencyId, c.CurrencyCode, c.CurrencyName, c.CurrencySymbol, c.ExchangeRate,

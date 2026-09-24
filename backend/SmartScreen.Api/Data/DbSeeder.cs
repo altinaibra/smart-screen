@@ -39,7 +39,38 @@ public static class DbSeeder
             else if (db.Database.IsSqlite())
                 await db.Database.ExecuteSqlRawAsync(sqlite);
         }
+
+        foreach (var (table, column, sqlServerType, sqliteType) in AddedColumns)
+        {
+            if (db.Database.IsSqlServer())
+            {
+                await db.Database.ExecuteSqlRawAsync(
+                    $"IF COL_LENGTH(N'[{table}]', N'{column}') IS NULL ALTER TABLE [{table}] ADD [{column}] {sqlServerType};");
+            }
+            else if (db.Database.IsSqlite())
+            {
+                var exists = await db.Database
+                    .SqlQueryRaw<int>($"SELECT COUNT(*) AS \"Value\" FROM pragma_table_info('{table}') WHERE name = '{column}'")
+                    .SingleAsync();
+                if (exists == 0)
+                    await db.Database.ExecuteSqlRawAsync($"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" {sqliteType};");
+            }
+        }
     }
+
+    /// <summary>Kolonat e shtuara më vonë në tabelat ekzistuese (tabela, kolona, tipi SQL Server, tipi SQLite).</summary>
+    private static readonly (string Table, string Column, string SqlServer, string Sqlite)[] AddedColumns =
+    [
+        ("BusinessSettings", "Tagline", "nvarchar(100) NULL", "TEXT NULL"),
+        ("BusinessSettings", "Slogan", "nvarchar(200) NULL", "TEXT NULL"),
+        ("BusinessSettings", "OpeningTime", "nvarchar(5) NULL", "TEXT NULL"),
+        ("BusinessSettings", "ClosingTime", "nvarchar(5) NULL", "TEXT NULL"),
+        ("BusinessSettings", "Phone", "nvarchar(50) NULL", "TEXT NULL"),
+        ("BusinessSettings", "SocialHandle", "nvarchar(100) NULL", "TEXT NULL"),
+        ("BusinessSettings", "ScreenLanguage", "nvarchar(5) NOT NULL CONSTRAINT [DF_BusinessSettings_ScreenLanguage] DEFAULT N'sq'", "TEXT NOT NULL DEFAULT 'sq'"),
+        ("PlaylistItems", "Badge", "nvarchar(100) NULL", "TEXT NULL"),
+        ("PlaylistItems", "Price", "decimal(12,2) NULL", "TEXT NULL"),
+    ];
 
     private static readonly (string Table, string SqlServer, string Sqlite)[] AddedTables =
     [

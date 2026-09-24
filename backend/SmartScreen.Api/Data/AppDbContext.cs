@@ -73,10 +73,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<Playlist>(e => e.Property(p => p.Name).HasMaxLength(100));
 
+        b.Entity<BusinessSettings>(e =>
+        {
+            e.Property(s => s.Tagline).HasMaxLength(100);
+            e.Property(s => s.Slogan).HasMaxLength(200);
+            e.Property(s => s.OpeningTime).HasMaxLength(5);
+            e.Property(s => s.ClosingTime).HasMaxLength(5);
+            e.Property(s => s.Phone).HasMaxLength(50);
+            e.Property(s => s.SocialHandle).HasMaxLength(100);
+            e.Property(s => s.ScreenLanguage).HasMaxLength(5);
+        });
+
         b.Entity<PlaylistItem>(e =>
         {
             e.Property(i => i.Type).HasConversion<string>().HasMaxLength(20);
             e.Property(i => i.Fit).HasConversion<string>().HasMaxLength(20);
+            e.Property(i => i.Badge).HasMaxLength(100);
+            e.Property(i => i.Price).HasPrecision(12, 2);
             e.HasOne(i => i.Playlist).WithMany(p => p.Items).HasForeignKey(i => i.PlaylistId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.MediaAsset).WithMany().HasForeignKey(i => i.MediaAssetId)

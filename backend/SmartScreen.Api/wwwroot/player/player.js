@@ -22,8 +22,18 @@
   var RETRY_MS = 10000;
   var FADE_MS = 800;
   var MAX_VIDEO_MS = 10 * 60 * 1000; // mbrojtje nëse video "ngec" dhe nuk mbaron kurrë
-  var BRAND = '<div class="brand"><img src="logo.svg" alt=""><div><div class="brand-name">Smart Screen</div>' +
+  var BRAND = '<div class="brand"><img src="logo.svg" alt=""><div><div class="brand-title">Smart Screen</div>' +
               '<div class="brand-tag">DIGITAL SIGNAGE</div></div></div>';
+
+  // Tekstet që shfaqen në TV (gjuha zgjidhet te Cilësimet → Ekrani).
+  var LABELS = {
+    sq: { open: 'Hapur', closed: 'Mbyllur', only: 'Vetëm', prices: 'Çmimet në {c}', vat: 'TVSH e përfshirë',
+          hours: 'Orari', order: 'Porosi', follow: 'Ndiqni', soldOut: 'E mbaruar', photo: 'Foto' },
+    en: { open: 'Open', closed: 'Closed', only: 'Only', prices: 'Prices in {c}', vat: 'VAT included',
+          hours: 'Hours', order: 'Order', follow: 'Follow', soldOut: 'Sold out', photo: 'Photo' }
+  };
+  var CREAM = '#f3e9d8';
+  var INK = '#1a1411';
 
   var params = parseQuery(location.search);
   var isPreview = params.preview === '1';
@@ -48,6 +58,10 @@
   // ------------------------------------------------------------------ nisja
 
   function boot() {
+    // Ekrani vetëm shfaq: pa menu konteksti, pa përzgjedhje teksti, pa tërheqje elementësh.
+    document.oncontextmenu = function () { return false; };
+    document.onselectstart = function () { return false; };
+    document.ondragstart = function () { return false; };
     startClock();
     if (!isPreview) registerServiceWorker();
     setInterval(function () { if (!state.online) applyOfflineSchedule(); }, OFFLINE_CHECK_MS);
@@ -154,7 +168,7 @@
     clearLayer(layers[1]);
     layers[0].className = layers[1].className = 'layer';
     $('ticker').className = 'hidden';
-    $('clock').className = 'hidden';
+    $('header').className = 'hidden';
     root.className = '';
   }
 
@@ -188,6 +202,8 @@
     var incoming = layers[1 - activeLayer];
     var outgoing = layers[activeLayer];
     var built = buildSlide(slide, state.content.settings);
+    var slideCount = ((state.content.playlist && state.content.playlist.slides) || []).length;
+    setProgress(state.index, slideCount, built.video && !(slide.duration > 0) ? 0 : Math.max(3, slide.duration || 10) * 1000);
 
     clearLayer(incoming);
     incoming.appendChild(built.el);
@@ -207,6 +223,11 @@
       var done = false;
       var finish = function () { if (!done) { done = true; next(); } };
       video.onerror = function () { setTimeout(finish, 1000); };
+      if (!(slide.duration > 0)) {
+        video.onloadedmetadata = function () {
+          if (video.duration && isFinite(video.duration)) setProgress(state.index, slideCount, video.duration * 1000);
+        };
+      }
       if (slide.duration > 0) {
         state.timer = setTimeout(finish, slide.duration * 1000);
         video.loop = true;
@@ -240,7 +261,7 @@
 
   function preload(slide) {
     if (!slide) return;
-    if (slide.type === 'Image' && slide.mediaUrl) new Image().src = abs(slide.mediaUrl);
+    if ((slide.type === 'Image' || slide.type === 'Promo' || slide.type === 'Combo') && slide.mediaUrl) new Image().src = abs(slide.mediaUrl);
     if (slide.type === 'Menu' && slide.menu) {
       for (var i = 0; i < slide.menu.products.length; i++) {
         if (slide.menu.products[i].imageUrl) new Image().src = abs(slide.menu.products[i].imageUrl);
@@ -282,7 +303,6 @@
 
       case 'Text':
         el.className += ' text';
-        if (!slide.backgroundColor) el.style.backgroundColor = settings.primaryColor;
         if (slide.title) el.appendChild(textEl('h1', slide.title));
         if (slide.text) el.appendChild(textEl('p', slide.text));
         break;
@@ -297,6 +317,18 @@
       case 'Menu':
         buildMenu(el, slide, settings);
         break;
+
+      case 'Promo':
+        buildPromo(el, slide, settings);
+        break;
+
+      case 'Combo':
+        buildCombo(el, slide, settings);
+        break;
+
+      case 'Brand':
+        buildBrand(el, settings);
+        break;
     }
     return { el: el, video: video };
   }
@@ -309,105 +341,334 @@
     el.appendChild(cap);
   }
 
+  /** Produkt / ofertë: etiketë, titull i madh në dy ngjyra, përshkrim, foto rrethore dhe çmim. */
+  function buildPromo(el, slide, settings) {
+    el.className += ' hero promo';
+    var left = div('hero-left');
+    if (slide.badge) {
+      var pill = textEl('div', slide.badge, 'pill');
+      pill.style.backgroundColor = settings.primaryColor;
+      left.appendChild(pill);
+    }
+    left.appendChild(heroTitle(slide.title, slide.textColor || CREAM, settings.primaryColor));
+    if (slide.text) left.appendChild(textEl('p', slide.text, 'hero-desc'));
+    el.appendChild(left);
+    el.appendChild(heroPhoto(slide, settings, settings.primaryColor));
+  }
+
+  /** Ofertë me listë (p.sh. menu familjare) mbi sfondin e ngjyrës kryesore. */
+  function buildCombo(el, slide, settings) {
+    el.className += ' hero combo';
+    if (!slide.backgroundColor) el.style.backgroundColor = settings.primaryColor;
+    var left = div('hero-left');
+    if (slide.badge) left.appendChild(textEl('div', slide.badge, 'kicker'));
+    left.appendChild(heroTitle(slide.title, CREAM, slide.textColor || INK));
+    var lines = String(slide.text || '').split(/\r?\n/);
+    var list = document.createElement('ul');
+    list.className = 'hero-items';
+    for (var i = 0, n = 0; i < lines.length; i++) {
+      var line = lines[i].replace(/^\s*[-•*◆]\s*/, '').trim();
+      if (!line) continue;
+      var li = textEl('li', line);
+      li.style.webkitAnimationDelay = li.style.animationDelay = (0.5 + n * 0.45) + 's';
+      list.appendChild(li);
+      n++;
+    }
+    if (list.childNodes.length) left.appendChild(list);
+    el.appendChild(left);
+    el.appendChild(heroPhoto(slide, settings, null));
+  }
+
+  function heroTitle(title, color1, color2) {
+    var parts = splitTitle(title);
+    var h = document.createElement('h1');
+    h.className = 'hero-title';
+    var longest = Math.max(parts[0].length, parts[1].length, 4);
+    // Titulli i gjatë zvogëlohet që të mos dalë nga gjysma e ekranit.
+    var size = Math.min(isPortrait() ? 15 : 17, (isPortrait() ? 88 : 78) / (longest * 0.5));
+    h.style.fontSize = size.toFixed(1) + 'vmin';
+    var a = textEl('span', parts[0]); a.style.color = color1; h.appendChild(a);
+    if (parts[1]) { var b = textEl('span', parts[1]); b.style.color = color2; h.appendChild(b); }
+    return h;
+  }
+
+  /** "Double Smash" -> ["Double", "Smash"]; rreshti i ri në tekst ndan me dorë. */
+  function splitTitle(title) {
+    var t = String(title || '').replace(/\r/g, '');
+    if (t.indexOf('\n') >= 0) {
+      var i = t.indexOf('\n');
+      return [t.slice(0, i).trim(), t.slice(i + 1).replace(/\n/g, ' ').trim()];
+    }
+    var words = t.split(/\s+/);
+    if (words.length < 2) return [t, ''];
+    var half = Math.ceil(words.length / 2);
+    return [words.slice(0, half).join(' '), words.slice(half).join(' ')];
+  }
+
+  function heroPhoto(slide, settings, ringColor) {
+    var right = div('hero-right');
+    var ring = div('photo-ring');
+    if (ringColor) {
+      var line = div('ring');
+      line.style.borderColor = ringColor;
+      ring.appendChild(line);
+    }
+    var circle;
+    if (slide.mediaUrl) {
+      circle = div('photo-circle');
+      var img = document.createElement('img');
+      img.src = abs(slide.mediaUrl);
+      circle.appendChild(img);
+    } else {
+      circle = textEl('div', label(settings, 'photo'), 'photo-circle placeholder');
+    }
+    ring.appendChild(circle);
+    if (slide.price !== null && slide.price !== undefined) {
+      var bubble = div('price-bubble');
+      bubble.style.backgroundColor = settings.accentColor || '#f2b632';
+      bubble.appendChild(textEl('div', label(settings, 'only'), 'only'));
+      bubble.appendChild(priceEl(slide.price, settings.currency));
+      ring.appendChild(bubble);
+    }
+    right.appendChild(ring);
+    return right;
+  }
+
+  /** Çmimi me simbolin e vogël majtas dhe decimalet sipër: €5.90 */
+  function priceEl(value, currency, oldValue) {
+    var box = div('price');
+    if (oldValue) box.appendChild(textEl('span', formatPrice(oldValue, currency), 'old'));
+    var n = Number(value);
+    var whole = Math.floor(n);
+    var cents = Math.round((n - whole) * 100);
+    if (currency) box.appendChild(textEl('span', currency, 'cur'));
+    box.appendChild(textEl('span', String(whole), 'int'));
+    if (cents > 0) box.appendChild(textEl('span', '.' + (cents < 10 ? '0' : '') + cents, 'dec'));
+    return box;
+  }
+
   function buildMenu(el, slide, settings) {
     el.className += ' menu';
-    if (!slide.backgroundColor) el.style.backgroundColor = settings.primaryColor;
 
-    var header = div('menu-header');
-    if (settings.logoUrl) {
-      var logo = document.createElement('img');
-      logo.src = abs(settings.logoUrl);
-      header.appendChild(logo);
-    }
-    header.appendChild(textEl('h1', slide.menu.title));
-    el.appendChild(header);
+    var head = div('menu-head');
+    head.appendChild(textEl('h1', slide.menu.title));
+    var note = settings.currencyName
+      ? label(settings, 'prices').replace('{c}', settings.currencyName) + ' · ' + label(settings, 'vat')
+      : label(settings, 'vat');
+    head.appendChild(textEl('div', note, 'menu-note'));
+    el.appendChild(head);
 
     var products = slide.menu.products;
     var n = products.length;
     var portrait = isPortrait();
     var cols;
-    if (portrait) cols = n <= 2 ? 1 : n <= 6 ? 2 : 3;
-    else cols = n <= 4 ? n : n <= 8 ? 4 : n <= 10 ? 5 : 6;
+    if (portrait) cols = n <= 4 ? 1 : 2;
+    else cols = n <= 2 ? n : n <= 6 ? 3 : 4;
     var rows = Math.ceil(n / cols);
 
-    var grid = div('menu-grid' + (rows * cols > 12 ? ' dense' : ''));
+    var grid = div('menu-grid' + (rows > 3 || (portrait && rows > 5) ? ' dense' : ''));
     var w = (100 / cols) + '%';
     var h = (100 / rows) + '%';
 
     for (var i = 0; i < n; i++) {
       var p = products[i];
-      var cell = div('product-cell');
+      var cell = div('card-cell');
       cell.style.width = w;
       cell.style.height = h;
 
-      var card = div('product' + (p.isAvailable ? '' : ' soldout'));
-      var imgBox = div('product-img');
-      if (p.imageUrl) imgBox.style.backgroundImage = 'url("' + abs(p.imageUrl) + '")';
-      else { imgBox.className += ' no-img'; imgBox.appendChild(document.createTextNode(p.name.charAt(0))); }
-      card.appendChild(imgBox);
+      var card = div('card' + (p.isAvailable ? '' : ' soldout'));
+      if (p.isFeatured && p.isAvailable) card.style.borderColor = settings.primaryColor;
 
-      var info = div('product-info');
-      info.appendChild(textEl('div', p.name, 'product-name'));
-      if (p.description) info.appendChild(textEl('div', p.description, 'product-desc'));
-      var price = div('product-price');
+      var photo;
+      if (p.imageUrl) {
+        photo = div('card-photo');
+        photo.style.backgroundImage = 'url("' + abs(p.imageUrl) + '")';
+      } else {
+        photo = textEl('div', label(settings, 'photo'), 'card-photo placeholder');
+      }
+      card.appendChild(photo);
+
+      var info = div('card-info');
+      info.appendChild(textEl('div', p.name, 'card-name'));
+      if (p.description) info.appendChild(textEl('div', p.description, 'card-desc'));
+      var price = priceEl(p.price, settings.currency, p.oldPrice && p.oldPrice > p.price ? p.oldPrice : null);
+      price.className += ' card-price';
       price.style.color = settings.primaryColor;
-      if (p.oldPrice && p.oldPrice > p.price) price.appendChild(textEl('span', formatPrice(p.oldPrice, settings.currency), 'old'));
-      price.appendChild(document.createTextNode(formatPrice(p.price, settings.currency)));
       info.appendChild(price);
       card.appendChild(info);
 
       if (!p.isAvailable) {
-        card.appendChild(textEl('div', 'E mbaruar', 'soldout-label'));
+        card.appendChild(textEl('div', label(settings, 'soldOut'), 'sold-label'));
       } else if (p.oldPrice && p.oldPrice > p.price) {
-        var off = Math.round((1 - p.price / p.oldPrice) * 100);
-        var badge = textEl('div', '-' + off + '%', 'badge');
-        badge.style.backgroundColor = settings.accentColor;
-        card.appendChild(badge);
-      } else if (p.isFeatured) {
-        var star = textEl('div', 'Top', 'badge');
-        star.style.backgroundColor = settings.accentColor;
-        card.appendChild(star);
+        var off = textEl('div', '-' + Math.round((1 - p.price / p.oldPrice) * 100) + '%', 'off-label');
+        off.style.backgroundColor = settings.accentColor || '#f2b632';
+        card.appendChild(off);
       }
 
       cell.appendChild(card);
       grid.appendChild(cell);
+      fitPhoto(photo);
     }
     el.appendChild(grid);
+  }
+
+  // Foto katrore sa lartësia e kartës (pa CSS aspect-ratio, që mungon në TV-të e vjetër).
+  function fitPhoto(photo) {
+    if (isPortrait()) return; // vertikal: foto sipër, e gjithë gjerësia (CSS)
+    setTimeout(function () {
+      var h = photo.offsetHeight;
+      if (h) photo.style.width = h + 'px';
+    }, 0);
+  }
+
+  /** Logo, emri, slogani dhe orari / telefoni / rrjeti social nga Cilësimet. */
+  function buildBrand(el, settings) {
+    el.className += ' brand';
+    el.appendChild(logoCircle(settings, 'logo-circle brand-logo'));
+    el.appendChild(textEl('h1', settings.businessName || '', 'brand-name'));
+    if (settings.slogan) el.appendChild(textEl('div', settings.slogan, 'brand-slogan'));
+
+    var cols = [];
+    var hours = hoursText(settings);
+    if (hours) cols.push([label(settings, 'hours'), hours]);
+    if (settings.phone) cols.push([label(settings, 'order'), settings.phone]);
+    if (settings.socialHandle) cols.push([label(settings, 'follow'), settings.socialHandle]);
+    if (cols.length) {
+      var info = div('brand-info');
+      for (var i = 0; i < cols.length; i++) {
+        var col = div('col');
+        var l = textEl('div', cols[i][0], 'label');
+        l.style.color = settings.primaryColor;
+        col.appendChild(l);
+        col.appendChild(textEl('div', cols[i][1], 'value'));
+        info.appendChild(col);
+      }
+      el.appendChild(info);
+    }
+  }
+
+  function logoCircle(settings, cls) {
+    var c = div(cls);
+    c.style.backgroundColor = settings.primaryColor;
+    if (settings.logoUrl) {
+      var img = document.createElement('img');
+      img.src = abs(settings.logoUrl);
+      c.appendChild(img);
+    } else {
+      c.appendChild(document.createTextNode(String(settings.businessName || 'S').charAt(0)));
+    }
+    return c;
   }
 
   // ------------------------------------------------------------------ ora, shiriti, orientimi
 
   function applyChrome(c) {
     var s = c.settings || {};
+
+    // Kreu: logo, emri, teksti anash, orari
+    var logo = $('hLogo');
+    logo.parentNode.replaceChild(logoCircleWithId(s), logo);
+    $('hName').textContent = s.businessName || '';
+    $('hTagline').textContent = s.tagline || '';
+    $('header').className = '';
+    updateStatus();
+
+    // Shiriti poshtë: fjalitë ndahen me • ose rresht të ri dhe shfaqen me ◆ mes tyre.
     var ticker = $('ticker');
-    if (s.showTicker && s.tickerText) {
-      $('tickerText').textContent = s.tickerText;
-      ticker.style.backgroundColor = s.accentColor || '#ffc72c';
-      ticker.style.color = '#1d1d1f';
+    var items = String(s.tickerText || '').split(/\s*(?:•|\n|\|)\s*/);
+    var clean = [];
+    for (var i = 0; i < items.length; i++) if (items[i].trim()) clean.push(items[i].trim());
+    if (s.showTicker && clean.length) {
+      var track = $('tickerTrack');
+      track.innerHTML = '';
+      // Dy kopje njëra pas tjetrës që lëvizja të duket pa fund.
+      for (var copy = 0; copy < 2; copy++) {
+        for (var j = 0; j < clean.length; j++) {
+          track.appendChild(textEl('span', clean[j]));
+          track.appendChild(textEl('span', '◆', 'sep'));
+        }
+      }
+      ticker.style.backgroundColor = s.primaryColor;
       ticker.className = '';
-      // Shpejtësi konstante pavarësisht gjatësisë së tekstit
-      var secs = Math.max(15, Math.round(s.tickerText.length / 5));
-      var track = ticker.firstChild;
+      var secs = Math.max(20, Math.round(clean.join('   ').length / 3.5));
       track.style.webkitAnimationDuration = secs + 's';
       track.style.animationDuration = secs + 's';
     } else {
       ticker.className = 'hidden';
     }
-    $('clock').className = s.showClock ? '' : 'hidden';
+    $('clock').className = s.showClock ? 'h-clock' : 'h-clock hidden';
+    document.documentElement.lang = s.screenLanguage === 'en' ? 'en' : 'sq';
     applyOrientation(c);
+  }
+
+  function logoCircleWithId(s) {
+    var c = logoCircle(s, 'logo-circle');
+    c.id = 'hLogo';
+    return c;
+  }
+
+  function hasTicker(s) {
+    return !!(s && s.showTicker && String(s.tickerText || '').replace(/[\s•|]/g, ''));
   }
 
   function applyOrientation(c) {
     var wantPortrait = c.screen && c.screen.orientation === 'Portrait';
-    var cls = [];
-    if (wantPortrait && window.innerWidth > window.innerHeight) cls.push('rotated');
-    var s = c.settings || {};
-    if (s.showTicker && s.tickerText) cls.push('with-ticker');
+    var cls = ['with-header'];
+    var rotated = wantPortrait && window.innerWidth > window.innerHeight;
+    if (rotated) cls.push('rotated');
+    if (rotated || window.innerHeight > window.innerWidth) cls.push('portrait');
+    if (hasTicker(c.settings)) cls.push('with-ticker');
     root.className = cls.join(' ');
   }
 
   function isPortrait() {
-    return root.className.indexOf('rotated') >= 0 || window.innerHeight > window.innerWidth;
+    return root.className.indexOf('portrait') >= 0 || window.innerHeight > window.innerWidth;
+  }
+
+  // Shiritat e progresit në krye: një për çdo slide, i aktivi mbushet gjatë kohëzgjatjes.
+  function setProgress(index, count, ms) {
+    var box = $('progress');
+    if (count < 2) { box.innerHTML = ''; return; }
+    if (box.childNodes.length !== count) {
+      box.innerHTML = '';
+      for (var i = 0; i < count; i++) { var seg = div('seg'); seg.appendChild(document.createElement('i')); box.appendChild(seg); }
+    }
+    for (var k = 0; k < count; k++) {
+      var fill = box.childNodes[k].firstChild;
+      fill.style.webkitTransition = fill.style.transition = 'none';
+      fill.style.width = '0';
+    }
+    if (!ms) return;
+    var active = box.childNodes[index].firstChild;
+    setTimeout(function () {
+      active.style.webkitTransition = active.style.transition = 'width ' + ms + 'ms linear';
+      active.style.width = '100%';
+    }, 50);
+  }
+
+  function hoursText(s) {
+    if (!s.openingTime || !s.closingTime) return '';
+    return s.openingTime + ' – ' + s.closingTime;
+  }
+
+  // "HAPUR · 10:00 – 24:00" sipas orës së pajisjes (orari mund të kalojë mesnatën).
+  function updateStatus() {
+    var s = (state.content && state.content.settings) || {};
+    var box = $('hStatus');
+    var hours = hoursText(s);
+    if (!hours) { box.className = 'h-status hidden'; return; }
+    var now = new Date();
+    var t = now.getHours() * 60 + now.getMinutes();
+    var open = toMinutes(s.openingTime);
+    var close = toMinutes(s.closingTime);
+    var isOpen = open <= close ? (t >= open && t < close) : (t >= open || t < close);
+    box.className = 'h-status' + (isOpen ? '' : ' closed');
+    $('hStatusText').textContent = label(s, isOpen ? 'open' : 'closed') + ' · ' + hours;
+  }
+
+  function label(settings, key) {
+    var lang = settings && settings.screenLanguage === 'en' ? 'en' : 'sq';
+    return LABELS[lang][key];
   }
 
   function startClock() {
@@ -415,6 +676,7 @@
     var tick = function () {
       var d = new Date();
       el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+      updateStatus();
     };
     tick();
     setInterval(tick, 10000);
@@ -438,9 +700,8 @@
     var html = '';
     if (settings.logoUrl) html += '<img class="idle-logo" src="' + escapeHtml(abs(settings.logoUrl)) + '">';
     html += '<h1>' + escapeHtml(settings.businessName || 'Smart Screen') + '</h1>';
-    html += '<div class="hint" style="margin-top:3vmin">Asnjë përmbajtje e caktuar për këtë ekran.</div>';
+    if (settings.slogan) html += '<div class="hint" style="margin-top:2vmin">' + escapeHtml(settings.slogan) + '</div>';
     showOverlay(html);
-    overlay.style.backgroundColor = settings.primaryColor || '#101218';
   }
 
   function showOverlay(html) {

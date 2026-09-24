@@ -23,6 +23,8 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
             return BadRequest(new { message = "Ngjyrat duhet të jenë në formatin #RRGGBB." });
         if (req.LogoAssetId is int logo && !await db.MediaAssets.AnyAsync(m => m.Id == logo && m.Type == MediaType.Image))
             return BadRequest(new { message = "Logo e zgjedhur nuk ekziston." });
+        if (!IsTime(req.OpeningTime) || !IsTime(req.ClosingTime))
+            return BadRequest(new { message = "Orari duhet të jetë në formatin HH:mm (p.sh. 10:00, 24:00)." });
 
         var s = await LoadAsync();
         s.BusinessName = req.BusinessName.Trim();
@@ -34,6 +36,13 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
         s.TickerText = req.TickerText;
         s.ShowClock = req.ShowClock;
         s.TimeZoneId = string.IsNullOrWhiteSpace(req.TimeZoneId) ? "Europe/Tirane" : req.TimeZoneId.Trim();
+        s.Tagline = Clean(req.Tagline);
+        s.Slogan = Clean(req.Slogan);
+        s.OpeningTime = Clean(req.OpeningTime);
+        s.ClosingTime = Clean(req.ClosingTime);
+        s.Phone = Clean(req.Phone);
+        s.SocialHandle = Clean(req.SocialHandle);
+        s.ScreenLanguage = req.ScreenLanguage == "en" ? "en" : "sq";
         s.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
@@ -68,6 +77,12 @@ public partial class SettingsController(AppDbContext db) : ControllerBase
 
     private async Task<SettingsDto> ToDtoAsync(BusinessSettings s) =>
         s.ToDto(await MainCurrency.GetSymbolAsync(db, s.Currency));
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>Bosh ose "HH:mm" (00:00–24:00).</summary>
+    private static bool IsTime(string? value) =>
+        string.IsNullOrWhiteSpace(value) || value.Trim() == "24:00" || TimeOnly.TryParseExact(value.Trim(), "HH:mm", out _);
 
     [GeneratedRegex("^#[0-9a-fA-F]{6}$")]
     private static partial Regex HexColor();

@@ -11,13 +11,17 @@ import { useCategories } from '../services/Menu/menuQueries';
 import { usePlaylist, usePlaylistPreview, useUpdatePlaylist } from '../services/Playlist/playlistQueries';
 import { slideTypes, type Category, type Media, type MediaType, type Orientation, type Playlist, type PlaylistItem, type SlideType } from '../types';
 
+const durations: Record<SlideType, number> = { Video: 0, Menu: 12, Promo: 8, Combo: 9, Brand: 6, Image: 10, Text: 10, WebPage: 10 };
+
 const newItem = (type: SlideType): PlaylistItem => ({
   type,
-  durationSeconds: type === 'Video' ? 0 : type === 'Menu' ? 12 : 10,
+  durationSeconds: durations[type],
   isEnabled: true,
   fit: 'Cover',
   title: type === 'Text' ? i18n.t('editor.defaultTitle') : null,
   text: type === 'Text' ? i18n.t('editor.defaultText') : null,
+  badge: type === 'Combo' ? i18n.t('editor.defaultKicker') : null,
+  price: null,
 });
 
 export default function PlaylistEditorPage() {
@@ -222,6 +226,54 @@ function SlideFields({ item, categories, onChange, onPick }: {
           {duration}
           <Field label={t('editor.text')}><textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value })} /></Field>
           <div className="grid-2">{colors}</div>
+        </div>
+      );
+    case 'Promo':
+    case 'Combo': {
+      const products = categories.flatMap(c => c.products);
+      const fromProduct = (id: number) => {
+        const p = products.find(x => x.id === id);
+        if (p) onChange({ title: p.name, text: p.description ?? null, price: p.price });
+      };
+      return (
+        <div className="slide-fields media-fields">
+          <button className="thumb-btn" onClick={() => onPick('Image')}>
+            <MediaThumb media={item.mediaAsset} />
+            <span>{item.mediaAsset ? t('editor.change') : t('editor.pickImage')}</span>
+          </button>
+          <div className="grid-2 grow">
+            {item.type === 'Promo' && products.length > 0 && (
+              <Field label={t('editor.fromProduct')} hint={t('editor.fromProductHint')}>
+                <select value="" onChange={e => e.target.value && fromProduct(Number(e.target.value))}>
+                  <option value="">{t('editor.chooseProduct')}</option>
+                  {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </Field>
+            )}
+            <Field label={item.type === 'Promo' ? t('editor.badge') : t('editor.kicker')} hint={item.type === 'Promo' ? t('editor.badgeHint') : t('editor.kickerHint')}>
+              <input value={item.badge ?? ''} maxLength={100} onChange={e => onChange({ badge: e.target.value || null })} />
+            </Field>
+            <Field label={t('editor.title')} hint={t('editor.heroTitleHint')}>
+              <textarea rows={2} value={item.title ?? ''} onChange={e => onChange({ title: e.target.value })} />
+            </Field>
+            <Field label={item.type === 'Promo' ? t('editor.text') : t('editor.items')} hint={item.type === 'Combo' ? t('editor.itemsHint') : undefined}>
+              <textarea rows={3} value={item.text ?? ''} onChange={e => onChange({ text: e.target.value || null })} />
+            </Field>
+            <Field label={t('editor.price')} hint={t('editor.priceHint')}>
+              <input type="number" step="any" min="0" value={item.price ?? ''}
+                onChange={e => onChange({ price: e.target.value === '' ? null : Number(e.target.value) })} />
+            </Field>
+            {duration}
+            {item.mediaAsset && <button className="link" onClick={() => onChange({ mediaAssetId: null, mediaAsset: null })}>{t('editor.removePhoto')}</button>}
+          </div>
+        </div>
+      );
+    }
+    case 'Brand':
+      return (
+        <div className="slide-fields grid-2">
+          <p className="muted">{t('editor.brandHint')}</p>
+          {duration}
         </div>
       );
     case 'WebPage':

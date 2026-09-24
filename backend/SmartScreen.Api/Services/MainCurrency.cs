@@ -11,10 +11,17 @@ public static class MainCurrency
     /// Vetëm nëse asnjë rresht nuk ka IsMainCurrency = true përdoret monedha e vjetër e cilësimeve.
     /// </summary>
     public static async Task<string> GetSymbolAsync(AppDbContext db, string fallback) =>
-        await db.Currencies.AsNoTracking()
+        (await GetAsync(db))?.Symbol ?? fallback;
+
+    /// <summary>Simboli dhe emri i valutës kryesore, ose null nëse asnjë valutë nuk është kryesore.</summary>
+    public static async Task<(string Symbol, string Name)?> GetAsync(AppDbContext db)
+    {
+        var main = await db.Currencies.AsNoTracking()
             .Where(c => c.IsMainCurrency)
             .OrderByDescending(c => c.Status)
             .ThenBy(c => c.CurrencyId)
-            .Select(c => c.CurrencySymbol)
-            .FirstOrDefaultAsync() ?? fallback;
+            .Select(c => new { c.CurrencySymbol, c.CurrencyName })
+            .FirstOrDefaultAsync();
+        return main is null ? null : (main.CurrencySymbol, main.CurrencyName);
+    }
 }

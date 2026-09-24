@@ -52,7 +52,10 @@
     "Video": "Video",
     "Menu": "Menu me çmime",
     "Text": "Tekst / Njoftim",
-    "WebPage": "Faqe web"
+    "WebPage": "Faqe web",
+    "Promo": "Produkt / Ofertë",
+    "Combo": "Ofertë me listë",
+    "Brand": "Biznesi (logo, orari)"
   },
   "nav": {
     "dashboard": "Paneli",
@@ -236,7 +239,22 @@
     "title": "Titulli",
     "text": "Teksti",
     "url": "URL",
-    "urlHint": "Disa faqe nuk lejojnë shfaqjen brenda iframe."
+    "urlHint": "Disa faqe nuk lejojnë shfaqjen brenda iframe.",
+    "defaultKicker": "OFERTË E JAVËS",
+    "fromProduct": "Merr nga menuja",
+    "fromProductHint": "Plotëson titullin, përshkrimin dhe çmimin",
+    "chooseProduct": "— Zgjidh produktin —",
+    "badge": "Etiketa",
+    "badgeHint": "p.sh. E RE, MË I KËRKUARI",
+    "kicker": "Teksti sipër",
+    "kickerHint": "p.sh. OFERTË E JAVËS",
+    "heroTitleHint": "Rreshti i dytë del me ngjyrë tjetër (rresht i ri = ndarje me dorë)",
+    "items": "Çfarë përfshin",
+    "itemsHint": "Një rresht = një pikë në listë",
+    "price": "Çmimi (opsional)",
+    "priceHint": "Shfaqet në rrethin e verdhë \"VETËM …\"",
+    "removePhoto": "Hiq foton",
+    "brandHint": "Shfaq logon, emrin, sloganin, orarin, telefonin dhe rrjetin social nga Cilësimet."
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -290,9 +308,9 @@
     "choose": "Zgjidh",
     "remove": "Hiq",
     "primaryColor": "Ngjyra kryesore",
-    "primaryColorHint": "Sfondi i menuve dhe njoftimeve",
+    "primaryColorHint": "Kreu, shiriti poshtë, etiketat dhe çmimet në TV",
     "accentColor": "Ngjyra theksuese",
-    "accentColorHint": "Shiriti i lajmeve, etiketat e ofertave",
+    "accentColorHint": "Rrethi i çmimit \"VETËM …\" dhe zbritjet",
     "screen": "Ekrani",
     "showClock": "Shfaq orën",
     "showTicker": "Shfaq shiritin e lajmeve (poshtë)",
@@ -308,7 +326,19 @@
     "newPassword": "Fjalëkalimi i ri",
     "newPasswordHint": "Të paktën 6 karaktere",
     "change": "Ndrysho",
-    "noCurrencies": "Nuk ka valuta. Shtojini te <link>Valutat</link>."
+    "noCurrencies": "Nuk ka valuta. Shtojini te <link>Valutat</link>.",
+    "tagline": "Teksti anash emrit",
+    "taglineHint": "Shfaqet në krye të TV-së, p.sh. BURGER & GRILL",
+    "slogan": "Slogani",
+    "sloganHint": "Në slide-in \"Biznesi\"",
+    "openingTime": "Hapet në",
+    "closingTime": "Mbyllet në",
+    "closingTimeHint": "HH:mm, p.sh. 22:00 ose 24:00",
+    "phone": "Telefoni (porosi)",
+    "social": "Rrjeti social",
+    "design": "Dizajni i TV-së",
+    "screenLanguage": "Gjuha në TV",
+    "screenLanguageHint": "HAPUR, VETËM, ORARI…"
   },
   "currencies": {
     "title": "Valutat",

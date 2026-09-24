@@ -1,19 +1,34 @@
 /*
  * Player për TV (LG webOS, Samsung Tizen, Android TV, Sony Bravia, shfletues).
+ * Dizajni: sfond i errët, shkronja të mëdha "display" (Anton), etiketa mono (Space Mono), tekst Inter.
  * Të gjitha madhësitë janë në vmin / %, kështu që përshtatet me çdo rezolucion (720p → 4K).
- * Përdoret vetëm flexbox (jo CSS grid) për përputhshmëri me shfletuesit e vjetër të TV-ve.
+ * Vetëm flexbox (jo CSS grid, jo variabla CSS) për përputhshmëri me shfletuesit e vjetër të TV-ve.
+ * Ngjyra kryesore vjen nga Cilësimet dhe shtohet nga player.js (klasat .c-primary, .bg-primary ...).
  */
+@font-face { font-family: 'SS Display'; font-weight: 400; font-style: normal;
+  src: url('fonts/anton-latin-400-normal.woff2') format('woff2'), url('fonts/anton-latin-400-normal.woff') format('woff'); }
+@font-face { font-family: 'SS Mono'; font-weight: 400; font-style: normal;
+  src: url('fonts/space-mono-latin-400-normal.woff2') format('woff2'), url('fonts/space-mono-latin-400-normal.woff') format('woff'); }
+@font-face { font-family: 'SS Mono'; font-weight: 700; font-style: normal;
+  src: url('fonts/space-mono-latin-700-normal.woff2') format('woff2'), url('fonts/space-mono-latin-700-normal.woff') format('woff'); }
+@font-face { font-family: 'SS Text'; font-weight: 400; font-style: normal;
+  src: url('fonts/inter-latin-400-normal.woff2') format('woff2'), url('fonts/inter-latin-400-normal.woff') format('woff'); }
+@font-face { font-family: 'SS Text'; font-weight: 600; font-style: normal;
+  src: url('fonts/inter-latin-600-normal.woff2') format('woff2'), url('fonts/inter-latin-600-normal.woff') format('woff'); }
+
 html, body {
   margin: 0; padding: 0; width: 100%; height: 100%;
-  overflow: hidden; background: #000; color: #fff;
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden; background: #0b0908; color: #f3e9d8;
+  font-family: 'SS Text', "Segoe UI", Roboto, Arial, sans-serif;
   cursor: none;
   -webkit-user-select: none; user-select: none;
 }
 * { box-sizing: border-box; }
 .hidden { display: none !important; }
+.display { font-family: 'SS Display', Impact, "Arial Narrow", sans-serif; font-weight: 400; text-transform: uppercase; }
+.mono { font-family: 'SS Mono', Consolas, "Courier New", monospace; text-transform: uppercase; letter-spacing: .25em; }
 
-#root { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+#root { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; background: #16110e; }
 /* TV i montuar vertikalisht, por që raporton rezolucion horizontal: rrotullo përmbajtjen. */
 #root.rotated {
   width: 100vh; height: 100vw; top: 50%; left: 50%;
@@ -21,8 +36,40 @@ html, body {
   transform: translate(-50%, -50%) rotate(90deg);
 }
 
+/* ---------- Kreu (logo, emri, progresi, orari) ---------- */
+#header {
+  position: absolute; top: 0; left: 0; right: 0; height: 11vmin; z-index: 6;
+  padding: 0 6vmin; background: #16110e; border-bottom: 1px solid rgba(243,233,216,.08);
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+}
+.h-brand, .h-right, .h-status {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+}
+.h-brand { min-width: 0; }
+.logo-circle {
+  width: 6.4vmin; height: 6.4vmin; border-radius: 50%; overflow: hidden; -webkit-flex-shrink: 0; flex-shrink: 0;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  font-family: 'SS Display', Impact, sans-serif; font-size: 3.8vmin; color: #16110e; text-transform: uppercase;
+}
+.logo-circle img { width: 100%; height: 100%; -o-object-fit: cover; object-fit: cover; }
+.h-name { margin-left: 2vmin; font-family: 'SS Display', Impact, sans-serif; font-size: 5.4vmin; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+.h-tagline { margin-left: 2.2vmin; margin-top: 1.2vmin; font-family: 'SS Mono', monospace; font-size: 1.8vmin; letter-spacing: .25em; text-transform: uppercase; color: #a39684; white-space: nowrap; }
+.progress { display: -webkit-box; display: -webkit-flex; display: flex; margin-right: 3.5vmin; }
+.progress .seg { width: 4.4vmin; height: .45vmin; margin-left: .7vmin; border-radius: .3vmin; background: rgba(243,233,216,.16); overflow: hidden; }
+.progress .seg i { display: block; height: 100%; width: 0; background: #f3e9d8; }
+.h-status, .h-clock { font-family: 'SS Mono', monospace; font-weight: 700; font-size: 2.1vmin; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+.h-status .dot { width: 1.3vmin; height: 1.3vmin; border-radius: 50%; margin-right: 1.4vmin; background: #34c759; }
+.h-status.closed .dot { background: #ff453a; }
+.h-clock { margin-left: 3vmin; color: #a39684; }
+
 #slides { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-#root.with-ticker #slides { bottom: 7vmin; }
+#root.with-header #slides { top: 11vmin; }
+#root.with-ticker #slides { bottom: 7.6vmin; }
 
 .layer {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -30,7 +77,7 @@ html, body {
 }
 .layer.visible { opacity: 1; }
 
-.slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+.slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; background: #16110e; }
 .slide img.media, .slide video.media {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   -o-object-fit: cover; object-fit: cover; background: #000;
@@ -39,107 +86,179 @@ html, body {
 .slide iframe { width: 100%; height: 100%; border: 0; background: #fff; }
 
 .media-caption {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 4vmin 5vmin;
-  background: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,.75));
-  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.75));
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 6vmin 6vmin 4vmin;
+  background: -webkit-linear-gradient(top, rgba(22,17,14,0), rgba(22,17,14,.9));
+  background: linear-gradient(to bottom, rgba(22,17,14,0), rgba(22,17,14,.9));
 }
-.media-caption h2 { margin: 0; font-size: 7vmin; font-weight: 800; }
-.media-caption p { margin: 1vmin 0 0; font-size: 3.6vmin; white-space: pre-line; }
+.media-caption h2 { margin: 0; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 9vmin; line-height: .95; text-transform: uppercase; }
+.media-caption p { margin: 1.4vmin 0 0; font-size: 3.4vmin; white-space: pre-line; color: #d9cdbb; }
 
-/* ---------- Slide tekst ---------- */
-.slide.text {
+/* Vendi i fotos kur mungon: vija diagonale + etiketë mono */
+.placeholder {
+  background-color: #231c18;
+  background-image: -webkit-repeating-linear-gradient(45deg, rgba(243,233,216,.05) 0, rgba(243,233,216,.05) 1.2vmin, transparent 1.2vmin, transparent 2.6vmin);
+  background-image: repeating-linear-gradient(45deg, rgba(243,233,216,.05) 0, rgba(243,233,216,.05) 1.2vmin, transparent 1.2vmin, transparent 2.6vmin);
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  font-family: 'SS Mono', monospace; font-size: 2vmin; letter-spacing: .25em; text-transform: uppercase; color: #8b8073;
+}
+
+/* ---------- Promo (produkt / ofertë) dhe Combo ---------- */
+.slide.hero {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  padding: 0 6vmin;
+}
+.hero-left { -webkit-box-flex: 1; -webkit-flex: 1 1 50%; flex: 1 1 50%; min-width: 0; padding-right: 4vmin; }
+.hero-right {
+  -webkit-box-flex: 1; -webkit-flex: 1 1 50%; flex: 1 1 50%; position: relative; height: 100%;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+}
+.pill {
+  display: inline-block; padding: 1.4vmin 2.8vmin 1.2vmin; border-radius: 5vmin; margin-bottom: 3vmin;
+  font-family: 'SS Mono', monospace; font-weight: 700; font-size: 2.4vmin; letter-spacing: .3em; text-transform: uppercase; color: #fff;
+}
+.kicker { margin-bottom: 2.6vmin; font-family: 'SS Mono', monospace; font-weight: 700; font-size: 2.6vmin; letter-spacing: .32em; text-transform: uppercase; color: #1a1411; }
+.hero-title { margin: 0; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; line-height: .92; text-transform: uppercase; }
+.hero-title span { display: block; white-space: nowrap; }
+.hero-desc { margin: 3.6vmin 0 0; max-width: 72vmin; font-size: 3.4vmin; line-height: 1.35; color: #cfc3b1; white-space: pre-line; }
+.hero-items { list-style: none; margin: 4vmin 0 0; padding: 0; }
+.hero-items li {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  margin-top: 1.6vmin; font-weight: 600; font-size: 4.2vmin; color: #1a1411;
+  opacity: 0; -webkit-animation: itemIn .6s ease forwards; animation: itemIn .6s ease forwards;
+}
+.hero-items li:before { content: '\25C6'; font-size: 2.6vmin; margin-right: 2.4vmin; color: #1a1411; }
+@-webkit-keyframes itemIn { from { opacity: 0; -webkit-transform: translateX(-3vmin); } to { opacity: 1; -webkit-transform: none; } }
+@keyframes itemIn { from { opacity: 0; transform: translateX(-3vmin); } to { opacity: 1; transform: none; } }
+
+.photo-ring { position: relative; width: 70vmin; height: 70vmin; max-height: 92%; border-radius: 50%; }
+.photo-ring .ring { position: absolute; top: -3.2vmin; left: -3.2vmin; right: -3.2vmin; bottom: -3.2vmin; border-radius: 50%; border: .25vmin solid; opacity: .8; }
+.photo-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; }
+.photo-circle.placeholder { border: .2vmin dashed rgba(243,233,216,.14); }
+.photo-circle img { width: 100%; height: 100%; -o-object-fit: cover; object-fit: cover; }
+.slide.combo .photo-circle.placeholder {
+  background-color: rgba(0,0,0,.06); color: rgba(26,20,17,.55); border-color: rgba(26,20,17,.18);
+  background-image: -webkit-repeating-linear-gradient(45deg, rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 1.2vmin, transparent 1.2vmin, transparent 2.6vmin);
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 1.2vmin, transparent 1.2vmin, transparent 2.6vmin);
+}
+
+.price-bubble {
+  position: absolute; left: -6vmin; bottom: 2vmin; width: 26vmin; height: 26vmin; border-radius: 50%; color: #16110e;
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
-  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
   -webkit-box-align: center; -webkit-align-items: center; align-items: center;
-  text-align: center; padding: 8vmin;
+  -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+  -webkit-transform: rotate(-8deg); transform: rotate(-8deg);
+  box-shadow: 0 2vmin 5vmin rgba(0,0,0,.35);
 }
-.slide.text h1 { margin: 0 0 3vmin; font-size: 12vmin; line-height: 1.05; font-weight: 900; }
-.slide.text p { margin: 0; font-size: 5vmin; line-height: 1.35; white-space: pre-line; opacity: .92; }
+.price-bubble .only { font-family: 'SS Mono', monospace; font-weight: 700; font-size: 2vmin; letter-spacing: .25em; text-transform: uppercase; }
+.price { font-family: 'SS Display', Impact, sans-serif; font-weight: 400; line-height: 1; white-space: nowrap;
+  display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: start; -webkit-align-items: flex-start; align-items: flex-start; }
+.price .cur { font-size: .42em; margin-top: .32em; margin-right: .06em; }
+.price .dec { font-size: .45em; margin-top: .08em; }
+.price-bubble .price { font-size: 11vmin; }
+.price .old { font-family: 'SS Text', sans-serif; font-size: .3em; text-decoration: line-through; opacity: .5; margin: .3em .5em 0 0; }
 
-/* ---------- Slide menu (ushqime me çmime) ---------- */
+/* ---------- Menu (kartat e produkteve) ---------- */
 .slide.menu {
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
-  padding: 3vmin 3vmin 2vmin;
+  padding: 3vmin 6vmin 3.4vmin;
 }
-.menu-header {
+.menu-head {
+  -webkit-flex-shrink: 0; flex-shrink: 0; margin-bottom: 3vmin;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: end; -webkit-align-items: flex-end; align-items: flex-end;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+}
+.menu-head h1 { margin: 0; padding-top: .12em; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 11vmin; line-height: .9; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-note { margin-bottom: 1.2vmin; margin-left: 3vmin; font-family: 'SS Mono', monospace; font-size: 2vmin; letter-spacing: .22em; text-transform: uppercase; color: #a39684; white-space: nowrap; }
+.menu-grid {
+  -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; min-height: 0; margin: -1.2vmin;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-content: stretch; align-content: stretch;
+}
+.card-cell { padding: 1.2vmin; }
+.card {
+  position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 1.8vmin; padding: 2.2vmin;
+  background: #221b17; border: .35vmin solid transparent;
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-align: center; -webkit-align-items: center; align-items: center;
-  height: 12vmin; -webkit-flex-shrink: 0; flex-shrink: 0; padding: 0 1vmin 2vmin;
 }
-.menu-header img { height: 9vmin; max-width: 25vmin; margin-right: 3vmin; -o-object-fit: contain; object-fit: contain; }
-.menu-header h1 {
-  margin: 0; font-size: 8vmin; font-weight: 900; text-transform: uppercase; letter-spacing: .05em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.card-photo { height: 100%; max-height: 22vmin; border-radius: 1.1vmin; overflow: hidden; -webkit-flex-shrink: 0; flex-shrink: 0; background-size: cover; background-position: center; }
+.card-photo.placeholder { border: .15vmin dashed rgba(243,233,216,.14); font-size: 1.7vmin; }
+.card-info { min-width: 0; padding-left: 2.6vmin; -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; }
+/* padding-top: që pikat e Ë/Ç të mos priten nga overflow:hidden */
+.card-name { font-family: 'SS Display', Impact, sans-serif; font-size: 5vmin; line-height: .95; text-transform: uppercase; overflow: hidden; padding-top: .14em; max-height: 2.04em; }
+.card-desc { margin-top: .9vmin; font-size: 2.2vmin; line-height: 1.3; color: #bcae9b; overflow: hidden; max-height: 2.6em; }
+.card-price { margin-top: 1.6vmin; font-size: 8vmin; }
+.card.soldout .card-photo, .card.soldout .card-info { opacity: .3; }
+.card .sold-label {
+  position: absolute; top: 1.4vmin; right: 1.4vmin; padding: .7vmin 1.4vmin; border-radius: .8vmin; background: #f3e9d8; color: #16110e;
+  font-family: 'SS Mono', monospace; font-weight: 700; font-size: 1.6vmin; letter-spacing: .15em; text-transform: uppercase;
 }
-.menu-grid {
-  -webkit-box-flex: 1; -webkit-flex: 1; flex: 1;
-  display: -webkit-box; display: -webkit-flex; display: flex;
-  -webkit-flex-wrap: wrap; flex-wrap: wrap; align-content: stretch;
-  min-height: 0;
-}
-.product-cell { padding: 1vmin; }
-.product {
-  position: relative; width: 100%; height: 100%; overflow: hidden;
-  background: #fff; color: #1d1d1f; border-radius: 2vmin;
+.card .off-label { position: absolute; top: 1.4vmin; right: 1.4vmin; padding: .6vmin 1.3vmin; border-radius: .8vmin; color: #16110e;
+  font-family: 'SS Mono', monospace; font-weight: 700; font-size: 1.8vmin; }
+.menu-grid.dense .card-name { font-size: 3.6vmin; }
+.menu-grid.dense .card-price { font-size: 5.6vmin; margin-top: 1vmin; }
+.menu-grid.dense .card-desc { display: none; }
+
+/* ---------- Brand (logo, slogani, orari, kontakti) ---------- */
+.slide.brand, .slide.text {
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
-  box-shadow: 0 1vmin 3vmin rgba(0,0,0,.25);
-}
-.product-img {
-  -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; min-height: 0;
-  background-color: #f2f2f2; background-size: cover; background-position: center;
-}
-.product-img.no-img {
-  display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-align: center; -webkit-align-items: center; align-items: center;
   -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
-  font-size: 12vmin; font-weight: 900; color: rgba(0,0,0,.12);
+  text-align: center; padding: 6vmin;
 }
-.product-info { padding: 1.4vmin 2vmin 1.6vmin; -webkit-flex-shrink: 0; flex-shrink: 0; }
-.product-name { font-size: 3.4vmin; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.product-desc { font-size: 2.1vmin; opacity: .65; margin-top: .4vmin; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.product-price { margin-top: .8vmin; font-size: 4.4vmin; font-weight: 900; }
-.product-price .old { font-size: 2.8vmin; font-weight: 600; text-decoration: line-through; opacity: .5; margin-right: 1.2vmin; }
-.badge {
-  position: absolute; top: 1.5vmin; left: 1.5vmin; padding: .6vmin 1.6vmin; border-radius: 5vmin;
-  font-size: 2.2vmin; font-weight: 800; text-transform: uppercase; color: #1d1d1f;
-}
-.product.soldout .product-img, .product.soldout .product-info { opacity: .35; }
-.soldout-label {
-  position: absolute; top: 40%; left: -10%; right: -10%; text-align: center;
-  -webkit-transform: rotate(-12deg); transform: rotate(-12deg);
-  background: #1d1d1f; color: #fff; font-size: 4vmin; font-weight: 900; padding: 1vmin 0; text-transform: uppercase;
-}
-/* Kur ka shumë produkte, zvogëlo tekstin */
-.menu-grid.dense .product-name { font-size: 2.6vmin; }
-.menu-grid.dense .product-price { font-size: 3.4vmin; }
-.menu-grid.dense .product-desc { display: none; }
+.brand-logo { width: 17vmin; height: 17vmin; font-size: 10vmin; }
+.brand-name { margin: 3vmin 0 0; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 15vmin; line-height: .95; text-transform: uppercase; }
+.brand-slogan { margin-top: 1.6vmin; font-size: 3.8vmin; color: #bcae9b; }
+.brand-info { margin-top: 7vmin; display: -webkit-box; display: -webkit-flex; display: flex; }
+.brand-info .col { padding: 0 6vmin; border-left: 1px solid rgba(243,233,216,.14); }
+.brand-info .col:first-child { border-left: 0; }
+.brand-info .label { font-family: 'SS Mono', monospace; font-size: 2.1vmin; letter-spacing: .3em; text-transform: uppercase; }
+.brand-info .value { margin-top: 1.6vmin; font-family: 'SS Display', Impact, sans-serif; font-size: 6vmin; line-height: 1; white-space: nowrap; }
 
-/* ---------- Ora + shiriti lajmesh ---------- */
-#clock {
-  position: absolute; top: 2.5vmin; right: 3vmin; z-index: 5;
-  padding: .8vmin 2vmin; border-radius: 1.5vmin; background: rgba(0,0,0,.45);
-  font-size: 3.6vmin; font-weight: 700; letter-spacing: .05em;
-}
+/* ---------- Tekst / njoftim ---------- */
+.slide.text h1 { margin: 0 0 3vmin; font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 13vmin; line-height: .95; text-transform: uppercase; }
+.slide.text p { margin: 0; max-width: 150vmin; font-size: 4.4vmin; line-height: 1.35; white-space: pre-line; opacity: .9; }
+
+/* ---------- Vertikal ---------- */
+#root.portrait .slide.hero { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center; padding: 5vmin; }
+#root.portrait .hero-left { -webkit-box-flex: 0; -webkit-flex: 0 0 auto; flex: 0 0 auto; width: 100%; padding: 0 0 4vmin; }
+#root.portrait .hero-right { -webkit-box-flex: 0; -webkit-flex: 0 0 auto; flex: 0 0 auto; height: auto; width: 100%; }
+#root.portrait .photo-ring { width: 64vmin; height: 64vmin; }
+#root.portrait .brand-info { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; }
+#root.portrait .brand-info .col { border-left: 0; padding: 2vmin 0; }
+#root.portrait .h-tagline, #root.portrait .progress { display: none; }
+#root.portrait .menu-head { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; -webkit-box-align: start; -webkit-align-items: flex-start; align-items: flex-start; }
+#root.portrait .menu-note { margin: 1.4vmin 0 0; }
+#root.portrait .card { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; -webkit-box-align: stretch; -webkit-align-items: stretch; align-items: stretch; }
+#root.portrait .card-photo { width: 100%; height: auto; max-height: none; min-height: 0; -webkit-box-flex: 1; -webkit-flex: 1 1 0; flex: 1 1 0; }
+#root.portrait .card-info { padding: 2vmin 0 0; -webkit-box-flex: 0; -webkit-flex: 0 0 auto; flex: 0 0 auto; }
+
+/* ---------- Shiriti poshtë ---------- */
 #ticker {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 7vmin; z-index: 5; overflow: hidden;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 7.6vmin; z-index: 5; overflow: hidden; color: #16110e;
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-align: center; -webkit-align-items: center; align-items: center;
-  font-size: 3.4vmin; font-weight: 700;
 }
-.ticker-track { white-space: nowrap; padding-left: 100%; -webkit-animation: ticker 30s linear infinite; animation: ticker 30s linear infinite; }
-@-webkit-keyframes ticker { from { -webkit-transform: translateX(0); } to { -webkit-transform: translateX(-100%); } }
-@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+.ticker-track { white-space: nowrap; -webkit-animation: ticker 40s linear infinite; animation: ticker 40s linear infinite; }
+.ticker-track span { display: inline-block; font-family: 'SS Display', Impact, sans-serif; font-size: 4.8vmin; line-height: 1; text-transform: uppercase; padding-top: .4vmin; }
+.ticker-track .sep { font-size: 2.6vmin; padding: 0 3.4vmin; vertical-align: .6vmin; }
+@-webkit-keyframes ticker { from { -webkit-transform: translateX(0); } to { -webkit-transform: translateX(-50%); } }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---------- Ekranet e sistemit (çiftimi, pa përmbajtje) ---------- */
 #overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
-  background: #121419;
-  background-image: -webkit-radial-gradient(20% 40%, circle, #4a0915 0%, #121419 70%);
-  background-image: radial-gradient(circle at 20% 40%, #4a0915 0%, #121419 70%);
-  text-align: center;
+  background: #16110e; text-align: center;
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
   -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
@@ -152,17 +271,17 @@ html, body {
   text-align: left; margin-bottom: 6vmin;
 }
 #overlay .brand img { width: 13vmin; height: 13vmin; margin-right: 3vmin; }
-#overlay .brand-name { font-size: 7vmin; font-weight: 800; line-height: 1.1; }
-#overlay .brand-tag { font-size: 2.4vmin; font-weight: 700; letter-spacing: .3em; color: #ffc72c; margin-top: .6vmin; }
-#overlay .label { font-size: 3.6vmin; opacity: .7; }
-#overlay .code { font-size: 20vmin; font-weight: 900; letter-spacing: .12em; margin: 2vmin 0 4vmin; font-family: Consolas, "Courier New", monospace; }
-#overlay .hint { font-size: 3vmin; opacity: .6; max-width: 120vmin; line-height: 1.4; }
-#overlay .meta { position: absolute; bottom: 3vmin; left: 0; right: 0; font-size: 2.2vmin; opacity: .35; }
+#overlay .brand-title { font-family: 'SS Display', Impact, sans-serif; font-size: 8vmin; line-height: 1; text-transform: uppercase; }
+#overlay .brand-tag { font-family: 'SS Mono', monospace; font-size: 2.2vmin; font-weight: 700; letter-spacing: .3em; color: #ffc72c; margin-top: .8vmin; }
+#overlay .label { font-family: 'SS Mono', monospace; font-size: 2.6vmin; letter-spacing: .3em; text-transform: uppercase; color: #a39684; }
+#overlay .code { font-family: 'SS Display', Impact, sans-serif; font-size: 24vmin; letter-spacing: .08em; line-height: 1; margin: 2vmin 0 4vmin; }
+#overlay .hint { font-size: 3vmin; color: #a39684; max-width: 120vmin; line-height: 1.4; }
+#overlay .meta { position: absolute; bottom: 3vmin; left: 0; right: 0; font-family: 'SS Mono', monospace; font-size: 1.8vmin; letter-spacing: .15em; opacity: .35; }
 #overlay img.idle-logo { max-width: 50vmin; max-height: 30vmin; margin-bottom: 4vmin; }
-#overlay h1 { font-size: 9vmin; margin: 0; }
+#overlay h1 { font-family: 'SS Display', Impact, sans-serif; font-weight: 400; font-size: 11vmin; margin: 0; text-transform: uppercase; }
 
 #netStatus {
-  position: absolute; top: 2vmin; left: 2vmin; z-index: 20;
-  width: 2vmin; height: 2vmin; border-radius: 50%; background: #ff3b30;
+  position: absolute; bottom: 9.5vmin; right: 2vmin; z-index: 20;
+  width: 1.6vmin; height: 1.6vmin; border-radius: 50%; background: #ff3b30;
   box-shadow: 0 0 0 .5vmin rgba(255,59,48,.3);
 }

@@ -52,7 +52,10 @@
     "Video": "Video",
     "Menu": "Price menu",
     "Text": "Text / Notice",
-    "WebPage": "Web page"
+    "WebPage": "Web page",
+    "Promo": "Product / Deal",
+    "Combo": "Combo deal",
+    "Brand": "Brand (logo, hours)"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -236,7 +239,22 @@
     "title": "Title",
     "text": "Text",
     "url": "URL",
-    "urlHint": "Some sites do not allow being shown inside an iframe."
+    "urlHint": "Some sites do not allow being shown inside an iframe.",
+    "defaultKicker": "DEAL OF THE WEEK",
+    "fromProduct": "Fill from menu",
+    "fromProductHint": "Fills in the title, description and price",
+    "chooseProduct": "— Choose a product —",
+    "badge": "Badge",
+    "badgeHint": "e.g. NEW, BESTSELLER",
+    "kicker": "Kicker",
+    "kickerHint": "e.g. DEAL OF THE WEEK",
+    "heroTitleHint": "The second line gets the other colour (new line = manual split)",
+    "items": "What's included",
+    "itemsHint": "One line = one bullet",
+    "price": "Price (optional)",
+    "priceHint": "Shown in the yellow \"ONLY …\" circle",
+    "removePhoto": "Remove photo",
+    "brandHint": "Shows the logo, name, slogan, hours, phone and social handle from Settings."
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -290,9 +308,9 @@
     "choose": "Choose",
     "remove": "Remove",
     "primaryColor": "Primary colour",
-    "primaryColorHint": "Background of menus and notices",
+    "primaryColorHint": "Header accents, bottom ticker, badges and prices on the TV",
     "accentColor": "Accent colour",
-    "accentColorHint": "News ticker, deal labels",
+    "accentColorHint": "The \"ONLY …\" price circle and discounts",
     "screen": "Screen",
     "showClock": "Show the clock",
     "showTicker": "Show the news ticker (bottom)",
@@ -308,7 +326,19 @@
     "newPassword": "New password",
     "newPasswordHint": "At least 6 characters",
     "change": "Change",
-    "noCurrencies": "No currencies yet. Add them under <link>Currencies</link>."
+    "noCurrencies": "No currencies yet. Add them under <link>Currencies</link>.",
+    "tagline": "Tagline",
+    "taglineHint": "Shown at the top of the TV, e.g. BURGER & GRILL",
+    "slogan": "Slogan",
+    "sloganHint": "On the \"Brand\" slide",
+    "openingTime": "Opens at",
+    "closingTime": "Closes at",
+    "closingTimeHint": "HH:mm, e.g. 22:00 or 24:00",
+    "phone": "Phone (orders)",
+    "social": "Social handle",
+    "design": "TV design",
+    "screenLanguage": "TV language",
+    "screenLanguageHint": "OPEN, ONLY, HOURS…"
   },
   "currencies": {
     "title": "Currencies",

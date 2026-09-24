@@ -90,7 +90,7 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
             {
                 SortOrder = i.SortOrder, Type = i.Type, DurationSeconds = i.DurationSeconds, IsEnabled = i.IsEnabled,
                 Title = i.Title, Text = i.Text, Url = i.Url, BackgroundColor = i.BackgroundColor, TextColor = i.TextColor,
-                Fit = i.Fit, MediaAssetId = i.MediaAssetId, MenuCategoryId = i.MenuCategoryId,
+                Fit = i.Fit, MediaAssetId = i.MediaAssetId, MenuCategoryId = i.MenuCategoryId, Badge = i.Badge, Price = i.Price,
             }).ToList(),
         };
         db.Playlists.Add(copy);
@@ -137,7 +137,17 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
                     if (i.MenuCategoryId is int cid && !categoryIds.Contains(cid))
                         return $"Slide {n}: kategoria nuk ekziston.";
                     break;
+                case SlideType.Promo or SlideType.Combo:
+                    if (string.IsNullOrWhiteSpace(i.Title))
+                        return $"Slide {n}: vendosni titullin.";
+                    if (i.MediaAssetId is int pid && (!media.TryGetValue(pid, out var pt) || pt != MediaType.Image))
+                        return $"Slide {n}: foto e zgjedhur nuk ekziston.";
+                    if (i.Price is < 0)
+                        return $"Slide {n}: çmimi nuk mund të jetë negativ.";
+                    break;
             }
+            var hasMedia = i.Type is SlideType.Image or SlideType.Video or SlideType.Promo or SlideType.Combo;
+            var hasOffer = i.Type is SlideType.Promo or SlideType.Combo;
 
             playlist.Items.Add(new PlaylistItem
             {
@@ -151,8 +161,10 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
                 BackgroundColor = i.BackgroundColor,
                 TextColor = i.TextColor,
                 Fit = i.Fit,
-                MediaAssetId = i.Type is SlideType.Image or SlideType.Video ? i.MediaAssetId : null,
+                MediaAssetId = hasMedia ? i.MediaAssetId : null,
                 MenuCategoryId = i.Type == SlideType.Menu ? i.MenuCategoryId : null,
+                Badge = hasOffer ? i.Badge?.Trim() : null,
+                Price = hasOffer ? i.Price : null,
             });
         }
         return null;

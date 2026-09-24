@@ -20,6 +20,12 @@ public class PlaylistItem
     public string? TextColor { get; set; }
     public MediaFit Fit { get; set; } = MediaFit.Cover;
 
+    /// <summary>Promo/Combo: etiketa e vogël sipër titullit, p.sh. "E RE", "OFERTË E JAVËS".</summary>
+    public string? Badge { get; set; }
+
+    /// <summary>Promo/Combo: çmimi i shfaqur në rrethin e verdhë ("VETËM €5.90"). Null = pa çmim.</summary>
+    public decimal? Price { get; set; }
+
     public int? MediaAssetId { get; set; }
     public MediaAsset? MediaAsset { get; set; }
 

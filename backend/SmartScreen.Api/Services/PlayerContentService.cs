@@ -69,9 +69,10 @@ public class PlayerContentService(AppDbContext db)
     private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion,
         Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
-        var currency = await MainCurrency.GetSymbolAsync(db, s.Currency);
+        var main = await MainCurrency.GetAsync(db);
         var settings = new PlayerSettingsDto(
-            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, s.TickerText, s.ShowClock);
+            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, main?.Symbol ?? s.Currency, s.ShowTicker, s.TickerText, s.ShowClock,
+            s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name);
 
         // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
         var ids = new List<int>();
@@ -128,6 +129,8 @@ public class PlayerContentService(AppDbContext db)
             {
                 case SlideType.Image or SlideType.Video when mediaUrl is null:
                     continue; // media e fshirë – kalo
+                case SlideType.Promo or SlideType.Combo when string.IsNullOrWhiteSpace(i.Title):
+                    continue;
                 case SlideType.WebPage when string.IsNullOrWhiteSpace(i.Url):
                     continue;
                 case SlideType.Menu:
@@ -143,7 +146,7 @@ public class PlayerContentService(AppDbContext db)
 
             var duration = i.Type == SlideType.Video ? Math.Max(0, i.DurationSeconds) : Math.Max(3, i.DurationSeconds);
             slides.Add(new PlayerSlideDto(i.Id, i.Type, duration, i.Title, i.Text, mediaUrl, i.Url,
-                i.BackgroundColor, i.TextColor, i.Fit, menu));
+                i.BackgroundColor, i.TextColor, i.Fit, menu, i.Badge, i.Price));
         }
         return slides;
     }

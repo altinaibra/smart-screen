@@ -1,7 +1,7 @@
 export type ScreenPlatform = 'Unknown' | 'LgWebOs' | 'SamsungTizen' | 'AndroidTv' | 'SonyBravia' | 'Browser';
 export type Orientation = 'Landscape' | 'Portrait';
 export type MediaType = 'Image' | 'Video';
-export type SlideType = 'Image' | 'Video' | 'Menu' | 'Text' | 'WebPage';
+export type SlideType = 'Image' | 'Video' | 'Menu' | 'Text' | 'WebPage' | 'Promo' | 'Combo' | 'Brand';
 export type MediaFit = 'Cover' | 'Contain';
 
 export interface Schedule {
@@ -64,6 +64,8 @@ export interface PlaylistItem {
   mediaAssetId?: number | null;
   mediaAsset?: Media | null;
   menuCategoryId?: number | null;
+  badge?: string | null;
+  price?: number | null;
 }
 
 export interface Playlist {
@@ -106,6 +108,13 @@ export interface Settings {
   tickerText?: string | null;
   showClock: boolean;
   timeZoneId: string;
+  tagline?: string | null;
+  slogan?: string | null;
+  openingTime?: string | null;
+  closingTime?: string | null;
+  phone?: string | null;
+  socialHandle?: string | null;
+  screenLanguage: 'sq' | 'en';
 }
 
 export interface Currency {
@@ -154,4 +163,4 @@ export interface Dashboard {
 }
 
 /** Etiketat përkthehen: t(`platform.${platform}`), t(`slideType.${type}`). */
-export const slideTypes: SlideType[] = ['Image', 'Video', 'Menu', 'Text', 'WebPage'];
+export const slideTypes: SlideType[] = ['Promo', 'Combo', 'Menu', 'Brand', 'Image', 'Video', 'Text', 'WebPage'];

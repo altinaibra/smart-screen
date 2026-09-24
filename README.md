@@ -94,7 +94,9 @@ rifreskon çmimet te Menuja).
   orientim horizontal/vertikal, rifreskim në distancë.
 - **Orare** – p.sh. menuja e mëngjesit 07:00–11:00, oferta e drekës 12:00–15:00 (sipas ditëve të javës).
 - **Foto & Video** – ngarkim me drag & drop (deri 1 GB, rekomandohet MP4 H.264).
-- **Playlistat** – slide: Foto, Video, Menu me çmime, Tekst/Njoftim, Faqe web; renditje, kohëzgjatje,
+- **Dizajni i TV-së** – kreu me logo, emër, orar (HAPUR/MBYLLUR) dhe progres; shirit poshtë me ◆; ngjyra kryesore,
+  gjuha e TV-së dhe të dhënat e biznesit caktohen vetëm nga admini te **Cilësimet** (në TV nuk editohet asgjë).
+- **Playlistat** – slide: Produkt/Ofertë, Ofertë me listë, Menu me çmime, Biznesi, Foto, Video, Tekst/Njoftim, Faqe web; renditje, kohëzgjatje,
   **preview live** në rezolucione të ndryshme (720p, 1080p, 4K, vertikal).
 - **Menuja** – kategori, produkte, çmime, oferta (çmim i vjetër → % zbritje), "E mbaruar" me një klik.
 - **Valutat** – kodi, emri, simboli, kursi, lloji fiskal; valuta kryesore (isMainCurrency) shfaqet te çmimet.

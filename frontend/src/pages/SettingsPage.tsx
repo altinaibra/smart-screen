@@ -10,6 +10,9 @@ import { useCurrencies, useSetMainCurrency } from '../services/Currency/currency
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
 import type { Settings } from '../types';
 
+/** Ngjyrat e gatshme të dizajnit (mund të zgjidhet edhe çdo ngjyrë tjetër). */
+const themeColors = ['#e8452f', '#2f7bf5', '#1fa36b', '#d63a7a', '#f08a24', '#7b4ff0'];
+
 const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
 
 export default function SettingsPage() {
@@ -73,11 +76,48 @@ function SettingsForm({ initial }: { initial: Settings }) {
             </div>
           </Field>
           <div className="grid-2">
-            <Field label={t('settings.primaryColor')} hint={t('settings.primaryColorHint')}>
-              <div className="color-input"><input type="color" value={s.primaryColor} onChange={e => set({ primaryColor: e.target.value })} /><code>{s.primaryColor}</code></div>
+            <Field label={t('settings.tagline')} hint={t('settings.taglineHint')}>
+              <input value={s.tagline ?? ''} maxLength={100} onChange={e => set({ tagline: e.target.value })} placeholder="BURGER & GRILL" />
             </Field>
+            <Field label={t('settings.slogan')} hint={t('settings.sloganHint')}>
+              <input value={s.slogan ?? ''} maxLength={200} onChange={e => set({ slogan: e.target.value })} />
+            </Field>
+            <Field label={t('settings.openingTime')}>
+              <input type="time" value={s.openingTime ?? ''} onChange={e => set({ openingTime: e.target.value })} />
+            </Field>
+            <Field label={t('settings.closingTime')} hint={t('settings.closingTimeHint')}>
+              <input value={s.closingTime ?? ''} maxLength={5} placeholder="24:00" pattern="([01]\d|2[0-3]):[0-5]\d|24:00"
+                onChange={e => set({ closingTime: e.target.value })} />
+            </Field>
+            <Field label={t('settings.phone')}>
+              <input value={s.phone ?? ''} maxLength={50} onChange={e => set({ phone: e.target.value })} placeholder="044 555 010" />
+            </Field>
+            <Field label={t('settings.social')}>
+              <input value={s.socialHandle ?? ''} maxLength={100} onChange={e => set({ socialHandle: e.target.value })} placeholder="@emri.juaj" />
+            </Field>
+          </div>
+
+          <h2>{t('settings.design')}</h2>
+          <div className="field">
+            <span className="field-label">{t('settings.primaryColor')}</span>
+            <div className="swatches">
+              {themeColors.map(c => (
+                <button key={c} type="button" className={`swatch ${s.primaryColor.toLowerCase() === c ? 'active' : ''}`}
+                  style={{ background: c }} title={c} onClick={() => set({ primaryColor: c })} />
+              ))}
+              <div className="color-input"><input type="color" value={s.primaryColor} onChange={e => set({ primaryColor: e.target.value })} /><code>{s.primaryColor}</code></div>
+            </div>
+            <span className="field-hint">{t('settings.primaryColorHint')}</span>
+          </div>
+          <div className="grid-2">
             <Field label={t('settings.accentColor')} hint={t('settings.accentColorHint')}>
               <div className="color-input"><input type="color" value={s.accentColor} onChange={e => set({ accentColor: e.target.value })} /><code>{s.accentColor}</code></div>
+            </Field>
+            <Field label={t('settings.screenLanguage')} hint={t('settings.screenLanguageHint')}>
+              <select value={s.screenLanguage ?? 'sq'} onChange={e => set({ screenLanguage: e.target.value as Settings['screenLanguage'] })}>
+                <option value="sq">Shqip</option>
+                <option value="en">English</option>
+              </select>
             </Field>
           </div>
 

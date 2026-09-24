@@ -11,14 +11,25 @@
 </head>
 <body>
   <div id="root">
+    <div id="header" class="hidden">
+      <div class="h-brand">
+        <div id="hLogo" class="logo-circle"></div>
+        <div id="hName" class="h-name"></div>
+        <div id="hTagline" class="h-tagline"></div>
+      </div>
+      <div class="h-right">
+        <div id="progress" class="progress"></div>
+        <div id="hStatus" class="h-status hidden"><span id="hDot" class="dot"></span><span id="hStatusText"></span></div>
+        <div id="clock" class="h-clock hidden"></div>
+      </div>
+    </div>
     <div id="slides">
       <div class="layer" id="layerA"></div>
       <div class="layer" id="layerB"></div>
     </div>
-    <div id="clock" class="hidden"></div>
-    <div id="ticker" class="hidden"><div class="ticker-track"><span id="tickerText"></span></div></div>
+    <div id="ticker" class="hidden"><div class="ticker-track" id="tickerTrack"></div></div>
     <div id="overlay" class="hidden"></div>
-    <div id="netStatus" class="hidden" title="Pa lidhje me serverin"></div>
+    <div id="netStatus" class="hidden"></div>
   </div>
   <script src="player.js"></script>
 </body>
