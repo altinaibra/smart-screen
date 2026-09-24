@@ -1,9 +1,10 @@
 import type React from 'react';
 import LogOutIcon from './LogOutIcon';
+import SettingsIcon from './SettingsIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { LogOutIcon };
+export { LogOutIcon, SettingsIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -12,4 +13,5 @@ export { LogOutIcon };
  */
 export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   logout: LogOutIcon,
+  settings: SettingsIcon,
 };
