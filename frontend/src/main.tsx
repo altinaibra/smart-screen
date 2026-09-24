@@ -15,6 +15,8 @@ import MenuPage from './pages/MenuPage';
 import SettingsPage from './pages/SettingsPage';
 import CurrenciesPage from './pages/CurrenciesPage';
 import PaymentMethodsPage from './pages/PaymentMethodsPage';
+import BusinessesPage from './pages/BusinessesPage';
+import UsersPage from './pages/UsersPage';
 import { queryClient } from './services/queryClient';
 import './i18n';
 import './styles.css';
@@ -39,6 +41,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="currencies" element={<CurrenciesPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="businesses" element={<BusinessesPage />} />
+            <Route path="users" element={<UsersPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

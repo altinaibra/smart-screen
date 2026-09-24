@@ -12,21 +12,26 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/currencies")]
 [Authorize]
-public class CurrenciesController(AppDbContext db) : ControllerBase
+[BusinessScoped(fullAccess: true)]
+public class CurrenciesController(AppDbContext db, BusinessAccess access) : ControllerBase
 {
+    private IQueryable<Currency> Currencies => db.Currencies.Where(c => c.BusinessId == access.BusinessId);
+
     [HttpGet]
+    [BusinessScoped]
     public async Task<List<CurrencyDto>> GetAll([FromQuery] bool? status)
     {
-        var q = db.Currencies.AsNoTracking();
+        var q = Currencies.AsNoTracking();
         if (status is not null) q = q.Where(c => c.Status == status);
         var items = await q.OrderBy(c => c.CurrencyId).ToListAsync();
         return items.Select(c => c.ToDto()).ToList();
     }
 
     [HttpGet("{id:int}")]
+    [BusinessScoped]
     public async Task<ActionResult<CurrencyDto>> Get(int id)
     {
-        var currency = await db.Currencies.AsNoTracking().FirstOrDefaultAsync(c => c.CurrencyId == id);
+        var currency = await Currencies.AsNoTracking().FirstOrDefaultAsync(c => c.CurrencyId == id);
         return currency is null ? NotFound() : currency.ToDto();
     }
 
@@ -36,7 +41,7 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
         var error = await ValidateAsync(req, null);
         if (error is not null) return BadRequest(new { message = error });
 
-        var currency = new Currency();
+        var currency = new Currency { BusinessId = access.BusinessId };
         Apply(currency, req);
         db.Currencies.Add(currency);
         await ClearOtherMainAsync(currency);
@@ -47,7 +52,7 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<CurrencyDto>> Update(int id, SaveCurrencyRequest req)
     {
-        var currency = await db.Currencies.FindAsync(id);
+        var currency = await Currencies.FirstOrDefaultAsync(c => c.CurrencyId == id);
         if (currency is null) return NotFound();
 
         var error = await ValidateAsync(req, id);
@@ -72,7 +77,7 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}/main")]
     public async Task<ActionResult<CurrencyDto>> SetMain(int id)
     {
-        var currency = await db.Currencies.FindAsync(id);
+        var currency = await Currencies.FirstOrDefaultAsync(c => c.CurrencyId == id);
         if (currency is null) return NotFound();
         if (!currency.Status)
             return BadRequest(new { message = "Valuta joaktive nuk mund të jetë kryesore." });
@@ -86,7 +91,7 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var currency = await db.Currencies.FindAsync(id);
+        var currency = await Currencies.FirstOrDefaultAsync(c => c.CurrencyId == id);
         if (currency is null) return NotFound();
         if (currency.IsMainCurrency)
             return BadRequest(new { message = "Valuta kryesore nuk mund të fshihet. Caktoni fillimisht një valutë tjetër si kryesore." });
@@ -99,10 +104,10 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
     private async Task<string?> ValidateAsync(SaveCurrencyRequest req, int? id)
     {
         var code = req.CurrencyCode.Trim().ToUpperInvariant();
-        if (await db.Currencies.AnyAsync(c => c.CurrencyCode == code && c.CurrencyId != id))
+        if (await Currencies.AnyAsync(c => c.CurrencyCode == code && c.CurrencyId != id))
             return $"Valuta me kodin '{code}' ekziston tashmë.";
         if (!req.IsMainCurrency && id is not null &&
-            await db.Currencies.AnyAsync(c => c.CurrencyId == id && c.IsMainCurrency))
+            await Currencies.AnyAsync(c => c.CurrencyId == id && c.IsMainCurrency))
             return "Duhet të ketë gjithmonë një valutë kryesore. Caktoni një valutë tjetër si kryesore.";
         if (req.IsMainCurrency && !req.Status)
             return "Valuta kryesore duhet të jetë aktive.";
@@ -124,7 +129,7 @@ public class CurrenciesController(AppDbContext db) : ControllerBase
     private async Task ClearOtherMainAsync(Currency currency)
     {
         if (!currency.IsMainCurrency) return;
-        var others = await db.Currencies.Where(c => c.IsMainCurrency && c.CurrencyId != currency.CurrencyId).ToListAsync();
+        var others = await Currencies.Where(c => c.IsMainCurrency && c.CurrencyId != currency.CurrencyId).ToListAsync();
         foreach (var other in others) other.IsMainCurrency = false;
     }
 }

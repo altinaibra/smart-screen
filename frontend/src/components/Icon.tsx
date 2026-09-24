@@ -16,6 +16,8 @@ export const iconFallbacks = {
   currency: '¤',
   payment: '▤',
   settings: '⚙',
+  business: '⌂',
+  users: '👥',
   'external-link': '↗',
   close: '✕',
   plus: '+',
@@ -29,6 +31,8 @@ export const iconFallbacks = {
   check: '✓',
   logout: '⎋',
   language: '🌐',
+  eye: '👁',
+  'eye-off': '⊘',
 } as const;
 
 export type IconName = keyof typeof iconFallbacks;

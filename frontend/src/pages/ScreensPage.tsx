@@ -13,6 +13,8 @@ export default function ScreensPage() {
   const { t } = useTranslation();
   const { data: screens = [], error: loadError } = useScreens();
   const { data: playlists = [] } = usePlaylists();
+  // Pa qasje të plotë (vetëm disa ekrane): nuk shtohen dhe nuk fshihen ekrane.
+  const fullAccess = useCurrentBusiness()?.fullAccess ?? false;
   const { mutateAsync: reloadScreen } = useReloadScreen();
   const { mutateAsync: deleteScreen } = useDeleteScreen();
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +39,12 @@ export default function ScreensPage() {
       <PageHeader
         title={t('screens.title')}
         subtitle={t('screens.subtitle')}
-        actions={<button className="btn primary" onClick={() => setPairing(true)}><Icon name="plus" />{t('screens.add')}</button>}
+        actions={fullAccess && <button className="btn primary" onClick={() => setPairing(true)}><Icon name="plus" />{t('screens.add')}</button>}
       />
       <ErrorBox error={error ?? loadError?.message ?? null} />
       {notice && <div className="alert info" onClick={() => setNotice(null)}>{notice}</div>}
 
-      <TvSetupGuide />
+      {fullAccess && <TvSetupGuide />}
 
       {screens.length === 0 ? (
         <Empty>{t('screens.empty')}</Empty>
@@ -69,7 +71,7 @@ export default function ScreensPage() {
               <div className="row-actions">
                 <button className="btn" onClick={() => setEditing(s)}>{t('common.edit')}</button>
                 <button className="btn" onClick={() => reload(s)}>{t('screens.reloadTv')}</button>
-                <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>
+                {fullAccess && <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>}
               </div>
             </div>
           ))}

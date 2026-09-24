@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import LanguageSelect from '../components/LanguageSelect';
 import MediaPicker from '../components/MediaPicker';
-import { ErrorBox, Field, PageHeader } from '../components/ui';
+import { ErrorBox, Field, PageHeader, PasswordInput } from '../components/ui';
 import { useChangePassword } from '../services/Auth/authQueries';
+import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
 import type { BusinessType, Settings } from '../types';
@@ -23,7 +24,18 @@ const themeColors = ['#e8452f', '#2f7bf5', '#1fa36b', '#d63a7a', '#f08a24', '#7b
 const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+  const fullAccess = useCurrentBusiness()?.fullAccess ?? false;
   const { data, error } = useSettings();
+  // Pa qasje të plotë në biznes: vetëm gjuha e panelit dhe fjalëkalimi.
+  if (!fullAccess) {
+    return (
+      <>
+        <PageHeader title={t('settings.title')} />
+        <div className="settings-side narrow"><LanguageCard /><PasswordCard /></div>
+      </>
+    );
+  }
   if (!data) return <ErrorBox error={error?.message ?? null} />;
   // Formulari punon me një kopje lokale; rifreskimet e query-t nuk prishin ndryshimet e paruajtura.
   return <SettingsForm initial={data} />;
@@ -200,8 +212,8 @@ function PasswordCard() {
     <form className="card" onSubmit={submit}>
       <h2>{t('settings.changePassword')}</h2>
       {msg && <div className={`alert ${msg.ok ? 'info' : 'error'}`}>{msg.text}</div>}
-      <Field label={t('settings.currentPassword')}><input type="password" value={current} onChange={e => setCurrent(e.target.value)} required /></Field>
-      <Field label={t('settings.newPassword')} hint={t('settings.newPasswordHint')}><input type="password" minLength={6} value={next} onChange={e => setNext(e.target.value)} required /></Field>
+      <Field label={t('settings.currentPassword')}><PasswordInput value={current} onChange={e => setCurrent(e.target.value)} required /></Field>
+      <Field label={t('settings.newPassword')} hint={t('settings.newPasswordHint')}><PasswordInput minLength={6} value={next} onChange={e => setNext(e.target.value)} required /></Field>
       <div className="form-actions"><button className="btn">{t('settings.change')}</button></div>
     </form>
   );

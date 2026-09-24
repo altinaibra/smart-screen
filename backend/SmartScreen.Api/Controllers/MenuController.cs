@@ -12,12 +12,17 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/menu")]
 [Authorize]
-public class MenuController(AppDbContext db) : ControllerBase
+[BusinessScoped(fullAccess: true)]
+public class MenuController(AppDbContext db, BusinessAccess access) : ControllerBase
 {
+    private IQueryable<MenuCategory> Categories => db.MenuCategories.Where(c => c.BusinessId == access.BusinessId);
+    private IQueryable<Products> Products => db.Products.Where(p => p.Category!.BusinessId == access.BusinessId);
+
     [HttpGet("categories")]
+    [BusinessScoped] // edhe për slide-t e menusë në playlista
     public async Task<List<CategoryDto>> GetCategories()
     {
-        var categories = await db.MenuCategories.AsNoTracking()
+        var categories = await Categories.AsNoTracking()
             .Include(c => c.Products).ThenInclude(p => p.ImageAsset)
             .OrderBy(c => c.SortOrder).ThenBy(c => c.Name)
             .ToListAsync();
@@ -27,7 +32,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpPost("categories")]
     public async Task<ActionResult<CategoryDto>> CreateCategory(SaveCategoryRequest req)
     {
-        var category = new MenuCategory { Name = req.Name.Trim(), SortOrder = req.SortOrder };
+        var category = new MenuCategory { BusinessId = access.BusinessId, Name = req.Name.Trim(), SortOrder = req.SortOrder };
         db.MenuCategories.Add(category);
         await db.SaveChangesAsync();
         return category.ToDto();
@@ -36,7 +41,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpPut("categories/{id:int}")]
     public async Task<ActionResult<CategoryDto>> UpdateCategory(int id, SaveCategoryRequest req)
     {
-        var category = await db.MenuCategories.Include(c => c.Products).ThenInclude(p => p.ImageAsset)
+        var category = await Categories.Include(c => c.Products).ThenInclude(p => p.ImageAsset)
             .FirstOrDefaultAsync(c => c.Id == id);
         if (category is null) return NotFound();
         category.Name = req.Name.Trim();
@@ -48,7 +53,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpDelete("categories/{id:int}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        var category = await db.MenuCategories.FindAsync(id);
+        var category = await Categories.FirstOrDefaultAsync(c => c.Id == id);
         if (category is null) return NotFound();
         db.MenuCategories.Remove(category);
         await db.SaveChangesAsync();
@@ -71,7 +76,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpPut("products/{id:int}")]
     public async Task<ActionResult<ProductsDto>> UpdateProduct(int id, SaveProductRequest req)
     {
-        var product = await db.Products.FindAsync(id);
+        var product = await Products.FirstOrDefaultAsync(p => p.Id == id);
         if (product is null) return NotFound();
 
         var error = await ValidateAsync(req);
@@ -86,7 +91,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpPatch("products/{id:int}/availability")]
     public async Task<IActionResult> SetAvailability(int id, SetAvailabilityRequest req)
     {
-        var updated = await db.Products.Where(p => p.Id == id)
+        var updated = await Products.Where(p => p.Id == id)
             .ExecuteUpdateAsync(u => u.SetProperty(p => p.IsAvailable, req.IsAvailable));
         return updated == 0 ? NotFound() : NoContent();
     }
@@ -94,7 +99,7 @@ public class MenuController(AppDbContext db) : ControllerBase
     [HttpDelete("products/{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        var product = await db.Products.FindAsync(id);
+        var product = await Products.FirstOrDefaultAsync(p => p.Id == id);
         if (product is null) return NotFound();
         db.Products.Remove(product);
         await db.SaveChangesAsync();
@@ -103,9 +108,9 @@ public class MenuController(AppDbContext db) : ControllerBase
 
     private async Task<string?> ValidateAsync(SaveProductRequest req)
     {
-        if (!await db.MenuCategories.AnyAsync(c => c.Id == req.CategoryId))
+        if (!await Categories.AnyAsync(c => c.Id == req.CategoryId))
             return "Kategoria nuk ekziston.";
-        if (req.ImageAssetId is int img && !await db.MediaAssets.AnyAsync(m => m.Id == img && m.Type == MediaType.Image))
+        if (req.ImageAssetId is int img && !await db.MediaAssets.AnyAsync(m => m.Id == img && m.BusinessId == access.BusinessId && m.Type == MediaType.Image))
             return "Foto e zgjedhur nuk ekziston.";
         if (req.OldPrice is < 0)
             return "Çmimi i vjetër nuk mund të jetë negativ.";

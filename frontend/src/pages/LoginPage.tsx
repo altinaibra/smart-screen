@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { ErrorBox, Field } from '../components/ui';
+import { ErrorBox, Field, PasswordInput } from '../components/ui';
 import LanguageSelect from '../components/LanguageSelect';
 import { useLogin } from '../services/Auth/authQueries';
 
@@ -29,7 +29,7 @@ export default function LoginPage() {
           <input value={username} onChange={e => setUsername(e.target.value)} autoFocus required />
         </Field>
         <Field label={t('login.password')}>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} required />
         </Field>
         <button className="btn primary block" disabled={busy}>{busy ? t('login.submitting') : t('login.submit')}</button>
         <div className="login-lang"><LanguageSelect /></div>

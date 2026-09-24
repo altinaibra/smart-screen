@@ -15,16 +15,16 @@ public partial class PlayerContentService(AppDbContext db)
 
     public async Task<PlayerContentDto> BuildForScreenAsync(Screen screen)
     {
-        var settings = await GetSettingsAsync();
+        var settings = await GetSettingsAsync(screen.BusinessId);
         var schedules = await db.ScreenSchedules.AsNoTracking().Where(s => s.ScreenId == screen.Id).ToListAsync();
         var playlistId = ResolvePlaylistId(screen, schedules, GetTimeZone(settings.TimeZoneId));
         return await BuildAsync(playlistId, settings, new PlayerScreenDto(screen.Id, screen.Name, screen.Orientation), screen.CommandVersion,
             screen, schedules);
     }
 
-    public async Task<PlayerContentDto> BuildPreviewAsync(int playlistId, ScreenOrientation orientation)
+    public async Task<PlayerContentDto> BuildPreviewAsync(int businessId, int playlistId, ScreenOrientation orientation)
     {
-        var settings = await GetSettingsAsync();
+        var settings = await GetSettingsAsync(businessId);
         return await BuildAsync(playlistId, settings, new PlayerScreenDto(0, "Preview", orientation), 0);
     }
 
@@ -63,13 +63,15 @@ public partial class PlayerContentService(AppDbContext db)
         catch { return TimeZoneInfo.Local; }
     }
 
-    private async Task<BusinessSettings> GetSettingsAsync() =>
-        await db.BusinessSettings.AsNoTracking().Include(s => s.LogoAsset).FirstOrDefaultAsync() ?? new BusinessSettings();
+    /// <summary>Cilësimet e biznesit të ekranit (logo, ngjyrat, orari, lloji i biznesit).</summary>
+    private async Task<BusinessSettings> GetSettingsAsync(int? businessId) =>
+        await db.BusinessSettings.AsNoTracking().Include(s => s.LogoAsset).FirstOrDefaultAsync(s => s.Id == businessId)
+        ?? new BusinessSettings();
 
     private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion,
         Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
-        var main = await MainCurrency.GetAsync(db);
+        var main = await MainCurrency.GetAsync(db, s.Id);
         var currency = main?.Symbol ?? s.Currency;
         var settings = new PlayerSettingsDto(
             s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, WithCurrency(s.TickerText, currency), s.ShowClock,
@@ -85,12 +87,12 @@ public partial class PlayerContentService(AppDbContext db)
         var playlists = await db.Playlists.AsNoTracking()
             .Include(p => p.Items).ThenInclude(i => i.MediaAsset)
             .Include(p => p.Items).ThenInclude(i => i.MenuCategory)
-            .Where(p => ids.Contains(p.Id))
+            .Where(p => ids.Contains(p.Id) && p.BusinessId == s.Id)
             .ToListAsync();
 
         var built = new List<PlayerPlaylistDto>();
         foreach (var playlist in playlists)
-            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, currency)));
+            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, s.Id, currency)));
 
         var playlistDto = built.FirstOrDefault(p => p.Id == playlistId);
 
@@ -108,7 +110,7 @@ public partial class PlayerContentService(AppDbContext db)
         return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto, offline);
     }
 
-    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, string currency)
+    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, int businessId, string currency)
     {
         var items = playlist.Items.Where(i => i.IsEnabled).OrderBy(i => i.SortOrder).ToList();
 
@@ -117,6 +119,7 @@ public partial class PlayerContentService(AppDbContext db)
         if (items.Any(i => i.Type == SlideType.Menu))
         {
             products = await db.Products.AsNoTracking().Include(p => p.ImageAsset).Include(p => p.Category)
+                .Where(p => p.Category!.BusinessId == businessId)
                 .OrderBy(p => p.SortOrder).ThenBy(p => p.Name).ToListAsync();
         }
 

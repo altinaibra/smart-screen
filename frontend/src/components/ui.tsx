@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { InputHTMLAttributes, ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Icon from './Icon';
 
@@ -53,5 +53,21 @@ export function Field({ label, children, hint }: { label: string; children: Reac
       {children}
       {hint && <span className="field-hint">{hint}</span>}
     </label>
+  );
+}
+
+/** Fushë fjalëkalimi me butonin "sy" për ta parë/fshehur atë që shkruhet. */
+export function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  const { t } = useTranslation();
+  const [visible, setVisible] = useState(false);
+  const label = visible ? t('common.hidePassword') : t('common.showPassword');
+  return (
+    <span className="password-input">
+      <input {...props} type={visible ? 'text' : 'password'} />
+      <button type="button" className="password-toggle" onClick={() => setVisible(v => !v)}
+        aria-label={label} title={label} aria-pressed={visible}>
+        <Icon name={visible ? 'eye-off' : 'eye'} />
+      </button>
+    </span>
   );
 }

@@ -6,6 +6,9 @@ public class Screen
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? Location { get; set; }
+    /// <summary>Biznesi i ekranit; null derisa TV-ja të çiftohet.</summary>
+    public int? BusinessId { get; set; }
+    public BusinessSettings? Business { get; set; }
 
     /// <summary>Çelës unik që player-i ruan lokalisht dhe e përdor për t'u identifikuar.</summary>
     public string DeviceKey { get; set; } = "";

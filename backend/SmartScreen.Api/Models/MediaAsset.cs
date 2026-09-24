@@ -3,6 +3,7 @@ namespace SmartScreen.Api.Models;
 public class MediaAsset
 {
     public int Id { get; set; }
+    public int BusinessId { get; set; }
     public string Name { get; set; } = "";
     public MediaType Type { get; set; }
     public string FileName { get; set; } = "";

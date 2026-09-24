@@ -4,6 +4,7 @@ namespace SmartScreen.Api.Models;
 public class PaymentMethod
 {
     public int PaymentMethodId { get; set; }
+    public int BusinessId { get; set; }
     public string PaymentMethodCode { get; set; } = "";
     public string PaymentMethodName { get; set; } = "";
     public bool Status { get; set; } = true;

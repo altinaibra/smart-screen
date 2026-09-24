@@ -12,21 +12,26 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/payment-methods")]
 [Authorize]
-public class PaymentMethodsController(AppDbContext db) : ControllerBase
+[BusinessScoped(fullAccess: true)]
+public class PaymentMethodsController(AppDbContext db, BusinessAccess access) : ControllerBase
 {
+    private IQueryable<PaymentMethod> Methods => db.PaymentMethods.Where(p => p.BusinessId == access.BusinessId);
+
     [HttpGet]
+    [BusinessScoped]
     public async Task<List<PaymentMethodDto>> GetAll([FromQuery] bool? status)
     {
-        var q = db.PaymentMethods.AsNoTracking();
+        var q = Methods.AsNoTracking();
         if (status is not null) q = q.Where(p => p.Status == status);
         var items = await q.OrderBy(p => p.SortOrder).ThenBy(p => p.PaymentMethodId).ToListAsync();
         return items.Select(p => p.ToDto()).ToList();
     }
 
     [HttpGet("{id:int}")]
+    [BusinessScoped]
     public async Task<ActionResult<PaymentMethodDto>> Get(int id)
     {
-        var method = await db.PaymentMethods.AsNoTracking().FirstOrDefaultAsync(p => p.PaymentMethodId == id);
+        var method = await Methods.AsNoTracking().FirstOrDefaultAsync(p => p.PaymentMethodId == id);
         return method is null ? NotFound() : method.ToDto();
     }
 
@@ -36,7 +41,7 @@ public class PaymentMethodsController(AppDbContext db) : ControllerBase
         var error = await ValidateAsync(req, null);
         if (error is not null) return BadRequest(new { message = error });
 
-        var method = new PaymentMethod();
+        var method = new PaymentMethod { BusinessId = access.BusinessId };
         Apply(method, req);
         db.PaymentMethods.Add(method);
         await ClearOtherDefaultAsync(method);
@@ -47,7 +52,7 @@ public class PaymentMethodsController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<PaymentMethodDto>> Update(int id, SavePaymentMethodRequest req)
     {
-        var method = await db.PaymentMethods.FindAsync(id);
+        var method = await Methods.FirstOrDefaultAsync(p => p.PaymentMethodId == id);
         if (method is null) return NotFound();
 
         var error = await ValidateAsync(req, id);
@@ -71,7 +76,7 @@ public class PaymentMethodsController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var method = await db.PaymentMethods.FindAsync(id);
+        var method = await Methods.FirstOrDefaultAsync(p => p.PaymentMethodId == id);
         if (method is null) return NotFound();
         db.PaymentMethods.Remove(method);
         await db.SaveChangesAsync();
@@ -81,7 +86,7 @@ public class PaymentMethodsController(AppDbContext db) : ControllerBase
     private async Task<string?> ValidateAsync(SavePaymentMethodRequest req, int? id)
     {
         var code = req.PaymentMethodCode.Trim().ToUpperInvariant();
-        return await db.PaymentMethods.AnyAsync(p => p.PaymentMethodCode == code && p.PaymentMethodId != id)
+        return await Methods.AnyAsync(p => p.PaymentMethodCode == code && p.PaymentMethodId != id)
             ? $"Mënyra e pagesës me kodin '{code}' ekziston tashmë."
             : null;
     }
@@ -100,7 +105,7 @@ public class PaymentMethodsController(AppDbContext db) : ControllerBase
     private async Task ClearOtherDefaultAsync(PaymentMethod method)
     {
         if (!method.IsDefault) return;
-        var others = await db.PaymentMethods.Where(p => p.IsDefault && p.PaymentMethodId != method.PaymentMethodId).ToListAsync();
+        var others = await Methods.Where(p => p.IsDefault && p.PaymentMethodId != method.PaymentMethodId).ToListAsync();
         foreach (var other in others) other.IsDefault = false;
     }
 }

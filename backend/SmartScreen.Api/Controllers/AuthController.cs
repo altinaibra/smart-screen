@@ -23,7 +23,17 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
             return Unauthorized(new { message = "Përdoruesi ose fjalëkalimi është i gabuar." });
 
         var (token, expires) = tokens.CreateToken(user);
-        return new LoginResponse(token, user.Username, expires);
+        return new LoginResponse(token, user.Username, expires, user.Role);
+    }
+
+    /// <summary>Përdoruesi aktual dhe bizneset që sheh (për zgjedhjen e biznesit në panel).</summary>
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<MeDto>> Me()
+    {
+        var user = await BusinessAccess.LoadUserAsync(db, User);
+        if (user is null) return Unauthorized();
+        return new MeDto(user.Id, user.Username, user.Role, user.IsAdmin, await BusinessesController.ListAsync(db, user));
     }
 
     [HttpPut("password")]

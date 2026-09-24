@@ -28,7 +28,9 @@
     "offline": "Offline",
     "newName": "Emri i ri:",
     "active": "Aktiv",
-    "inactive": "Joaktiv"
+    "inactive": "Joaktiv",
+    "showPassword": "Shfaq fjalëkalimin",
+    "hidePassword": "Fshih fjalëkalimin"
   },
   "time": {
     "never": "asnjëherë",
@@ -71,7 +73,10 @@
     "currencies": "Valutat",
     "paymentMethods": "Mënyrat e pagesës",
     "menu_barber": "Shërbimet & Çmimet",
-    "menu_shop": "Produktet & Çmimet"
+    "menu_shop": "Produktet & Çmimet",
+    "businesses": "Bizneset",
+    "users": "Përdoruesit",
+    "administration": "Administrimi"
   },
   "login": {
     "subtitle": "Menaxhimi i ekraneve dhe reklamave",
@@ -401,5 +406,44 @@
     "default": "E parazgjedhur",
     "isDefault": "E parazgjedhur (isDefault)",
     "confirmDelete": "Të fshihet \"{{name}}\"?"
+  },
+  "businesses": {
+    "title": "Bizneset",
+    "subtitle": "Çdo biznes ka ekranet, reklamat, menunë dhe cilësimet e veta",
+    "add": "Shto biznes",
+    "new": "Biznes i ri",
+    "open": "Hap",
+    "selected": "I zgjedhur",
+    "screens": "Ekrane",
+    "current": "Biznesi",
+    "screensOnly": "disa ekrane",
+    "newHint": "Pas ruajtjes mund të vendosni logon, ngjyrat dhe orarin te Cilësimet.",
+    "confirmDelete": "Të fshihet biznesi \"{{name}}\"? Do të fshihen të gjitha ekranet, playlistat, fotot, videot dhe menuja e tij.",
+    "noAccess": "Nuk keni ende qasje në asnjë biznes. Kërkojini administratorit t'ju japë qasje."
+  },
+  "users": {
+    "title": "Përdoruesit",
+    "subtitle": "Kush mund të hyjë dhe cilat biznese ose ekrane kontrollon",
+    "add": "Shto përdorues",
+    "new": "Përdorues i ri",
+    "edit": "Ndrysho përdoruesin",
+    "username": "Përdoruesi",
+    "role": "Roli",
+    "access": "Qasja",
+    "created": "Krijuar",
+    "you": "ju",
+    "role_Admin": "Administrator",
+    "role_User": "Përdorues",
+    "roleHint_Admin": "Sheh dhe menaxhon të gjitha bizneset dhe përdoruesit.",
+    "roleHint_User": "Sheh vetëm bizneset dhe ekranet e zgjedhura më poshtë.",
+    "allBusinesses": "Të gjitha bizneset",
+    "noAccess": "Pa qasje",
+    "access_none": "Pa qasje",
+    "access_full": "Qasje e plotë",
+    "access_screens": "Vetëm disa ekrane",
+    "accessHint": "Qasje e plotë: ekranet, reklamat, menuja dhe cilësimet e biznesit. Vetëm disa ekrane: vetëm ato ekrane, plus playlistat dhe fotot/videot e biznesit.",
+    "noScreens": "Ky biznes nuk ka ende ekrane.",
+    "passwordKeep": "Lëreni bosh që fjalëkalimi të mbetet i njëjtë.",
+    "confirmDelete": "Të fshihet përdoruesi \"{{name}}\"?"
   }
 }
