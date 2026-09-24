@@ -4,11 +4,12 @@ import DashboardIcon from './DashboardIcon';
 import LogOutIcon from './LogOutIcon';
 import MediaIcon from './MediaIcon';
 import PaymentMethodIcon from './PaymentMethodIcon';
+import PlaylistIcon from './PlaylistIcon';
 import SettingsIcon from './SettingsIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { CurrencyIcon, DashboardIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, SettingsIcon };
+export { CurrencyIcon, DashboardIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, SettingsIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -19,6 +20,7 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   dashboard: DashboardIcon,
   logout: LogOutIcon,
   media: MediaIcon,
+  playlists: PlaylistIcon,
   settings: SettingsIcon,
   payment: PaymentMethodIcon,
   currency: CurrencyIcon,
