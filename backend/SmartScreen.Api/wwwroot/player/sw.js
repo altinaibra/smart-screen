@@ -12,7 +12,7 @@
  * Kërkon "secure context": HTTPS, localhost, ose Edge/Chrome me
  * --unsafely-treat-insecure-origin-as-secure (e vendos Player-i për Windows).
  */
-var SHELL_CACHE = 'ss-shell-v2';
+var SHELL_CACHE = 'ss-shell-v3';
 var MEDIA_CACHE = 'ss-media-v1';
 var SHELL = ['./', 'index.html', 'player.js', 'player.css', 'logo.svg', 'icon-192.png',
   'fonts/anton-latin-400-normal.woff2', 'fonts/space-mono-latin-400-normal.woff2', 'fonts/space-mono-latin-700-normal.woff2',
