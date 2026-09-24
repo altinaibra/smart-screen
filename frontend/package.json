@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prestart": "npm install --no-audit --no-fund --loglevel=error",
     "start": "vite --open",
+    "predev": "npm install --no-audit --no-fund --loglevel=error",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"

@@ -32,7 +32,8 @@
     React dhe kopjohet në wwwroot/app. Për ta kapërcyer: -p:SkipFrontend=true
   -->
   <Target Name="BuildFrontend" BeforeTargets="ComputeResolvedFilesToPublishList" Condition="'$(SkipFrontend)' != 'true'">
-    <Exec WorkingDirectory="$(FrontendDir)" Command="npm ci" Condition="!Exists('$(FrontendDir)\node_modules')" />
+    <!-- npm install (jo vetëm kur mungon node_modules), që paketat e reja të instalohen edhe pas git pull -->
+    <Exec WorkingDirectory="$(FrontendDir)" Command="npm install --no-audit --no-fund --loglevel=error" />
     <Exec WorkingDirectory="$(FrontendDir)" Command="npm run build" />
     <ItemGroup>
       <FrontendFiles Include="wwwroot\app\**" />
