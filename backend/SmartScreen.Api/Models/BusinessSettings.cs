@@ -1,6 +1,9 @@
 namespace SmartScreen.Api.Models;
 
-/// <summary>Të dhënat e biznesit (rresht i vetëm, Id = 1).</summary>
+/// <summary>
+/// Një biznes (restorant, berber, dyqan...) me cilësimet e tij. Çdo biznes ka ekranet, playlistat,
+/// median, menunë, valutat dhe mënyrat e pagesës të veta (kolona BusinessId).
+/// </summary>
 public class BusinessSettings
 {
     public int Id { get; set; }

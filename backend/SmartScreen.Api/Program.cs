@@ -36,7 +36,7 @@ static string ResolveSqlitePath(string? connectionString, string contentRoot)
 }
 
 // ---------- Shërbimet ----------
-builder.Services.AddControllers()
+builder.Services.AddControllers(o => o.Filters.Add<BusinessAccessFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
@@ -55,13 +55,15 @@ builder.Services.AddSwaggerGen(o =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Vendosni vetëm token-in (pa fjalën Bearer).",
+        Description = "Vendosni vetëm token-in (pa fjalën Bearer). Biznesi zgjidhet me header-in X-Business-Id (pa të: biznesi i parë).",
         Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
     };
     o.AddSecurityDefinition("Bearer", bearer);
     o.AddSecurityRequirement(new OpenApiSecurityRequirement { [bearer] = [] });
 });
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<BusinessAccess>();
+builder.Services.AddScoped<BusinessAccessFilter>();
 builder.Services.AddScoped<PlayerContentService>();
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 

@@ -11,8 +11,11 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/media")]
 [Authorize]
-public class MediaController(AppDbContext db) : ControllerBase
+[BusinessScoped]
+public class MediaController(AppDbContext db, BusinessAccess access) : ControllerBase
 {
+    private IQueryable<MediaAsset> Assets => db.MediaAssets.Where(m => m.BusinessId == access.BusinessId);
+
     private const long MaxUploadBytes = 1L * 1024 * 1024 * 1024; // 1 GB
 
     private static readonly Dictionary<string, (MediaType Type, string ContentType)> Allowed = new(StringComparer.OrdinalIgnoreCase)
@@ -30,7 +33,7 @@ public class MediaController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<List<MediaDto>> GetAll([FromQuery] MediaType? type)
     {
-        var q = db.MediaAssets.AsNoTracking();
+        var q = Assets.AsNoTracking();
         if (type is not null) q = q.Where(m => m.Type == type);
         var items = await q.OrderByDescending(m => m.Id).ToListAsync();
         return items.Select(m => m.ToDto()).ToList();
@@ -52,6 +55,7 @@ public class MediaController(AppDbContext db) : ControllerBase
         var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
         var asset = new MediaAsset
         {
+            BusinessId = access.BusinessId,
             Name = string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(file.FileName) : name.Trim(),
             Type = info.Type,
             FileName = fileName,
@@ -74,7 +78,7 @@ public class MediaController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<MediaDto>> Rename(int id, RenameMediaRequest req)
     {
-        var asset = await db.MediaAssets.FindAsync(id);
+        var asset = await Assets.FirstOrDefaultAsync(m => m.Id == id);
         if (asset is null) return NotFound();
         asset.Name = req.Name.Trim();
         await db.SaveChangesAsync();
@@ -84,7 +88,7 @@ public class MediaController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var asset = await db.MediaAssets.FindAsync(id);
+        var asset = await Assets.FirstOrDefaultAsync(m => m.Id == id);
         if (asset is null) return NotFound();
 
         // Copat në MediaChunks fshihen automatikisht (ON DELETE CASCADE).

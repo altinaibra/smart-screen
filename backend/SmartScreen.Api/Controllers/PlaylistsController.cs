@@ -11,13 +11,16 @@ namespace SmartScreen.Api.Controllers;
 [ApiController]
 [Route("api/playlists")]
 [Authorize]
-public class PlaylistsController(AppDbContext db, PlayerContentService content) : ControllerBase
+[BusinessScoped]
+public class PlaylistsController(AppDbContext db, PlayerContentService content, BusinessAccess access) : ControllerBase
 {
+    private IQueryable<Playlist> Playlists => db.Playlists.Where(p => p.BusinessId == access.BusinessId);
+
     [HttpGet]
     public async Task<List<PlaylistSummaryDto>> GetAll()
     {
-        var playlists = await db.Playlists.AsNoTracking().Include(p => p.Items).OrderBy(p => p.Name).ToListAsync();
-        var screenCounts = await db.Screens.Where(s => s.IsPaired && s.DefaultPlaylistId != null)
+        var playlists = await Playlists.AsNoTracking().Include(p => p.Items).OrderBy(p => p.Name).ToListAsync();
+        var screenCounts = await db.Screens.Where(s => s.IsPaired && s.BusinessId == access.BusinessId && s.DefaultPlaylistId != null)
             .GroupBy(s => s.DefaultPlaylistId!.Value)
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
@@ -31,7 +34,7 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PlaylistDto>> Get(int id)
     {
-        var playlist = await db.Playlists.AsNoTracking()
+        var playlist = await Playlists.AsNoTracking()
             .Include(p => p.Items).ThenInclude(i => i.MediaAsset)
             .FirstOrDefaultAsync(p => p.Id == id);
         return playlist is null ? NotFound() : playlist.ToDto();
@@ -41,14 +44,14 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     [HttpGet("{id:int}/preview")]
     public async Task<ActionResult<PlayerContentDto>> Preview(int id, [FromQuery] ScreenOrientation orientation = ScreenOrientation.Landscape)
     {
-        if (!await db.Playlists.AnyAsync(p => p.Id == id)) return NotFound();
-        return await content.BuildPreviewAsync(id, orientation);
+        if (!await Playlists.AnyAsync(p => p.Id == id)) return NotFound();
+        return await content.BuildPreviewAsync(access.BusinessId, id, orientation);
     }
 
     [HttpPost]
     public async Task<ActionResult<PlaylistDto>> Create(SavePlaylistRequest req)
     {
-        var playlist = new Playlist { Name = req.Name.Trim(), Description = req.Description };
+        var playlist = new Playlist { BusinessId = access.BusinessId, Name = req.Name.Trim(), Description = req.Description };
         var error = await ApplyItemsAsync(playlist, req.Items ?? []);
         if (error is not null) return BadRequest(new { message = error });
 
@@ -60,7 +63,7 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<PlaylistDto>> Update(int id, SavePlaylistRequest req)
     {
-        var playlist = await db.Playlists.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id);
+        var playlist = await Playlists.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id);
         if (playlist is null) return NotFound();
 
         playlist.Name = req.Name.Trim();
@@ -79,11 +82,12 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     [HttpPost("{id:int}/duplicate")]
     public async Task<ActionResult<PlaylistDto>> Duplicate(int id)
     {
-        var source = await db.Playlists.AsNoTracking().Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id);
+        var source = await Playlists.AsNoTracking().Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id);
         if (source is null) return NotFound();
 
         var copy = new Playlist
         {
+            BusinessId = access.BusinessId,
             Name = $"{source.Name} (kopje)",
             Description = source.Description,
             Items = source.Items.Select(i => new PlaylistItem
@@ -101,7 +105,7 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var playlist = await db.Playlists.FindAsync(id);
+        var playlist = await Playlists.FirstOrDefaultAsync(p => p.Id == id);
         if (playlist is null) return NotFound();
 
         await db.Screens.Where(s => s.DefaultPlaylistId == id)
@@ -114,8 +118,8 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content) 
     private async Task<string?> ApplyItemsAsync(Playlist playlist, List<PlaylistItemDto> items)
     {
         var mediaIds = items.Where(i => i.MediaAssetId != null).Select(i => i.MediaAssetId!.Value).Distinct().ToList();
-        var media = await db.MediaAssets.Where(m => mediaIds.Contains(m.Id)).ToDictionaryAsync(m => m.Id, m => m.Type);
-        var categoryIds = await db.MenuCategories.Select(c => c.Id).ToListAsync();
+        var media = await db.MediaAssets.Where(m => mediaIds.Contains(m.Id) && m.BusinessId == access.BusinessId).ToDictionaryAsync(m => m.Id, m => m.Type);
+        var categoryIds = await db.MenuCategories.Where(c => c.BusinessId == access.BusinessId).Select(c => c.Id).ToListAsync();
 
         for (var index = 0; index < items.Count; index++)
         {

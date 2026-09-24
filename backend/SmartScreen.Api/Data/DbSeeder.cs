@@ -7,7 +7,7 @@ namespace SmartScreen.Api.Data;
 public static class DbSeeder
 {
     /// <summary>
-    /// Krijon tabelat dhe vetëm përdoruesin admin (për hyrjen e parë).
+    /// Krijon tabelat, biznesin e parë dhe vetëm përdoruesin admin (për hyrjen e parë).
     /// Të gjitha të dhënat e tjera (menuja, valutat, mënyrat e pagesës, playlistat, cilësimet)
     /// shtohen nga paneli dhe ruhen në tabela – asgjë nuk vendoset në kod.
     /// </summary>
@@ -15,10 +15,11 @@ public static class DbSeeder
     {
         await db.Database.EnsureCreatedAsync();
         await UpgradeSchemaAsync(db);
+        await AssignLegacyDataAsync(db);
 
         if (!await db.Users.AnyAsync())
         {
-            var user = new AppUser { Username = config["Admin:Username"] ?? "admin" };
+            var user = new AppUser { Username = config["Admin:Username"] ?? "admin", Role = AppUser.AdminRole };
             user.PasswordHash = hasher.HashPassword(user, config["Admin:Password"] ?? "Admin123!");
             db.Users.Add(user);
         }
@@ -58,6 +59,57 @@ public static class DbSeeder
         }
     }
 
+    /// <summary>
+    /// Para bizneseve të shumta gjithçka i përkiste një biznesi të vetëm. Këtu sigurohet që ekziston
+    /// të paktën një biznes dhe të dhënat pa biznes (BusinessId = 0 / null) i kalojnë biznesit të parë.
+    /// Pastaj indekset unike të kodeve (valuta, mënyra pagese) bëhen unike brenda çdo biznesi.
+    /// </summary>
+    private static async Task AssignLegacyDataAsync(AppDbContext db)
+    {
+        if (!await db.BusinessSettings.AnyAsync())
+        {
+            db.BusinessSettings.Add(new BusinessSettings());
+            await db.SaveChangesAsync();
+        }
+        var first = await db.BusinessSettings.MinAsync(b => b.Id);
+
+        foreach (var table in new[] { "Playlists", "MediaAssets", "MenuCategories", "Currencies", "PaymentMethods" })
+            await db.Database.ExecuteSqlRawAsync($"UPDATE \"{table}\" SET \"BusinessId\" = {{0}} WHERE \"BusinessId\" = 0", first);
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE \"Screens\" SET \"BusinessId\" = {0} WHERE \"BusinessId\" IS NULL AND \"IsPaired\" = {1}", first, true);
+
+        foreach (var (table, oldIndex, newIndex, columns, unique) in BusinessIndexes)
+        {
+            var kind = unique ? "UNIQUE INDEX" : "INDEX";
+            var cols = string.Join(", ", columns.Select(c => db.Database.IsSqlServer() ? $"[{c}]" : $"\"{c}\""));
+            if (db.Database.IsSqlServer())
+            {
+                if (oldIndex is not null)
+                    await db.Database.ExecuteSqlRawAsync(
+                        $"IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'{oldIndex}' AND object_id = OBJECT_ID(N'[{table}]')) DROP INDEX [{oldIndex}] ON [{table}];");
+                await db.Database.ExecuteSqlRawAsync(
+                    $"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'{newIndex}' AND object_id = OBJECT_ID(N'[{table}]')) CREATE {kind} [{newIndex}] ON [{table}] ({cols});");
+            }
+            else if (db.Database.IsSqlite())
+            {
+                if (oldIndex is not null)
+                    await db.Database.ExecuteSqlRawAsync($"DROP INDEX IF EXISTS \"{oldIndex}\";");
+                await db.Database.ExecuteSqlRawAsync($"CREATE {kind} IF NOT EXISTS \"{newIndex}\" ON \"{table}\" ({cols});");
+            }
+        }
+    }
+
+    /// <summary>Indekset për BusinessId (tabela, indeksi i vjetër që hiqet, indeksi i ri, kolonat, unik).</summary>
+    private static readonly (string Table, string? OldIndex, string NewIndex, string[] Columns, bool Unique)[] BusinessIndexes =
+    [
+        ("Currencies", "IX_Currencies_CurrencyCode", "IX_Currencies_BusinessId_CurrencyCode", ["BusinessId", "CurrencyCode"], true),
+        ("PaymentMethods", "IX_PaymentMethods_PaymentMethodCode", "IX_PaymentMethods_BusinessId_PaymentMethodCode", ["BusinessId", "PaymentMethodCode"], true),
+        ("Screens", null, "IX_Screens_BusinessId", ["BusinessId"], false),
+        ("Playlists", null, "IX_Playlists_BusinessId", ["BusinessId"], false),
+        ("MediaAssets", null, "IX_MediaAssets_BusinessId", ["BusinessId"], false),
+        ("MenuCategories", null, "IX_MenuCategories_BusinessId", ["BusinessId"], false),
+    ];
+
     /// <summary>Kolonat e shtuara më vonë në tabelat ekzistuese (tabela, kolona, tipi SQL Server, tipi SQLite).</summary>
     private static readonly (string Table, string Column, string SqlServer, string Sqlite)[] AddedColumns =
     [
@@ -71,6 +123,13 @@ public static class DbSeeder
         ("BusinessSettings", "BusinessType", "nvarchar(20) NOT NULL CONSTRAINT [DF_BusinessSettings_BusinessType] DEFAULT N'restaurant'", "TEXT NOT NULL DEFAULT 'restaurant'"),
         ("PlaylistItems", "Badge", "nvarchar(100) NULL", "TEXT NULL"),
         ("PlaylistItems", "Price", "decimal(12,2) NULL", "TEXT NULL"),
+        // Bizneset e shumta: 0 / null = të dhëna të vjetra, i kalojnë biznesit të parë (AssignLegacyDataAsync).
+        ("Screens", "BusinessId", "int NULL", "INTEGER NULL"),
+        ("Playlists", "BusinessId", "int NOT NULL CONSTRAINT [DF_Playlists_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("MediaAssets", "BusinessId", "int NOT NULL CONSTRAINT [DF_MediaAssets_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("MenuCategories", "BusinessId", "int NOT NULL CONSTRAINT [DF_MenuCategories_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("Currencies", "BusinessId", "int NOT NULL CONSTRAINT [DF_Currencies_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("PaymentMethods", "BusinessId", "int NOT NULL CONSTRAINT [DF_PaymentMethods_BusinessId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
     ];
 
     private static readonly (string Table, string SqlServer, string Sqlite)[] AddedTables =
@@ -112,7 +171,6 @@ public static class DbSeeder
                 [RowVersion] rowversion NULL,
                 CONSTRAINT [PK_Currencies] PRIMARY KEY ([CurrencyId])
             );
-            CREATE UNIQUE INDEX [IX_Currencies_CurrencyCode] ON [Currencies] ([CurrencyCode]);
             """,
             """
             CREATE TABLE IF NOT EXISTS "Currencies" (
@@ -127,7 +185,6 @@ public static class DbSeeder
                 "FiscalType" INTEGER NOT NULL,
                 "RowVersion" BLOB NULL
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS "IX_Currencies_CurrencyCode" ON "Currencies" ("CurrencyCode");
             """),
         ("PaymentMethods",
             """
@@ -143,7 +200,6 @@ public static class DbSeeder
                 [RowVersion] rowversion NULL,
                 CONSTRAINT [PK_PaymentMethods] PRIMARY KEY ([PaymentMethodId])
             );
-            CREATE UNIQUE INDEX [IX_PaymentMethods_PaymentMethodCode] ON [PaymentMethods] ([PaymentMethodCode]);
             """,
             """
             CREATE TABLE IF NOT EXISTS "PaymentMethods" (
@@ -157,7 +213,48 @@ public static class DbSeeder
                 "FiscalType" INTEGER NOT NULL,
                 "RowVersion" BLOB NULL
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS "IX_PaymentMethods_PaymentMethodCode" ON "PaymentMethods" ("PaymentMethodCode");
+            """),
+        ("UserBusinesses",
+            """
+            CREATE TABLE [UserBusinesses] (
+                [UserId] int NOT NULL,
+                [BusinessId] int NOT NULL,
+                CONSTRAINT [PK_UserBusinesses] PRIMARY KEY ([UserId], [BusinessId]),
+                CONSTRAINT [FK_UserBusinesses_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE,
+                CONSTRAINT [FK_UserBusinesses_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id]) ON DELETE CASCADE
+            );
+            CREATE INDEX [IX_UserBusinesses_BusinessId] ON [UserBusinesses] ([BusinessId]);
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS "UserBusinesses" (
+                "UserId" INTEGER NOT NULL,
+                "BusinessId" INTEGER NOT NULL,
+                CONSTRAINT "PK_UserBusinesses" PRIMARY KEY ("UserId", "BusinessId"),
+                CONSTRAINT "FK_UserBusinesses_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_UserBusinesses_BusinessSettings_BusinessId" FOREIGN KEY ("BusinessId") REFERENCES "BusinessSettings" ("Id") ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS "IX_UserBusinesses_BusinessId" ON "UserBusinesses" ("BusinessId");
+            """),
+        ("UserScreens",
+            """
+            CREATE TABLE [UserScreens] (
+                [UserId] int NOT NULL,
+                [ScreenId] int NOT NULL,
+                CONSTRAINT [PK_UserScreens] PRIMARY KEY ([UserId], [ScreenId]),
+                CONSTRAINT [FK_UserScreens_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE,
+                CONSTRAINT [FK_UserScreens_Screens_ScreenId] FOREIGN KEY ([ScreenId]) REFERENCES [Screens] ([Id]) ON DELETE CASCADE
+            );
+            CREATE INDEX [IX_UserScreens_ScreenId] ON [UserScreens] ([ScreenId]);
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS "UserScreens" (
+                "UserId" INTEGER NOT NULL,
+                "ScreenId" INTEGER NOT NULL,
+                CONSTRAINT "PK_UserScreens" PRIMARY KEY ("UserId", "ScreenId"),
+                CONSTRAINT "FK_UserScreens_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_UserScreens_Screens_ScreenId" FOREIGN KEY ("ScreenId") REFERENCES "Screens" ("Id") ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS "IX_UserScreens_ScreenId" ON "UserScreens" ("ScreenId");
             """),
     ];
 }

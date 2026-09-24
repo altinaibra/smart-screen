@@ -27,7 +27,7 @@ public static class Mapping
     public static PlaylistDto ToDto(this Playlist p) => new(
         p.Id, p.Name, p.Description, p.UpdatedAt, p.Items.OrderBy(i => i.SortOrder).Select(i => i.ToDto()).ToList());
 
-    public static ProductDto ToDto(this Products p) => new(
+    public static ProductsDto ToDto(this Products p) => new(
         p.Id, p.CategoryId, p.Name, p.Description, p.Price, p.OldPrice, p.ImageAssetId, p.ImageAsset?.Url,
         p.IsAvailable, p.IsFeatured, p.SortOrder);
 

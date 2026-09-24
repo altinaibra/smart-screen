@@ -18,6 +18,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<UserBusiness> UserBusinesses => Set<UserBusiness>();
+    public DbSet<UserScreen> UserScreens => Set<UserScreen>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -32,7 +34,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasIndex(u => u.Username).IsUnique();
             e.Property(u => u.Username).HasMaxLength(100);
+            e.Property(u => u.Role).HasMaxLength(20);
+            e.Ignore(u => u.IsAdmin);
         });
+
+        b.Entity<UserBusiness>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.BusinessId });
+            e.HasOne(x => x.User).WithMany(u => u.Businesses).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Business).WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<UserScreen>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.ScreenId });
+            e.HasOne(x => x.User).WithMany(u => u.Screens).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Screen).WithMany().HasForeignKey(x => x.ScreenId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Të dhënat e çdo biznesi. NoAction që të shmangen "multiple cascade paths" në SQL Server;
+        // fshirja e një biznesi pastron të dhënat e tij në kod (BusinessesController.Delete).
+        b.Entity<Screen>().HasOne(x => x.Business).WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
+        b.Entity<Playlist>().HasOne<BusinessSettings>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
+        b.Entity<MediaAsset>().HasOne<BusinessSettings>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
+        b.Entity<MenuCategory>().HasOne<BusinessSettings>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
+        b.Entity<Currency>().HasOne<BusinessSettings>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
+        b.Entity<PaymentMethod>().HasOne<BusinessSettings>().WithMany().HasForeignKey(x => x.BusinessId).OnDelete(DeleteBehavior.NoAction);
 
         b.Entity<Screen>(e =>
         {
@@ -120,7 +147,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<Currency>(e =>
         {
-            e.HasIndex(c => c.CurrencyCode).IsUnique();
+            e.HasIndex(c => new { c.BusinessId, c.CurrencyCode }).IsUnique();
             e.Property(c => c.CurrencyCode).HasMaxLength(10);
             e.Property(c => c.CurrencyName).HasMaxLength(100);
             e.Property(c => c.CurrencySymbol).HasMaxLength(10);
@@ -130,7 +157,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<PaymentMethod>(e =>
         {
-            e.HasIndex(p => p.PaymentMethodCode).IsUnique();
+            e.HasIndex(p => new { p.BusinessId, p.PaymentMethodCode }).IsUnique();
             e.Property(p => p.PaymentMethodCode).HasMaxLength(20);
             e.Property(p => p.PaymentMethodName).HasMaxLength(100);
             ConfigureRowVersion(e.Property(p => p.RowVersion));
