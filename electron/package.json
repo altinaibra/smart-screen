@@ -1,0 +1,34 @@
+{
+  "name": "smart-screen-desktop",
+  "productName": "Smart Screen",
+  "version": "1.0.0",
+  "description": "Smart Screen – Digital Signage",
+  "author": "Smart Screen",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.smartscreen.desktop",
+    "productName": "Smart Screen",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "loading.html"],
+    "extraResources": [
+      { "from": "server", "to": "server", "filter": ["**/*", "!.gitkeep"] }
+    ],
+    "win": { "target": ["nsis"], "icon": "build/icon.png" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Smart Screen"
+    }
+  }
+}

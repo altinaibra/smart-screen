@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# Server-i .NET kopjohet këtu nga publish-desktop.cmd
+server/*
+!server/.gitkeep
