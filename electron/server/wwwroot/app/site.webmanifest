@@ -1,0 +1,14 @@
+{
+  "name": "Smart Screen",
+  "short_name": "Smart Screen",
+  "description": "Menaxhimi i ekraneve, reklamave dhe menuve për TV",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#16181d",
+  "theme_color": "#c8102e",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
