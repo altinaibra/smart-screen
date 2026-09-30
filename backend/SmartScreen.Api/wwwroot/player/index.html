@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="sq">
+<html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Smart Screen Player</title>
-  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <title></title>
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="stylesheet" href="player.css">
 </head>
 <body>
+  <!--
+    I gjithë dizajni (markup-i) i player-it është këtu dhe në player.css.
+    player.js vetëm mbush të dhënat që vijnë nga serveri (databaza):
+      data-label="çelës"  -> teksti me atë çelës nga "Tekstet e TV-së" (gjuha e zgjedhur në Cilësimet)
+      data-bind="fushë"   -> fusha nga cilësimet e biznesit (businessName, tagline ...)
+  -->
   <div id="root">
     <div id="slides">
       <div class="layer" id="layerA"></div>
@@ -17,9 +22,72 @@
     </div>
     <div id="clock" class="hidden"></div>
     <div id="ticker" class="hidden"><div class="ticker-track"><span id="tickerText"></span></div></div>
-    <div id="overlay" class="hidden"></div>
-    <div id="netStatus" class="hidden" title="Pa lidhje me serverin"></div>
+
+    <!-- Ekranet e sistemit: lidhja, çiftimi, pa përmbajtje -->
+    <div id="overlay" class="hidden">
+      <div class="brand" id="brand">
+        <img class="brand-logo hidden" id="brandLogo" alt="">
+        <div class="brand-text">
+          <div class="brand-name" data-bind="businessName"></div>
+          <div class="brand-tag" data-bind="tagline"></div>
+        </div>
+      </div>
+
+      <div class="view hidden" id="viewConnecting">
+        <div class="spinner"></div>
+        <div class="label" data-label="connecting"></div>
+      </div>
+
+      <div class="view hidden" id="viewPreview">
+        <div class="label" data-label="waitingPreview"></div>
+      </div>
+
+      <div class="view hidden" id="viewPairing">
+        <div class="label" data-label="pairing.label"></div>
+        <div class="code" id="pairingCode"></div>
+        <div class="hint" data-label="pairing.hint"></div>
+        <div class="meta" id="pairingMeta"></div>
+      </div>
+
+      <div class="view hidden" id="viewIdle">
+        <div class="hint" data-label="idle.noContent"></div>
+      </div>
+    </div>
+
+    <div id="netStatus" class="hidden"></div>
   </div>
+
+  <!-- Shabllonet e slide-ve (klonohen nga player.js) -->
+  <div id="templates" class="hidden">
+    <div class="media-caption" data-tpl="caption">
+      <h2 class="caption-title"></h2>
+      <p class="caption-text"></p>
+    </div>
+
+    <div class="text-slide" data-tpl="text">
+      <h1 class="text-title"></h1>
+      <p class="text-body"></p>
+    </div>
+
+    <div class="menu-header" data-tpl="menuHeader">
+      <img class="menu-logo" alt="">
+      <h1 class="menu-title"></h1>
+    </div>
+
+    <div class="product-cell" data-tpl="product">
+      <div class="product">
+        <div class="product-img"></div>
+        <div class="product-info">
+          <div class="product-name"></div>
+          <div class="product-desc"></div>
+          <div class="product-price"><span class="old"></span><span class="now"></span></div>
+        </div>
+        <div class="badge"></div>
+        <div class="soldout-label" data-label="product.soldOut"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="player.js"></script>
 </body>
 </html>

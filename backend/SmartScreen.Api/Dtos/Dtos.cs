@@ -61,15 +61,28 @@ public record SetAvailabilityRequest(bool IsAvailable);
 
 // ---------- Settings ----------
 public record SettingsDto(
-    string BusinessName, int? LogoAssetId, string? LogoUrl, string PrimaryColor, string AccentColor, string Currency,
-    bool ShowTicker, string? TickerText, bool ShowClock, string TimeZoneId);
+    [Required, MaxLength(150)] string BusinessName, [MaxLength(200)] string? Tagline, int? LogoAssetId, string? LogoUrl,
+    string PrimaryColor, string AccentColor, string AccentTextColor, string BackgroundColor, [MaxLength(10)] string Currency,
+    bool ShowTicker, string? TickerText, bool ShowClock, string TimeZoneId, int? LanguageId);
+
+/// <summary>Të dhënat publike të markës (edhe për faqen e hyrjes në panel).</summary>
+public record BrandingDto(string BusinessName, string? Tagline, string? LogoUrl, string PrimaryColor, string AccentColor);
+
+// ---------- Gjuhët & tekstet e TV-së ----------
+public record LanguageDto(int Id, string Code, string Name, int SortOrder, int TextCount);
+
+public record SaveLanguageRequest(
+    [Required, MaxLength(10), RegularExpression("^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})?$")] string Code,
+    [Required, MaxLength(50)] string Name, int SortOrder, int? CopyFromLanguageId);
+
+public record UiTextDto([Required, MaxLength(100)] string Key, [MaxLength(2000)] string Value);
 
 // ---------- Dashboard ----------
 public record DashboardDto(int ScreensTotal, int ScreensOnline, int MediaCount, int PlaylistCount, int ProductCount, List<ScreenDto> Screens);
 
 // ---------- Player (TV) ----------
 public record PlayerRegisterRequest(string? DeviceKey, int Width, int Height, string? UserAgent);
-public record PlayerRegisterResponse(string DeviceKey, bool Paired, string? PairingCode);
+public record PlayerRegisterResponse(string DeviceKey, bool Paired, string? PairingCode, PlayerSettingsDto Settings);
 
 public record PlayerContentDto(
     bool Paired, string? PairingCode, string? Version, int CommandVersion,
@@ -78,8 +91,9 @@ public record PlayerContentDto(
 public record PlayerScreenDto(int Id, string Name, ScreenOrientation Orientation);
 
 public record PlayerSettingsDto(
-    string BusinessName, string? LogoUrl, string PrimaryColor, string AccentColor, string Currency,
-    bool ShowTicker, string? TickerText, bool ShowClock);
+    string BusinessName, string? Tagline, string? LogoUrl, string PrimaryColor, string AccentColor, string AccentTextColor,
+    string BackgroundColor, string Currency, bool ShowTicker, string? TickerText, bool ShowClock,
+    string? Language, Dictionary<string, string> Labels);
 
 public record PlayerPlaylistDto(int Id, string Name, List<PlayerSlideDto> Slides);
 

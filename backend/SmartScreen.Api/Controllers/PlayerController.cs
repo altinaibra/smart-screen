@@ -24,20 +24,23 @@ public class PlayerController(AppDbContext db, PlayerContentService content) : C
         if (!string.IsNullOrWhiteSpace(req.DeviceKey))
             screen = await db.Screens.FirstOrDefaultAsync(s => s.DeviceKey == req.DeviceKey);
 
+        var settings = await content.BuildSettingsAsync();
         if (screen is null)
         {
+            var code = await GeneratePairingCodeAsync();
             screen = new Screen
             {
-                Name = "Ekran i ri",
+                // Emri i përkohshëm (admini e vendos gjatë çiftimit): teksti "screen.defaultName" nga databaza.
+                Name = settings.Labels.GetValueOrDefault("screen.defaultName") is { Length: > 0 } n ? n : code,
                 DeviceKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(24)).ToLowerInvariant(),
-                PairingCode = await GeneratePairingCodeAsync(),
+                PairingCode = code,
             };
             db.Screens.Add(screen);
         }
 
         ApplyDeviceInfo(screen, req.Width, req.Height, req.UserAgent);
         await db.SaveChangesAsync();
-        return new PlayerRegisterResponse(screen.DeviceKey, screen.IsPaired, screen.PairingCode);
+        return new PlayerRegisterResponse(screen.DeviceKey, screen.IsPaired, screen.PairingCode, settings);
     }
 
     /// <summary>Player-i e thërret çdo ~15 sekonda. Shërben edhe si "heartbeat" (online/offline).</summary>
@@ -51,7 +54,8 @@ public class PlayerController(AppDbContext db, PlayerContentService content) : C
         await db.SaveChangesAsync();
 
         if (!screen.IsPaired)
-            return new PlayerContentDto(false, screen.PairingCode, null, screen.CommandVersion, null, null, null);
+            return new PlayerContentDto(false, screen.PairingCode, null, screen.CommandVersion, null,
+                await content.BuildSettingsAsync(), null);
 
         return await content.BuildForScreenAsync(screen);
     }

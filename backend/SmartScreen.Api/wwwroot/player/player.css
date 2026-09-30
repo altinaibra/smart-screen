@@ -136,9 +136,10 @@ html, body {
 /* ---------- Ekranet e sistemit (çiftimi, pa përmbajtje) ---------- */
 #overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
-  background: #121419;
-  background-image: -webkit-radial-gradient(20% 40%, circle, #4a0915 0%, #121419 70%);
-  background-image: radial-gradient(circle at 20% 40%, #4a0915 0%, #121419 70%);
+  /* Ngjyra e sfondit vjen nga Cilësimet (BackgroundColor); gradienti vetëm i jep thellësi. */
+  background-color: #000;
+  background-image: -webkit-radial-gradient(20% 40%, circle, rgba(255,255,255,.10) 0%, rgba(0,0,0,.35) 70%);
+  background-image: radial-gradient(circle at 20% 40%, rgba(255,255,255,.10) 0%, rgba(0,0,0,.35) 70%);
   text-align: center;
   display: -webkit-box; display: -webkit-flex; display: flex;
   -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
@@ -151,15 +152,27 @@ html, body {
   -webkit-box-align: center; -webkit-align-items: center; align-items: center;
   text-align: left; margin-bottom: 6vmin;
 }
-#overlay .brand img { width: 13vmin; height: 13vmin; margin-right: 3vmin; }
+#overlay .brand-logo { max-width: 30vmin; height: 13vmin; margin-right: 3vmin; -o-object-fit: contain; object-fit: contain; }
 #overlay .brand-name { font-size: 7vmin; font-weight: 800; line-height: 1.1; }
-#overlay .brand-tag { font-size: 2.4vmin; font-weight: 700; letter-spacing: .3em; color: #ffc72c; margin-top: .6vmin; }
+#overlay .brand-tag { font-size: 2.4vmin; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; margin-top: .6vmin; }
+#overlay .view {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+}
+#overlay .spinner {
+  width: 6vmin; height: 6vmin; margin-bottom: 3vmin; border-radius: 50%;
+  border: .7vmin solid rgba(255,255,255,.2); border-top-color: #fff;
+  -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite;
+}
+@-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 #overlay .label { font-size: 3.6vmin; opacity: .7; }
 #overlay .code { font-size: 20vmin; font-weight: 900; letter-spacing: .12em; margin: 2vmin 0 4vmin; font-family: Consolas, "Courier New", monospace; }
 #overlay .hint { font-size: 3vmin; opacity: .6; max-width: 120vmin; line-height: 1.4; }
 #overlay .meta { position: absolute; bottom: 3vmin; left: 0; right: 0; font-size: 2.2vmin; opacity: .35; }
-#overlay img.idle-logo { max-width: 50vmin; max-height: 30vmin; margin-bottom: 4vmin; }
-#overlay h1 { font-size: 9vmin; margin: 0; }
+#overlay.viewIdle .brand-logo { height: 24vmin; max-width: 50vmin; }
+#overlay.viewIdle .brand-name { font-size: 9vmin; }
 
 #netStatus {
   position: absolute; top: 2vmin; left: 2vmin; z-index: 20;

@@ -8,6 +8,7 @@ const links = [
   { to: '/playlists', label: 'Playlistat', icon: '▶' },
   { to: '/media', label: 'Foto & Video', icon: '▣' },
   { to: '/menu', label: 'Menuja & Çmimet', icon: '☰' },
+  { to: '/texts', label: 'Tekstet e TV-së', icon: '✎' },
   { to: '/settings', label: 'Cilësimet', icon: '⚙' },
 ];
 

@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "businessName": "Smart Screen",
+    "tagline": "Digital Signage",
+    "currency": "L",
+    "timeZoneId": "Europe/Tirane",
+    "language": "sq"
+  },
+  "languages": [
+    {
+      "code": "sq",
+      "name": "Shqip",
+      "texts": {
+        "connecting": "Duke u lidhur me serverin...",
+        "waitingPreview": "Duke pritur preview...",
+        "pairing.label": "Kodi i çiftimit",
+        "pairing.hint": "Hapni panelin e administrimit → Ekranet → Shto ekran dhe vendosni këtë kod.",
+        "idle.noContent": "Asnjë përmbajtje e caktuar për këtë ekran.",
+        "offline": "Pa lidhje me serverin",
+        "menu.featuredTitle": "Ofertat",
+        "product.soldOut": "E mbaruar",
+        "product.featured": "Top",
+        "platform.browser": "Shfletues",
+        "screen.defaultName": "Ekran i ri"
+      }
+    },
+    {
+      "code": "en",
+      "name": "English",
+      "texts": {
+        "connecting": "Connecting to the server...",
+        "waitingPreview": "Waiting for preview...",
+        "pairing.label": "Pairing code",
+        "pairing.hint": "Open the admin panel → Screens → Add screen and enter this code.",
+        "idle.noContent": "No content assigned to this screen.",
+        "offline": "No connection to the server",
+        "menu.featuredTitle": "Offers",
+        "product.soldOut": "Sold out",
+        "product.featured": "Top",
+        "platform.browser": "Browser",
+        "screen.defaultName": "New screen"
+      }
+    }
+  ]
+}

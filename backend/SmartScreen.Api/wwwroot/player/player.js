@@ -9,6 +9,10 @@
  *     aplikohet në fund të slide-it aktual. Përmbajtja ruhet lokalisht për punë offline.
  *
  * Parametra opsionalë në URL: ?server=http://ip:5080  ?device=<key>  ?preview=1
+ *
+ * Dizajni (markup-i) është në index.html + player.css. Këtu nuk ka tekste apo ngjyra statike:
+ * emri i biznesit, logo, ngjyrat dhe të gjitha tekstet ("settings.labels") vijnë nga databaza
+ * dhe ruhen lokalisht që ekrani të duket njësoj edhe kur nuk ka rrjet.
  */
 (function () {
   'use strict';
@@ -17,8 +21,6 @@
   var RETRY_MS = 10000;
   var FADE_MS = 800;
   var MAX_VIDEO_MS = 10 * 60 * 1000; // mbrojtje nëse video "ngec" dhe nuk mbaron kurrë
-  var BRAND = '<div class="brand"><img src="logo.svg" alt=""><div><div class="brand-name">Smart Screen</div>' +
-              '<div class="brand-tag">DIGITAL SIGNAGE</div></div></div>';
 
   var params = parseQuery(location.search);
   var isPreview = params.preview === '1';
@@ -27,6 +29,7 @@
   var root = $('root');
   var layers = [$('layerA'), $('layerB')];
   var overlay = $('overlay');
+  var templates = $('templates');
   var activeLayer = 0;
 
   var state = {
@@ -37,17 +40,19 @@
     commandVersion: null,
     index: -1,
     timer: null,
-    online: true
+    online: true,
+    settings: readJson('ss_settings') // markë + tekste nga serveri (e fundit e njohur)
   };
 
   // ------------------------------------------------------------------ nisja
 
   function boot() {
+    applySettings(state.settings);
     startClock();
     window.onresize = function () { if (state.content) applyOrientation(state.content); };
 
     if (isPreview) {
-      showOverlay('<div class="label">Duke pritur preview...</div>');
+      showOverlay('viewPreview');
       window.addEventListener('message', function (e) {
         if (e.origin !== location.origin || !e.data || e.data.type !== 'smartscreen-preview') return;
         state.pending = null;
@@ -56,14 +61,9 @@
       return;
     }
 
-    var cached = store('ss_content');
-    if (cached) {
-      try {
-        var c = JSON.parse(cached);
-        if (c && c.paired) start(c);
-      } catch (e) { /* cache e prishur */ }
-    }
-    if (!state.content) showOverlay('' + BRAND + '<div class="label">Duke u lidhur me serverin...</div>');
+    var c = readJson('ss_content');
+    if (c && c.paired) start(c);
+    if (!state.content) showOverlay('viewConnecting');
 
     register();
   }
@@ -79,6 +79,7 @@
       setOnline(true);
       state.deviceKey = res.deviceKey;
       store('ss_device_key', res.deviceKey);
+      applySettings(res.settings);
       poll();
     });
   }
@@ -103,6 +104,7 @@
 
   function handleContent(c) {
     if (!c) return;
+    applySettings(c.settings);
 
     if (!c.paired) {
       stopPlayback();
@@ -132,6 +134,7 @@
     state.content = c;
     state.version = c.version;
     state.index = -1;
+    applySettings(c.settings);
     hideOverlay();
     applyChrome(c);
     next();
@@ -159,6 +162,7 @@
       state.content = p;
       state.version = p.version;
       state.index = -1;
+      applySettings(p.settings);
       applyChrome(p);
     }
     if (!state.content) return;
@@ -275,8 +279,10 @@
       case 'Text':
         el.className += ' text';
         if (!slide.backgroundColor) el.style.backgroundColor = settings.primaryColor;
-        if (slide.title) el.appendChild(textEl('h1', slide.title));
-        if (slide.text) el.appendChild(textEl('p', slide.text));
+        var t = tpl('text');
+        fill(t, '.text-title', slide.title);
+        fill(t, '.text-body', slide.text);
+        el.appendChild(t);
         break;
 
       case 'WebPage':
@@ -295,9 +301,9 @@
 
   function addCaption(el, slide) {
     if (!slide.title && !slide.text) return;
-    var cap = div('media-caption');
-    if (slide.title) cap.appendChild(textEl('h2', slide.title));
-    if (slide.text) cap.appendChild(textEl('p', slide.text));
+    var cap = tpl('caption');
+    fill(cap, '.caption-title', slide.title);
+    fill(cap, '.caption-text', slide.text);
     el.appendChild(cap);
   }
 
@@ -305,13 +311,11 @@
     el.className += ' menu';
     if (!slide.backgroundColor) el.style.backgroundColor = settings.primaryColor;
 
-    var header = div('menu-header');
-    if (settings.logoUrl) {
-      var logo = document.createElement('img');
-      logo.src = abs(settings.logoUrl);
-      header.appendChild(logo);
-    }
-    header.appendChild(textEl('h1', slide.menu.title));
+    var header = tpl('menuHeader');
+    var logo = q(header, '.menu-logo');
+    if (settings.logoUrl) logo.src = abs(settings.logoUrl);
+    else hide(logo);
+    fill(header, '.menu-title', slide.menu.title);
     el.appendChild(header);
 
     var products = slide.menu.products;
@@ -328,40 +332,36 @@
 
     for (var i = 0; i < n; i++) {
       var p = products[i];
-      var cell = div('product-cell');
+      var cell = tpl('product');
       cell.style.width = w;
       cell.style.height = h;
 
-      var card = div('product' + (p.isAvailable ? '' : ' soldout'));
-      var imgBox = div('product-img');
+      var card = q(cell, '.product');
+      if (!p.isAvailable) card.className += ' soldout';
+
+      var imgBox = q(cell, '.product-img');
       if (p.imageUrl) imgBox.style.backgroundImage = 'url("' + abs(p.imageUrl) + '")';
       else { imgBox.className += ' no-img'; imgBox.appendChild(document.createTextNode(p.name.charAt(0))); }
-      card.appendChild(imgBox);
 
-      var info = div('product-info');
-      info.appendChild(textEl('div', p.name, 'product-name'));
-      if (p.description) info.appendChild(textEl('div', p.description, 'product-desc'));
-      var price = div('product-price');
-      price.style.color = settings.primaryColor;
-      if (p.oldPrice && p.oldPrice > p.price) price.appendChild(textEl('span', formatPrice(p.oldPrice, settings.currency), 'old'));
-      price.appendChild(document.createTextNode(formatPrice(p.price, settings.currency)));
-      info.appendChild(price);
-      card.appendChild(info);
+      fill(cell, '.product-name', p.name);
+      fill(cell, '.product-desc', p.description);
 
-      if (!p.isAvailable) {
-        card.appendChild(textEl('div', 'E mbaruar', 'soldout-label'));
-      } else if (p.oldPrice && p.oldPrice > p.price) {
-        var off = Math.round((1 - p.price / p.oldPrice) * 100);
-        var badge = textEl('div', '-' + off + '%', 'badge');
-        badge.style.backgroundColor = settings.accentColor;
-        card.appendChild(badge);
-      } else if (p.isFeatured) {
-        var star = textEl('div', 'Top', 'badge');
-        star.style.backgroundColor = settings.accentColor;
-        card.appendChild(star);
-      }
+      var onSale = p.oldPrice && p.oldPrice > p.price;
+      q(cell, '.product-price').style.color = settings.primaryColor;
+      fill(cell, '.old', onSale ? formatPrice(p.oldPrice, settings.currency) : null);
+      fill(cell, '.now', formatPrice(p.price, settings.currency));
 
-      cell.appendChild(card);
+      var badge = q(cell, '.badge');
+      var soldOut = q(cell, '.soldout-label');
+      if (p.isAvailable) hide(soldOut);
+
+      var badgeText = null;
+      if (p.isAvailable && onSale) badgeText = '-' + Math.round((1 - p.price / p.oldPrice) * 100) + '%';
+      else if (p.isAvailable && p.isFeatured) badgeText = label('product.featured');
+      fill(cell, '.badge', badgeText);
+      badge.style.backgroundColor = settings.accentColor;
+      badge.style.color = settings.accentTextColor;
+
       grid.appendChild(cell);
     }
     el.appendChild(grid);
@@ -374,8 +374,8 @@
     var ticker = $('ticker');
     if (s.showTicker && s.tickerText) {
       $('tickerText').textContent = s.tickerText;
-      ticker.style.backgroundColor = s.accentColor || '#ffc72c';
-      ticker.style.color = '#1d1d1f';
+      ticker.style.backgroundColor = s.accentColor || '';
+      ticker.style.color = s.accentTextColor || '';
       ticker.className = '';
       // Shpejtësi konstante pavarësisht gjatësisë së tekstit
       var secs = Math.max(15, Math.round(s.tickerText.length / 5));
@@ -415,33 +415,60 @@
   // ------------------------------------------------------------------ ekranet e sistemit
 
   function showPairing(code) {
-    var platform = detectPlatform();
-    showOverlay(
-      BRAND +
-      '<div class="label">Kodi i çiftimit</div>' +
-      '<div class="code">' + escapeHtml(code || '------') + '</div>' +
-      '<div class="hint">Hapni panelin e administrimit &rarr; <b>Ekranet</b> &rarr; <b>Shto ekran</b> dhe vendosni këtë kod.</div>' +
-      '<div class="meta">' + escapeHtml(platform) + ' &middot; ' + screenWidth() + '&times;' + screenHeight() + '</div>'
-    );
+    $('pairingCode').textContent = code || '';
+    $('pairingMeta').textContent = detectPlatform() + ' \u00b7 ' + screenWidth() + '\u00d7' + screenHeight();
+    showOverlay('viewPairing');
   }
 
   function showIdle(settings) {
-    settings = settings || {};
-    var html = '';
-    if (settings.logoUrl) html += '<img class="idle-logo" src="' + escapeHtml(abs(settings.logoUrl)) + '">';
-    html += '<h1>' + escapeHtml(settings.businessName || 'Smart Screen') + '</h1>';
-    html += '<div class="hint" style="margin-top:3vmin">Asnjë përmbajtje e caktuar për këtë ekran.</div>';
-    showOverlay(html);
-    overlay.style.backgroundColor = settings.primaryColor || '#101218';
+    applySettings(settings);
+    showOverlay('viewIdle');
   }
 
-  function showOverlay(html) {
-    overlay.style.backgroundColor = '';
-    overlay.innerHTML = html;
-    overlay.className = '';
+  var VIEWS = ['viewConnecting', 'viewPreview', 'viewPairing', 'viewIdle'];
+
+  function showOverlay(view) {
+    for (var i = 0; i < VIEWS.length; i++) $(VIEWS[i]).className = 'view' + (VIEWS[i] === view ? '' : ' hidden');
+    overlay.className = view;
   }
 
   function hideOverlay() { overlay.className = 'hidden'; }
+
+  // ------------------------------------------------------------------ marka + tekstet nga databaza
+
+  /** Aplikon emrin, logon, ngjyrat dhe tekstet (gjuha e zgjedhur nga admini) në të gjithë faqen. */
+  function applySettings(s) {
+    if (!s) return;
+    state.settings = s;
+    store('ss_settings', JSON.stringify(s));
+
+    if (s.language) document.documentElement.setAttribute('lang', s.language);
+    document.title = s.businessName || '';
+
+    var labels = document.querySelectorAll('[data-label]');
+    for (var i = 0; i < labels.length; i++) labels[i].textContent = label(labels[i].getAttribute('data-label'));
+
+    var binds = document.querySelectorAll('[data-bind]');
+    for (var j = 0; j < binds.length; j++) {
+      var v = s[binds[j].getAttribute('data-bind')];
+      binds[j].textContent = v || '';
+      binds[j].className = binds[j].className.replace(/\s*hidden/g, '') + (v ? '' : ' hidden');
+    }
+
+    var logo = $('brandLogo');
+    if (s.logoUrl) { logo.src = abs(s.logoUrl); logo.className = 'brand-logo'; }
+    else { logo.removeAttribute('src'); logo.className = 'brand-logo hidden'; }
+
+    overlay.style.backgroundColor = s.backgroundColor || '';
+    var tag = q(overlay, '.brand-tag');
+    if (tag) tag.style.color = s.accentColor || '';
+    $('netStatus').setAttribute('title', label('offline'));
+  }
+
+  function label(key) {
+    var l = state.settings && state.settings.labels;
+    return (l && l[key]) || '';
+  }
 
   function setOnline(online) {
     state.online = online;
@@ -488,7 +515,7 @@
     if (ua.indexOf('tizen') >= 0) return 'Samsung Tizen';
     if (ua.indexOf('bravia') >= 0 || ua.indexOf('sony') >= 0) return 'Sony Bravia';
     if (ua.indexOf('android') >= 0) return 'Android TV';
-    return 'Shfletues';
+    return label('platform.browser');
   }
 
   function screenWidth() { return Math.round(window.innerWidth * (window.devicePixelRatio || 1)); }
@@ -516,14 +543,29 @@
     return out;
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
+  function readJson(key) {
+    var raw = store(key);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; /* cache e prishur */ }
   }
 
+  /** Klonon një shabllon nga #templates në index.html. */
+  function tpl(name) {
+    return q(templates, '[data-tpl="' + name + '"]').cloneNode(true);
+  }
+
+  /** Vendos tekstin në elementin brenda "parent"; e fsheh nëse teksti mungon. */
+  function fill(parent, selector, text) {
+    var e = q(parent, selector);
+    if (!e) return;
+    e.textContent = text || '';
+    if (!text) hide(e);
+  }
+
+  function hide(e) { if (e.className.indexOf('hidden') < 0) e.className += ' hidden'; }
+  function q(parent, selector) { return parent.querySelector(selector); }
+
   function div(cls) { var d = document.createElement('div'); d.className = cls; return d; }
-  function textEl(tag, text, cls) { var e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; return e; }
   function pad(n) { return n < 10 ? '0' + n : String(n); }
   function $(id) { return document.getElementById(id); }
 

@@ -15,6 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
+    public DbSet<Language> Languages => Set<Language>();
+    public DbSet<UiText> UiTexts => Set<UiText>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -92,6 +94,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasOne(s => s.LogoAsset).WithMany().HasForeignKey(s => s.LogoAssetId)
                 .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(s => s.Language).WithMany().HasForeignKey(s => s.LanguageId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(s => s.AccentTextColor).HasMaxLength(20);
+            e.Property(s => s.BackgroundColor).HasMaxLength(20);
+            e.Property(s => s.Tagline).HasMaxLength(200);
+        });
+
+        b.Entity<Language>(e =>
+        {
+            e.HasIndex(l => l.Code).IsUnique();
+            e.Property(l => l.Code).HasMaxLength(10);
+            e.Property(l => l.Name).HasMaxLength(50);
+        });
+
+        b.Entity<UiText>(e =>
+        {
+            e.HasIndex(t => new { t.LanguageId, t.Key }).IsUnique();
+            e.Property(t => t.Key).HasMaxLength(100);
+            e.HasOne(t => t.Language).WithMany(l => l.Texts).HasForeignKey(t => t.LanguageId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

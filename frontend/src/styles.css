@@ -43,6 +43,7 @@ code { background: #f1f2f4; padding: 1px 6px; border-radius: 4px; font-size: 12.
 .brand { padding: 18px 20px; color: #fff; }
 .logo { display: inline-flex; align-items: center; gap: 10px; }
 .logo img { display: block; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(200,16,46,.35)); }
+.logo-initial { display: grid; place-items: center; flex-shrink: 0; border-radius: 22%; background: var(--primary); color: #fff; font-weight: 800; text-transform: uppercase; }
 .logo-text { display: flex; flex-direction: column; line-height: 1.15; }
 .logo-name { font-weight: 700; font-size: 16px; letter-spacing: .01em; }
 .logo-tagline { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #ffc72c; }
@@ -239,3 +240,10 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
   .menu-layout, .slide-fields.media-fields, .product-form-top { flex-direction: column; }
   .category-list { width: 100%; }
 }
+
+/* ---------- Tekstet e TV-së ---------- */
+.texts-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; align-items: start; }
+.lang-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.text-row input { width: 100%; }
+.text-row input.key { font-family: Consolas, monospace; font-size: 13px; }
+@media (max-width: 900px) { .texts-layout { grid-template-columns: 1fr; } }

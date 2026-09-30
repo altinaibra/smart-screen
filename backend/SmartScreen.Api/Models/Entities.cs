@@ -146,15 +146,46 @@ public class Product
 public class BusinessSettings
 {
     public int Id { get; set; }
-    public string BusinessName { get; set; } = "Smart Screen";
+    public string BusinessName { get; set; } = "";
+    /// <summary>Nëntitulli nën emrin e biznesit (p.sh. në ekranin e çiftimit).</summary>
+    public string? Tagline { get; set; }
     public int? LogoAssetId { get; set; }
     public MediaAsset? LogoAsset { get; set; }
     public string PrimaryColor { get; set; } = "#c8102e";
     public string AccentColor { get; set; } = "#ffc72c";
-    public string Currency { get; set; } = "L";
+    /// <summary>Ngjyra e tekstit mbi ngjyrën theksuese (shiriti, etiketat).</summary>
+    public string AccentTextColor { get; set; } = "#1d1d1f";
+    /// <summary>Sfondi i ekraneve të sistemit (çiftimi, lidhja, pa përmbajtje).</summary>
+    public string BackgroundColor { get; set; } = "#121419";
+
+    /// <summary>Gjuha e teksteve që shfaqen në TV. Null = gjuha e parë.</summary>
+    public int? LanguageId { get; set; }
+    public Language? Language { get; set; }
+    public string Currency { get; set; } = "";
     public bool ShowTicker { get; set; } = true;
     public string? TickerText { get; set; }
     public bool ShowClock { get; set; } = true;
     public string TimeZoneId { get; set; } = "Europe/Tirane";
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>Gjuhë për tekstet e TV-së (krijohet nga admini).</summary>
+public class Language
+{
+    public int Id { get; set; }
+    /// <summary>Kodi ISO, p.sh. "sq", "en".</summary>
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int SortOrder { get; set; }
+    public List<UiText> Texts { get; set; } = [];
+}
+
+/// <summary>Një tekst i ndërfaqes së TV-së (p.sh. "pairing.label" -> "Kodi i çiftimit") në një gjuhë.</summary>
+public class UiText
+{
+    public int Id { get; set; }
+    public int LanguageId { get; set; }
+    public Language? Language { get; set; }
+    public string Key { get; set; } = "";
+    public string Value { get; set; } = "";
 }

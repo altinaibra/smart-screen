@@ -11,6 +11,7 @@ import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistEditorPage from './pages/PlaylistEditorPage';
 import MenuPage from './pages/MenuPage';
 import SettingsPage from './pages/SettingsPage';
+import TextsPage from './pages/TextsPage';
 import './styles.css';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="playlists" element={<PlaylistsPage />} />
           <Route path="playlists/:id" element={<PlaylistEditorPage />} />
           <Route path="menu" element={<MenuPage />} />
+          <Route path="texts" element={<TextsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

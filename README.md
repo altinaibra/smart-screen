@@ -21,7 +21,7 @@ Hapni `backend/SmartScreen.sln` në Visual Studio dhe shtypni **F5**, ose:
 dotnet run --project backend/SmartScreen.Api
 ```
 - Swagger: **http://localhost:5080/swagger**
-- Databaza krijohet automatikisht me të dhëna demo (menu burgerash + playlist).
+- Databaza krijohet automatikisht (pa të dhëna demo). Vetëm herën e parë mbushet nga `backend/SmartScreen.Api/Data/Seed/seed.json` (emri i biznesit, gjuhët sq/en dhe tekstet e TV-së); pas kësaj gjithçka menaxhohet nga admini dhe ruhet në DB. Tabelat/kolonat e reja shtohen automatikisht në databazat ekzistuese.
 - Hyrja: **admin / Admin123!** (ndryshojeni te Cilësimet).
 
 ### 2. Frontend-i (React)

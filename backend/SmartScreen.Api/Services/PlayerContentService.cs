@@ -65,10 +65,28 @@ public class PlayerContentService(AppDbContext db)
     private async Task<BusinessSettings> GetSettingsAsync() =>
         await db.BusinessSettings.AsNoTracking().Include(s => s.LogoAsset).FirstOrDefaultAsync() ?? new BusinessSettings();
 
+    /// <summary>Cilësimet + tekstet e TV-së në gjuhën e zgjedhur (përdoren edhe nga ekrani i çiftimit).</summary>
+    public async Task<PlayerSettingsDto> BuildSettingsAsync() => await ToPlayerSettingsAsync(await GetSettingsAsync());
+
+    private async Task<PlayerSettingsDto> ToPlayerSettingsAsync(BusinessSettings s)
+    {
+        var language = await db.Languages.AsNoTracking()
+            .OrderBy(l => l.Id == s.LanguageId ? 0 : 1).ThenBy(l => l.SortOrder).ThenBy(l => l.Id)
+            .Select(l => new { l.Id, l.Code }).FirstOrDefaultAsync();
+
+        var labels = language is null
+            ? []
+            : await db.UiTexts.AsNoTracking().Where(t => t.LanguageId == language.Id)
+                .ToDictionaryAsync(t => t.Key, t => t.Value);
+
+        return new PlayerSettingsDto(
+            s.BusinessName, s.Tagline, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.AccentTextColor,
+            s.BackgroundColor, s.Currency, s.ShowTicker, s.TickerText, s.ShowClock, language?.Code, labels);
+    }
+
     private async Task<PlayerContentDto> BuildAsync(int? playlistId, BusinessSettings s, PlayerScreenDto screen, int commandVersion)
     {
-        var settings = new PlayerSettingsDto(
-            s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency, s.ShowTicker, s.TickerText, s.ShowClock);
+        var settings = await ToPlayerSettingsAsync(s);
 
         PlayerPlaylistDto? playlistDto = null;
         if (playlistId is int id)
@@ -79,14 +97,14 @@ public class PlayerContentService(AppDbContext db)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (playlist is not null)
-                playlistDto = new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist));
+                playlistDto = new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, settings.Labels));
         }
 
         var version = ComputeVersion(screen, settings, playlistDto);
         return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto);
     }
 
-    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist)
+    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, Dictionary<string, string> labels)
     {
         var items = playlist.Items.Where(i => i.IsEnabled).OrderBy(i => i.SortOrder).ToList();
 
@@ -114,7 +132,7 @@ public class PlayerContentService(AppDbContext db)
                     var selected = i.MenuCategoryId is int catId
                         ? products.Where(p => p.CategoryId == catId)
                         : products.Where(p => p.IsFeatured).OrderBy(p => p.Category?.SortOrder);
-                    var title = !string.IsNullOrWhiteSpace(i.Title) ? i.Title : i.MenuCategory?.Name ?? "Ofertat";
+                    var title = !string.IsNullOrWhiteSpace(i.Title) ? i.Title : i.MenuCategory?.Name ?? labels.GetValueOrDefault("menu.featuredTitle", "");
                     menu = new PlayerMenuDto(title!, selected.Select(p => new PlayerProductDto(
                         p.Id, p.Name, p.Description, p.Price, p.OldPrice, p.ImageAsset?.Url, p.IsAvailable, p.IsFeatured)).ToList());
                     if (menu.Products.Count == 0) continue;

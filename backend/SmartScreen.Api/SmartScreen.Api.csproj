@@ -15,6 +15,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Të dhënat fillestare (vetëm për databazë bosh); pas kësaj gjithçka menaxhohet nga admini. -->
+    <None Update="Data\Seed\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <PropertyGroup>
     <FrontendDir>$(MSBuildProjectDirectory)\..\..\frontend</FrontendDir>
   </PropertyGroup>

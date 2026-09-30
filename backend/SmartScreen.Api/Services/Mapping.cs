@@ -35,6 +35,9 @@ public static class Mapping
         c.Id, c.Name, c.SortOrder, c.Products.OrderBy(p => p.SortOrder).ThenBy(p => p.Name).Select(p => p.ToDto()).ToList());
 
     public static SettingsDto ToDto(this BusinessSettings s) => new(
-        s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.Currency,
-        s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId);
+        s.BusinessName, s.Tagline, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, s.AccentTextColor,
+        s.BackgroundColor, s.Currency, s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId, s.LanguageId);
+
+    public static BrandingDto ToBrandingDto(this BusinessSettings s) =>
+        new(s.BusinessName, s.Tagline, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor);
 }

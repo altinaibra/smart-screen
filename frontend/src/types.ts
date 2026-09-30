@@ -97,15 +97,40 @@ export interface Category {
 
 export interface Settings {
   businessName: string;
+  tagline?: string | null;
   logoAssetId?: number | null;
   logoUrl?: string | null;
   primaryColor: string;
   accentColor: string;
+  accentTextColor: string;
+  backgroundColor: string;
   currency: string;
   showTicker: boolean;
   tickerText?: string | null;
   showClock: boolean;
   timeZoneId: string;
+  languageId?: number | null;
+}
+
+export interface Branding {
+  businessName: string;
+  tagline?: string | null;
+  logoUrl?: string | null;
+  primaryColor: string;
+  accentColor: string;
+}
+
+export interface Language {
+  id: number;
+  code: string;
+  name: string;
+  sortOrder: number;
+  textCount: number;
+}
+
+export interface UiText {
+  key: string;
+  value: string;
 }
 
 export interface Dashboard {
