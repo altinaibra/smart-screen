@@ -109,6 +109,10 @@ async function main() {
 
   // Lidhjet e jashtme (p.sh. /swagger ose faqe web) hapen në shfletues, jo brenda aplikacionit.
   win.webContents.setWindowOpenHandler(({ url }) => {
+    // "Hap ekranin" (about:blank -> /player/?device=…) dhe faqet e serverit hapen në dritare të aplikacionit.
+    if (url === 'about:blank' || /^http:\/\/(127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+):5080\//.test(url)) {
+      return { action: 'allow', overrideBrowserWindowOptions: { autoHideMenuBar: true } };
+    }
     shell.openExternal(url);
     return { action: 'deny' };
   });

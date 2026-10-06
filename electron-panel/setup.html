@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="sq">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Screen Panel</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #121419; color: #fff; font-family: "Segoe UI", system-ui, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    .card { width: 460px; padding: 36px; border-radius: 18px; background: #1b1e24; box-shadow: 0 20px 60px rgba(0,0,0,.4); text-align: center; }
+    img { width: 84px; height: 84px; }
+    h1 { margin: 14px 0 4px; font-size: 24px; }
+    .tag { color: #ffc72c; font-size: 11px; font-weight: 700; letter-spacing: .3em; }
+    p { color: #a3a8b3; font-size: 14px; line-height: 1.5; margin: 18px 0; }
+    label { display: block; text-align: left; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    input { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #353a45; background: #121419; color: #fff; outline: none; }
+    input:focus { border-color: #ffc72c; }
+    .hint { text-align: left; color: #7c8290; font-size: 12px; margin-top: 6px; }
+    button { margin-top: 20px; width: 100%; padding: 12px; font-size: 15px; font-weight: 600; border: 0; border-radius: 10px; background: #c8102e; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: default; }
+    .error { margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: rgba(255,80,80,.12); color: #ff8a8a; font-size: 13px; text-align: left; line-height: 1.4; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <form class="card" id="form">
+    <img src="build/icon.png" alt="" />
+    <h1>Smart Screen</h1>
+    <div class="tag">PANELI</div>
+    <p>Shkruani adresën e serverit Smart Screen. E gjeni te kompjuteri ku punon serveri (ipconfig) ose te paneli → Ekranet.</p>
+    <label for="server">Adresa e serverit</label>
+    <input id="server" placeholder="192.168.110.133" autofocus required />
+    <div class="hint">p.sh. 192.168.110.133 (porti 5080 shtohet vetë) ose https://domeni-juaj.com</div>
+    <button id="btn">Lidhu</button>
+    <div id="error" class="error hidden"></div>
+  </form>
+  <script>
+    var q = new URLSearchParams(location.search);
+    var input = document.getElementById('server');
+    var err = document.getElementById('error');
+    var btn = document.getElementById('btn');
+    input.value = q.get('server') || '';
+    function showError(m) { err.textContent = m; err.className = m ? 'error' : 'error hidden'; }
+    showError(q.get('error') || '');
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      btn.disabled = true; btn.textContent = 'Duke u lidhur...'; showError('');
+      window.smartScreenPanel.connect(input.value).then(function (r) {
+        if (!r.ok) { showError(r.error); btn.disabled = false; btn.textContent = 'Lidhu'; }
+      });
+    });
+  </script>
+</body>
+</html>

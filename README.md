@@ -268,6 +268,22 @@ Për ta provuar pa instalues (pas `dotnet publish` më sipër): `cd electron && 
 
 > Herën e parë Windows Firewall pyet për portin 5080 – zgjidhni **Allow**, që TV-të ta gjejnë serverin.
 
+## Smart Screen Panel – vetëm paneli si .exe (për kompjuterët e tjerë)
+Dosja `electron-panel/` krijon instaluesin **`Smart Screen Panel Setup 1.0.0.exe`** me ikonën e aplikacionit:
+vetëm paneli, **pa server**. Instalohet në çdo kompjuter (zyrë, pronari, menaxherët) dhe lidhet me serverin ku
+punon Smart Screen (IIS, `SmartScreen.Api.exe` ose aplikacioni desktop).
+
+**Ndërtimi** (Windows, kërkon vetëm [Node.js 18+](https://nodejs.org)):
+```cmd
+publish-panel.cmd
+```
+Instaluesi del te `electron-panel\dist\Smart Screen Panel Setup 1.0.0.exe`.
+
+**Përdorimi:** herën e parë aplikacioni pyet adresën e serverit (p.sh. `192.168.110.133`, porti 5080 shtohet vetë,
+ose `https://domeni-juaj.com`), e kontrollon dhe e mban mend. Pas kësaj hapet direkt paneli. Për ta ndryshuar:
+**Ctrl+Shift+S** (ose tasti **Alt** → menyja **Serveri**). Nëse serveri nuk përgjigjet, shfaqet sërish kjo faqe me
+shpjegimin. Ikona: `electron-panel/build/icon.ico` (zëvendësojeni për ikonë tjetër).
+
 ## Siguria në prodhim
 - Ndryshoni fjalëkalimin e adminit (`admin / Admin123!`) menjëherë pas hyrjes së parë (**Cilësimet → Ndrysho fjalëkalimin**).
 - `Jwt:Key`: nëse lihet çelësi i shembullit nga `appsettings.json`, serveri krijon vetë një çelës të rastësishëm dhe e
