@@ -21,7 +21,14 @@ const businessTypes: { type: BusinessType; color: string }[] = [
 /** Ngjyrat e gatshme të dizajnit (mund të zgjidhet edhe çdo ngjyrë tjetër). */
 const themeColors = ['#e8452f', '#2f7bf5', '#1fa36b', '#d63a7a', '#f08a24', '#7b4ff0'];
 
-const timeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Berlin', 'Europe/Rome', 'Europe/London', 'America/New_York', 'UTC'];
+const commonTimeZones = ['Europe/Tirane', 'Europe/Belgrade', 'Europe/Skopje', 'Europe/Podgorica', 'Europe/Athens', 'Europe/Istanbul',
+  'Europe/Berlin', 'Europe/Vienna', 'Europe/Zurich', 'Europe/Rome', 'Europe/Paris', 'Europe/London', 'America/New_York', 'UTC'];
+
+/** Zonat më të përdorura sipër, pastaj të gjitha zonat që njeh shfletuesi. */
+const timeZones = (() => {
+  const all = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone') ?? [];
+  return [...new Set([...commonTimeZones, ...all])];
+})();
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -158,6 +165,11 @@ function SettingsForm({ initial }: { initial: Settings }) {
           {s.showTicker && (
             <Field label={t('settings.tickerText')} hint={t('settings.tickerHint', { symbol: s.currency || '€' })}><textarea rows={2} value={s.tickerText ?? ''} onChange={e => set({ tickerText: e.target.value })} /></Field>
           )}
+          <label className="inline-check">
+            <input type="checkbox" checked={s.sleepWhenClosed} onChange={e => set({ sleepWhenClosed: e.target.checked })}
+              disabled={!s.openingTime || !s.closingTime} /> {t('settings.sleepWhenClosed')}
+          </label>
+          <span className="field-hint block">{s.openingTime && s.closingTime ? t('settings.sleepWhenClosedHint') : t('settings.sleepNeedsHours')}</span>
           <Field label={t('settings.timeZone')} hint={t('settings.timeZoneHint')}>
             <select value={s.timeZoneId} onChange={e => set({ timeZoneId: e.target.value })}>
               {[...new Set([s.timeZoneId, ...timeZones])].map(tz => <option key={tz}>{tz}</option>)}

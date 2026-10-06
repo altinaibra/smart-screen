@@ -35,6 +35,27 @@ static string ResolveSqlitePath(string? connectionString, string contentRoot)
     return csb.ToString();
 }
 
+// ---------- Çelësi JWT ----------
+// Çelësi i shembullit nga appsettings.json (ose një çelës shumë i shkurtër) nuk përdoret kurrë: krijohet një
+// çelës i rastësishëm për këtë server dhe ruhet te "jwt.key", që token-at të mbeten të vlefshëm pas rinisjes.
+var jwtKey = config["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32 || jwtKey.StartsWith("NDRYSHOJENI", StringComparison.Ordinal))
+{
+    var keyFile = Path.Combine(builder.Environment.ContentRootPath, "jwt.key");
+    try
+    {
+        if (!File.Exists(keyFile))
+            File.WriteAllText(keyFile, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
+        jwtKey = File.ReadAllText(keyFile).Trim();
+    }
+    catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+    {
+        // Dosje vetëm-për-lexim (p.sh. IIS pa leje shkrimi): çelës vetëm për këtë nisje.
+        jwtKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
+    }
+    config["Jwt:Key"] = jwtKey;
+}
+
 // ---------- Shërbimet ----------
 builder.Services.AddControllers(o => o.Filters.Add<BusinessAccessFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -95,6 +116,15 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("player-register", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
+    // Mbrojtje nga provat e shumta të fjalëkalimit.
+    o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+    o.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await ctx.HttpContext.Response.WriteAsync("{\"message\":\"Shumë kërkesa. Provoni sërish pas një minute.\"}", ct);
+    };
 });
 
 var app = builder.Build();
@@ -106,6 +136,10 @@ using (var scope = app.Services.CreateScope())
     var db = sp.GetRequiredService<AppDbContext>();
     await DbSeeder.SeedAsync(db, config, sp.GetRequiredService<IPasswordHasher<AppUser>>());
     await MediaStore.ImportLegacyFilesAsync(db, config, app.Environment, app.Logger);
+
+    // TV-të që u hapën një herë por nuk u çiftuan kurrë (kod i papërdorur) fshihen pas 30 ditësh.
+    var staleBefore = DateTime.UtcNow.AddDays(-30);
+    await db.Screens.Where(s => !s.IsPaired && (s.LastSeenAt == null || s.LastSeenAt < staleBefore)).ExecuteDeleteAsync();
 }
 
 // Swagger UI: http://localhost:5080/swagger
@@ -252,3 +286,6 @@ app.MapFallback(async ctx =>
 });
 
 app.Run();
+
+/// <summary>E dukshme për testet e integrimit (WebApplicationFactory).</summary>
+public partial class Program;

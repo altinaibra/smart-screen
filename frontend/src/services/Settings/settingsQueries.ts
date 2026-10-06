@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../queryClient';
 import { meKeys } from '../Business/businessQueries';
-import { getSettings, updateSettings } from './settingsMethods';
-import type { BusinessType, Settings } from '../../types';
+import { clearAlert, getSettings, setAlert, updateSettings } from './settingsMethods';
+import type { BusinessType, SaveAlertRequest, Settings } from '../../types';
 
 export const settingsKeys = {
   all: ['settings'] as const,
@@ -27,5 +27,20 @@ export function useUpdateSettings() {
       // Emri dhe lloji i biznesit shfaqen edhe në zgjedhjen e biznesit.
       return queryClient.invalidateQueries({ queryKey: meKeys.all });
     },
+  });
+}
+
+/** Njoftimi urgjent në të gjitha ekranet e biznesit. */
+export function useSetAlert() {
+  return useMutation({
+    mutationFn: (req: SaveAlertRequest) => setAlert(req),
+    onSuccess: data => queryClient.setQueryData(settingsKeys.all, data),
+  });
+}
+
+export function useClearAlert() {
+  return useMutation({
+    mutationFn: () => clearAlert(),
+    onSuccess: data => queryClient.setQueryData(settingsKeys.all, data),
   });
 }

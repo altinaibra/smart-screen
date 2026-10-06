@@ -22,7 +22,7 @@ public static class Mapping
 
     public static PlaylistItemDto ToDto(this PlaylistItem i) => new(
         i.Id, i.Type, i.DurationSeconds, i.IsEnabled, i.Title, i.Text, i.Url, i.BackgroundColor, i.TextColor, i.Fit,
-        i.MediaAssetId, i.MediaAsset?.ToDto(), i.MenuCategoryId, i.Badge, i.Price);
+        i.MediaAssetId, i.MediaAsset?.ToDto(), i.MenuCategoryId, i.Badge, i.Price, i.StartDate, i.EndDate);
 
     public static PlaylistDto ToDto(this Playlist p) => new(
         p.Id, p.Name, p.Description, p.UpdatedAt, p.Items.OrderBy(i => i.SortOrder).Select(i => i.ToDto()).ToList());
@@ -37,7 +37,16 @@ public static class Mapping
     public static SettingsDto ToDto(this BusinessSettings s, string currency) => new(
         s.BusinessName, s.LogoAssetId, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency,
         s.ShowTicker, s.TickerText, s.ShowClock, s.TimeZoneId,
-        s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, s.BusinessType);
+        s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, s.BusinessType,
+        s.SleepWhenClosed, s.ActiveAlert());
+
+    public const string DefaultAlertColor = "#c8102e";
+
+    /// <summary>Njoftimi urgjent nëse ka tekst dhe nuk ka skaduar.</summary>
+    public static AlertDto? ActiveAlert(this BusinessSettings s) =>
+        string.IsNullOrWhiteSpace(s.AlertTitle) && string.IsNullOrWhiteSpace(s.AlertText) ? null
+        : s.AlertExpiresAt is DateTime exp && exp <= DateTime.UtcNow ? null
+        : new AlertDto(s.AlertTitle, s.AlertText, s.AlertColor ?? DefaultAlertColor, s.AlertExpiresAt);
 
     public static CurrencyDto ToDto(this Currency c) => new(
         c.CurrencyId, c.CurrencyCode, c.CurrencyName, c.CurrencySymbol, c.ExchangeRate,

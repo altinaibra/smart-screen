@@ -38,5 +38,17 @@ public class BusinessSettings
     public string? TickerText { get; set; }
     public bool ShowClock { get; set; } = true;
     public string TimeZoneId { get; set; } = "Europe/Tirane";
+
+    /// <summary>Jashtë orarit të punës (OpeningTime–ClosingTime) TV-të errësohen (ekran i zi) dhe ndalojnë luajtjen.</summary>
+    public bool SleepWhenClosed { get; set; }
+
+    /// <summary>
+    /// Njoftim urgjent që mbulon gjithë ekranin në të gjitha TV-të e biznesit (p.sh. "Mbyllur sot për inventar").
+    /// Bosh = pa njoftim. AlertExpiresAt (UTC) = hiqet vetë pas kësaj kohe; null = derisa ta heqë admini.
+    /// </summary>
+    public string? AlertTitle { get; set; }
+    public string? AlertText { get; set; }
+    public string? AlertColor { get; set; }
+    public DateTime? AlertExpiresAt { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

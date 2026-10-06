@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../api';
+import AlertPanel from '../components/AlertPanel';
 import Icon, { type IconName } from '../components/Icon';
 import { Empty, ErrorBox } from '../components/ui';
 import { useCurrentBusiness } from '../services/Business/businessQueries';
@@ -37,6 +38,8 @@ export default function DashboardPage() {
         </div>
       </div>
       <ErrorBox error={error?.message ?? null} />
+
+      {fullAccess && <div className="broadcast-row"><AlertPanel /></div>}
 
       {data && offline.length > 0 && <OfflineAlert offline={offline} total={screens.length} troubleshoot={fullAccess} />}
 

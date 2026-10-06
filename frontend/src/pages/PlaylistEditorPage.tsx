@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
-import i18n from '../i18n';
+import i18n, { locale } from '../i18n';
 import { formatDuration } from '../api';
 import Icon from '../components/Icon';
 import MediaPicker, { MediaThumb } from '../components/MediaPicker';
@@ -50,7 +50,8 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
   const { data: preview = null } = usePlaylistPreview(playlist.id, orientation);
 
   const total = useMemo(
-    () => playlist.items.filter(i => i.isEnabled).reduce((s, i) => s + i.durationSeconds, 0),
+    // Slide-t që kanë skaduar nuk luhen më, prandaj nuk numërohen te cikli.
+    () => playlist.items.filter(i => i.isEnabled && !(i.endDate && i.endDate < todayIso())).reduce((s, i) => s + i.durationSeconds, 0),
     [playlist],
   );
 
@@ -113,6 +114,7 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
               <div className="slide-item-head">
                 <span className="slide-index">{i + 1}</span>
                 <span className={`tag type-${item.type}`}>{t(`slideType.${item.type}`)}</span>
+                <DateBadge item={item} />
                 <label className="inline-check">
                   <input type="checkbox" checked={item.isEnabled} onChange={e => update(i, { isEnabled: e.target.checked })} /> {t('editor.active')}
                 </label>
@@ -125,6 +127,7 @@ function PlaylistEditor({ initial, categories }: { initial: Playlist; categories
               <SlideFields item={item} categories={categories}
                 onChange={patch => update(i, patch)}
                 onPick={type => setPicker({ index: i, type })} />
+              <SlideDates item={item} onChange={patch => update(i, patch)} />
             </div>
           ))}
 
@@ -285,3 +288,40 @@ function SlideFields({ item, categories, onChange, onPick }: {
       );
   }
 }
+
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** "Shfaqe nga – deri më": p.sh. oferta e javës zhduket vetë pas datës së fundit (edhe në TV pa rrjet). */
+function SlideDates({ item, onChange }: { item: PlaylistItem; onChange: (patch: Partial<PlaylistItem>) => void }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(!!(item.startDate || item.endDate));
+  if (!open) {
+    return <button type="button" className="link slide-dates-toggle" onClick={() => setOpen(true)}><Icon name="calendar" /> {t('editor.addDates')}</button>;
+  }
+  return (
+    <div className="slide-dates">
+      <Field label={t('editor.startDate')}>
+        <input type="date" value={item.startDate ?? ''} max={item.endDate ?? undefined} onChange={e => onChange({ startDate: e.target.value || null })} />
+      </Field>
+      <Field label={t('editor.endDate')} hint={t('editor.datesHint')}>
+        <input type="date" value={item.endDate ?? ''} min={item.startDate ?? undefined} onChange={e => onChange({ endDate: e.target.value || null })} />
+      </Field>
+      <button type="button" className="link" onClick={() => { onChange({ startDate: null, endDate: null }); setOpen(false); }}>{t('editor.clearDates')}</button>
+    </div>
+  );
+}
+
+function DateBadge({ item }: { item: PlaylistItem }) {
+  const { t } = useTranslation();
+  const today = todayIso();
+  if (item.endDate && item.endDate < today) return <span className="tag date-tag expired">{t('editor.expired')}</span>;
+  if (item.startDate && item.startDate > today) return <span className="tag date-tag upcoming">{t('editor.startsOn', { date: formatDate(item.startDate) })}</span>;
+  if (item.endDate) return <span className="tag date-tag">{t('editor.endsOn', { date: formatDate(item.endDate) })}</span>;
+  return null;
+}
+
+/** "2026-06-07" -> data sipas gjuhës së panelit (pa zhvendosje nga zona kohore). */
+const formatDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale());

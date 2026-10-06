@@ -149,6 +149,13 @@ public static class DbSeeder
         ("BusinessSettings", "BusinessType", "nvarchar(20) NOT NULL CONSTRAINT [DF_BusinessSettings_BusinessType] DEFAULT N'restaurant'", "TEXT NOT NULL DEFAULT 'restaurant'"),
         ("PlaylistItems", "Badge", "nvarchar(100) NULL", "TEXT NULL"),
         ("PlaylistItems", "Price", "decimal(12,2) NULL", "TEXT NULL"),
+        ("PlaylistItems", "StartDate", "date NULL", "TEXT NULL"),
+        ("PlaylistItems", "EndDate", "date NULL", "TEXT NULL"),
+        ("BusinessSettings", "SleepWhenClosed", "bit NOT NULL CONSTRAINT [DF_BusinessSettings_SleepWhenClosed] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
+        ("BusinessSettings", "AlertTitle", "nvarchar(200) NULL", "TEXT NULL"),
+        ("BusinessSettings", "AlertText", "nvarchar(1000) NULL", "TEXT NULL"),
+        ("BusinessSettings", "AlertColor", "nvarchar(7) NULL", "TEXT NULL"),
+        ("BusinessSettings", "AlertExpiresAt", "datetime2 NULL", "TEXT NULL"),
         // Klientët: 0 / null = të dhëna të vjetra, i kalojnë klientit të parë (AssignLegacyDataAsync).
         ("BusinessSettings", "ClientId", "int NOT NULL CONSTRAINT [DF_BusinessSettings_ClientId] DEFAULT 0", "INTEGER NOT NULL DEFAULT 0"),
         ("Users", "ClientId", "int NULL", "INTEGER NULL"),

@@ -26,6 +26,13 @@ public class PlaylistItem
     /// <summary>Promo/Combo: çmimi i shfaqur në rrethin e verdhë ("VETËM €5.90"). Null = pa çmim.</summary>
     public decimal? Price { get; set; }
 
+    /// <summary>
+    /// Periudha kur shfaqet slide-i (data lokale e biznesit, përfshirë të dyja). Null = pa kufi.
+    /// P.sh. oferta e javës 01.06 – 07.06 zhduket vetë pas datës së fundit, edhe pa rrjet.
+    /// </summary>
+    public DateOnly? StartDate { get; set; }
+    public DateOnly? EndDate { get; set; }
+
     public int? MediaAssetId { get; set; }
     public MediaAsset? MediaAsset { get; set; }
 

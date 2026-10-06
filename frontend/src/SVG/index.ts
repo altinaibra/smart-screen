@@ -1,4 +1,5 @@
 import type React from 'react';
+import AlertIcon from './AlertIcon';
 import BusinessIcon from './BusinessIcon';
 import CurrencyIcon from './CurrencyIcon';
 import DashboardIcon from './DashboardIcon';
@@ -16,7 +17,7 @@ import UsersIcon from './UsersIcon';
 import type { SvgIconProps } from './types';
 
 export type { SvgIconProps };
-export { BusinessIcon, CurrencyIcon, DashboardIcon, DownloadIcon, ExternalLinkIcon, EyeIcon, EyeOffIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon, UsersIcon };
+export { AlertIcon, BusinessIcon, CurrencyIcon, DashboardIcon, DownloadIcon, ExternalLinkIcon, EyeIcon, EyeOffIcon, LogOutIcon, MediaIcon, PaymentMethodIcon, PlaylistIcon, ScreenIcon, SettingsIcon, UsersIcon };
 
 /**
  * Ikonat që thërret <Icon name="..." />. Për një ikonë të re:
@@ -40,4 +41,5 @@ export const svgIcons: Partial<Record<string, React.FC<SvgIconProps>>> = {
   'eye-off': EyeOffIcon,
   users: UsersIcon,
   clients: BusinessIcon, // klientët: e njëjta ikonë si bizneset
+  alert: AlertIcon,
 };

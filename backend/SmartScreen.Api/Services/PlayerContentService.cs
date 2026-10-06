@@ -73,9 +73,15 @@ public partial class PlayerContentService(AppDbContext db)
     {
         var main = await MainCurrency.GetAsync(db, s.Id);
         var currency = main?.Symbol ?? s.Currency;
+        var alert = s.ActiveAlert();
         var settings = new PlayerSettingsDto(
             s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, WithCurrency(s.TickerText, currency), s.ShowClock,
-            s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name, s.BusinessType);
+            s.Tagline, s.Slogan, s.OpeningTime, s.ClosingTime, s.Phone, s.SocialHandle, s.ScreenLanguage, main?.Name, s.BusinessType,
+            s.SleepWhenClosed,
+            alert is null ? null : new PlayerAlertDto(WithCurrency(alert.Title, currency), WithCurrency(alert.Text, currency), alert.Color,
+                alert.ExpiresAt is DateTime exp ? new DateTimeOffset(exp).ToUnixTimeMilliseconds() : null));
+        var tz = GetTimeZone(s.TimeZoneId);
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz));
 
         // Playlist-a aktive + ato të orareve (për punë offline), secila ndërtohet vetëm një herë.
         var ids = new List<int>();
@@ -92,7 +98,7 @@ public partial class PlayerContentService(AppDbContext db)
 
         var built = new List<PlayerPlaylistDto>();
         foreach (var playlist in playlists)
-            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, s.Id, currency)));
+            built.Add(new PlayerPlaylistDto(playlist.Id, playlist.Name, await BuildSlidesAsync(playlist, s.Id, currency, today)));
 
         var playlistDto = built.FirstOrDefault(p => p.Id == playlistId);
 
@@ -107,12 +113,23 @@ public partial class PlayerContentService(AppDbContext db)
         }
 
         var version = ComputeVersion(screen, settings, playlistDto, offline);
-        return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto, offline);
+        return new PlayerContentDto(true, null, version, commandVersion, screen, settings, playlistDto, offline, Clock(tz));
     }
 
-    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, int businessId, string currency)
+    /// <summary>Ora e serverit + zhvendosja e zonës kohore të biznesit (për orën dhe oraret në TV).</summary>
+    public static PlayerClockDto Clock(TimeZoneInfo tz)
     {
-        var items = playlist.Items.Where(i => i.IsEnabled).OrderBy(i => i.SortOrder).ToList();
+        var now = DateTimeOffset.UtcNow;
+        return new PlayerClockDto(now.ToUnixTimeMilliseconds(), (int)tz.GetUtcOffset(now).TotalMinutes);
+    }
+
+    private async Task<List<PlayerSlideDto>> BuildSlidesAsync(Playlist playlist, int businessId, string currency, DateOnly today)
+    {
+        // Slide-t me datë të ardhshme dërgohen (player-i i shfaq vetë kur vjen data, edhe pa rrjet);
+        // ato që kanë skaduar hiqen. Një ditë rezervë për TV-të me orë pak të ndryshme.
+        var items = playlist.Items
+            .Where(i => i.IsEnabled && (i.EndDate is null || i.EndDate >= today.AddDays(-1)))
+            .OrderBy(i => i.SortOrder).ToList();
 
         // Ngarko produktet vetëm një herë për të gjitha slide-t e menusë.
         List<Products> products = [];
@@ -150,7 +167,8 @@ public partial class PlayerContentService(AppDbContext db)
 
             var duration = i.Type == SlideType.Video ? Math.Max(0, i.DurationSeconds) : Math.Max(3, i.DurationSeconds);
             slides.Add(new PlayerSlideDto(i.Id, i.Type, duration, WithCurrency(i.Title, currency), WithCurrency(i.Text, currency), mediaUrl, i.Url,
-                i.BackgroundColor, i.TextColor, i.Fit, menu, WithCurrency(i.Badge, currency), i.Price));
+                i.BackgroundColor, i.TextColor, i.Fit, menu, WithCurrency(i.Badge, currency), i.Price,
+                i.StartDate?.ToString("yyyy-MM-dd"), i.EndDate?.ToString("yyyy-MM-dd")));
         }
         return slides;
     }

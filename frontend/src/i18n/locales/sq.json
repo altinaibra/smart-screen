@@ -290,7 +290,15 @@
     "priceHint": "Shfaqet në rrethin e verdhë \"VETËM …\"",
     "removePhoto": "Hiq foton",
     "brandHint": "Shfaq logon, emrin, sloganin, orarin, telefonin dhe rrjetin social nga Cilësimet.",
-    "currencyHint": "{valuta} = simboli i valutës kryesore"
+    "currencyHint": "{valuta} = simboli i valutës kryesore",
+    "addDates": "Shfaqe vetëm në disa data",
+    "startDate": "Shfaqe nga data",
+    "endDate": "Deri më (përfshirë)",
+    "datesHint": "Pas kësaj date slide-i zhduket vetë nga TV-të",
+    "clearDates": "Hiq datat",
+    "expired": "Ka skaduar",
+    "startsOn": "Fillon më {{date}}",
+    "endsOn": "Deri më {{date}}"
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -363,7 +371,7 @@
     "showTicker": "Shfaq shiritin e lajmeve (poshtë)",
     "tickerText": "Teksti i shiritit",
     "timeZone": "Zona kohore",
-    "timeZoneHint": "Përdoret për oraret e playlistave",
+    "timeZoneHint": "Përdoret për orën në TV, HAPUR/MBYLLUR, oraret e playlistave dhe datat e slide-ve",
     "save": "Ruaj cilësimet",
     "panel": "Paneli",
     "languageHint": "Gjuha e panelit të administrimit (ruhet në këtë shfletues)",
@@ -391,7 +399,10 @@
     "type_restaurant": "Restorant",
     "type_barber": "Berber",
     "type_shop": "Aksesore",
-    "tickerHint": "Ndani fjalitë me • ose rresht të ri. Për monedhën shkruani {valuta}, p.sh. \"Menu Classic vetëm 6.50{valuta}\" → 6.50{{symbol}} (ndjek valutën kryesore)."
+    "tickerHint": "Ndani fjalitë me • ose rresht të ri. Për monedhën shkruani {valuta}, p.sh. \"Menu Classic vetëm 6.50{valuta}\" → 6.50{{symbol}} (ndjek valutën kryesore).",
+    "sleepWhenClosed": "Fik ekranet jashtë orarit të punës",
+    "sleepWhenClosedHint": "Jashtë orarit TV-të shfaqin ekran të zi dhe nuk luajnë asgjë; ndizen vetë kur hapet biznesi.",
+    "sleepNeedsHours": "Vendosni orën e hapjes dhe të mbylljes për ta aktivizuar."
   },
   "currencies": {
     "title": "Valutat",
@@ -500,5 +511,26 @@
     "adminHint": "Klienti hyn me këtë llogari dhe sheh vetëm bizneset, ekranet dhe përdoruesit e vet.",
     "activeHint": "Joaktiv: përdoruesit e klientit nuk mund të hyjnë (p.sh. abonimi i papaguar).",
     "confirmDelete": "Të fshihet klienti \"{{name}}\"? Do të fshihen të gjitha bizneset, ekranet, playlistat, fotot, videot dhe përdoruesit e tij."
+  },
+  "alert": {
+    "button": "Njoftim urgjent",
+    "title": "Njoftim urgjent në të gjitha ekranet",
+    "hint": "Njoftimi mbulon gjithë ekranin në çdo TV të këtij biznesi brenda ~15 sekondave, derisa ta hiqni ose të skadojë.",
+    "heading": "Titulli",
+    "headingPlaceholder": "p.sh. MBYLLUR SOT",
+    "text": "Teksti",
+    "textPlaceholder": "p.sh. Rihapemi nesër në 08:00. Faleminderit!",
+    "color": "Ngjyra",
+    "duration": "Sa kohë të shfaqet",
+    "untilRemoved": "Derisa ta heq vetë",
+    "minutes": "{{count}} minuta",
+    "minutes_one": "1 minutë",
+    "hours": "{{count}} orë",
+    "hours_one": "1 orë",
+    "send": "Shfaq në ekrane",
+    "stop": "Hiq njoftimin",
+    "live": "Njoftim aktiv në të gjitha ekranet",
+    "noExpiry": "Pa afat – derisa ta hiqni",
+    "until": "Hiqet vetë më {{time}}"
   }
 }

@@ -90,6 +90,10 @@ Pas çdo ndryshimi (mutation) rifreskohen vetë query-t që varen prej tij (p.sh
 rifreskon çmimet te Menuja).
 
 ## Çfarë mund të bëni
+- **Shumë biznese** – pronari i aplikacionit krijon **klientët** (ata që e blejnë), secili klient ka **bizneset**
+  e veta (restorant, berber, dyqan…) dhe **përdoruesit** e vet. Çdo biznes ka ekranet, playlistat, median, menunë,
+  valutat dhe cilësimet e veta; asnjë klient nuk sheh të dhënat e tjetrit. Një përdorues mund të ketë qasje të plotë
+  në disa biznese ose vetëm në disa ekrane.
 - **Ekranet** – çiftim me kod, statusi online/offline, platforma dhe rezolucioni i zbuluar automatikisht,
   orientim horizontal/vertikal, rifreskim në distancë.
 - **Orare** – p.sh. menuja e mëngjesit 07:00–11:00, oferta e drekës 12:00–15:00 (sipas ditëve të javës).
@@ -102,8 +106,24 @@ rifreskon çmimet te Menuja).
 - **Valutat** – kodi, emri, simboli, kursi, lloji fiskal; valuta kryesore (isMainCurrency) shfaqet te çmimet.
 - **Mënyrat e pagesës** – kodi, emri, renditja, lloji fiskal, e parazgjedhura.
 - **Cilësimet** – emri, logo, ngjyrat e markës, monedha, ora, shiriti i lajmeve, zona kohore, gjuha e panelit.
+- **Njoftim urgjent** – te **Paneli → Njoftim urgjent**: një mesazh (p.sh. "MBYLLUR SOT") mbulon gjithë ekranin në
+  **të gjitha TV-të e biznesit** brenda ~15 sekondave; zgjidhni ngjyrën dhe sa kohë të qëndrojë (ose derisa ta hiqni).
+- **Datat e slide-ve** – çdo slide mund të ketë "Shfaqe nga data – deri më": oferta e javës shfaqet vetë kur fillon
+  dhe zhduket vetë pas datës së fundit, edhe në TV pa rrjet.
+- **Fikja jashtë orarit** – te **Cilësimet → Ekrani**: jashtë orarit të punës TV-të shfaqin ekran të zi dhe ndizen vetë
+  kur hapet biznesi.
+- **Ora e saktë në çdo TV** – ora në ekran, HAPUR/MBYLLUR, oraret dhe datat llogariten me orën e serverit dhe zonën
+  kohore të biznesit, edhe kur TV-ja ka orë ose zonë kohore të gabuar.
 
 Player-i kontrollon serverin çdo 15 sekonda; ndryshimet shfaqen pa rinisur TV-në.
+
+## Testet
+```bash
+dotnet test backend/SmartScreen.sln -p:SkipFrontend=true
+```
+`backend/SmartScreen.Tests` nis serverin e vërtetë me një databazë SQLite të përkohshme dhe kontrollon çiftimin e TV-së,
+përmbajtjen, njoftimin urgjent, datat e slide-ve, ndarjen mes klientëve, qasjet e përdoruesve, oraret dhe sigurinë.
+Në GitHub testet dhe build-i i frontend-it nisen vetë me çdo push (`.github/workflows/ci.yml`).
 
 ## Puna pa rrjet (offline)
 TV-ja ruan gjithçka që i duhet për të luajtur pa internet, edhe pas rinisjes:
@@ -249,5 +269,9 @@ Për ta provuar pa instalues (pas `dotnet publish` më sipër): `cd electron && 
 > Herën e parë Windows Firewall pyet për portin 5080 – zgjidhni **Allow**, që TV-të ta gjejnë serverin.
 
 ## Siguria në prodhim
-- Ndryshoni `Jwt:Key` dhe fjalëkalimin e adminit te `appsettings.json`.
+- Ndryshoni fjalëkalimin e adminit (`admin / Admin123!`) menjëherë pas hyrjes së parë (**Cilësimet → Ndrysho fjalëkalimin**).
+- `Jwt:Key`: nëse lihet çelësi i shembullit nga `appsettings.json`, serveri krijon vetë një çelës të rastësishëm dhe e
+  ruan te `jwt.key` në dosjen e aplikacionit (mos e ndani dhe mos e vendosni në GitHub). Mund të vendosni edhe çelësin
+  tuaj (të paktën 32 karaktere) te `appsettings.json` ose me variablin `Jwt__Key`.
+- Hyrja kufizohet në 10 prova në minutë për çdo IP (mbrojtje nga provat e fjalëkalimit).
 - Përdorni HTTPS (p.sh. pas IIS ose Nginx).

@@ -8,6 +8,9 @@
  *  2. GET  /api/player/{key}/content çdo 15s -> nëse ndryshon "version", playlist-a e re
  *     aplikohet në fund të slide-it aktual. Përmbajtja ruhet lokalisht për punë offline.
  *
+ * Ora: serveri dërgon orën e vet dhe zonën kohore të biznesit (clock), që ora në ekran, HAPUR/MBYLLUR,
+ * oraret, datat e slide-ve dhe fikja jashtë orarit të jenë të sakta edhe kur ora/zona e TV-së është e gabuar.
+ *
  * Pa rrjet: përmbajtja (me oraret dhe të gjitha playlist-at e ekranit) merret nga localStorage,
  * playlist-a sipas orarit zgjidhet këtu me orën e pajisjes, dhe foto/videot vijnë nga cache-i
  * i pajisjes (Service Worker sw.js në shfletues/PC, ose cache-i në disk i aplikacionit Android).
@@ -55,7 +58,9 @@
     commandVersion: null,
     index: -1,
     timer: null,
-    online: true
+    online: true,
+    sleeping: false,
+    clock: parseJson(store('ss_clock'))  // { skew: ms (serveri - pajisja), offset: minuta UTC e biznesit }
   };
 
   // ------------------------------------------------------------------ nisja
@@ -75,6 +80,7 @@
       window.addEventListener('message', function (e) {
         if (e.origin !== location.origin || !e.data || e.data.type !== 'smartscreen-preview') return;
         state.pending = null;
+        syncClock(e.data.content);
         start(e.data.content);
       });
       return;
@@ -142,6 +148,7 @@
     }
     state.commandVersion = c.commandVersion;
 
+    syncClock(c);
     if (c.version === state.version && state.content) return;
     store('ss_content', JSON.stringify(c));
     cacheMedia(c);
@@ -186,9 +193,9 @@
       state.index = -1;
       applyChrome(p);
     }
-    if (!state.content) return;
+    if (!state.content || state.sleeping) return;
 
-    var slides = (state.content.playlist && state.content.playlist.slides) || [];
+    var slides = activeSlides();
     if (!slides.length) {
       showIdle(state.content.settings);
       state.timer = setTimeout(next, RETRY_MS);
@@ -197,15 +204,29 @@
     hideOverlay();
 
     state.index = (state.index + 1) % slides.length;
-    show(slides[state.index], slides.length === 1);
+    show(slides[state.index], slides.length);
     preload(slides[(state.index + 1) % slides.length]);
   }
 
-  function show(slide, isOnlySlide) {
+  /** Slide-t e playlist-ës që shfaqen sot (pa ato jashtë periudhës "nga data – deri më"). */
+  function activeSlides() {
+    var all = (state.content && state.content.playlist && state.content.playlist.slides) || [];
+    var today = bizNow().ymd;
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      var s = all[i];
+      if (s.startDate && today < s.startDate) continue;
+      if (s.endDate && today > s.endDate) continue;
+      out.push(s);
+    }
+    return out;
+  }
+
+  function show(slide, slideCount) {
     var incoming = layers[1 - activeLayer];
     var outgoing = layers[activeLayer];
     var built = buildSlide(slide, state.content.settings);
-    var slideCount = ((state.content.playlist && state.content.playlist.slides) || []).length;
+    var isOnlySlide = slideCount === 1;
     setProgress(state.index, slideCount, built.video && !(slide.duration > 0) ? 0 : Math.max(3, slide.duration || 10) * 1000);
 
     clearLayer(incoming);
@@ -441,9 +462,9 @@
   function priceEl(value, currency, oldValue) {
     var box = div('price');
     if (oldValue) box.appendChild(textEl('span', formatPrice(oldValue, currency), 'old'));
-    var n = Number(value);
-    var whole = Math.floor(n);
-    var cents = Math.round((n - whole) * 100);
+    var total = Math.round(Number(value) * 100); // në cent, që 5.999 të mos dalë "5.100"
+    var whole = Math.floor(total / 100);
+    var cents = total % 100;
     if (currency) box.appendChild(textEl('span', currency, 'cur'));
     box.appendChild(textEl('span', String(whole), 'int'));
     if (cents > 0) box.appendChild(textEl('span', '.' + (cents < 10 ? '0' : '') + cents, 'dec'));
@@ -598,6 +619,8 @@
     $('clock').className = s.showClock ? 'h-clock' : 'h-clock hidden';
     document.documentElement.lang = s.screenLanguage === 'en' ? 'en' : 'sq';
     applyOrientation(c);
+    updateAlert();
+    updateSleep();
   }
 
   function logoCircleWithId(s) {
@@ -656,13 +679,53 @@
     var box = $('hStatus');
     var hours = hoursText(s);
     if (!hours) { box.className = 'h-status hidden'; return; }
-    var now = new Date();
-    var t = now.getHours() * 60 + now.getMinutes();
-    var open = toMinutes(s.openingTime);
-    var close = toMinutes(s.closingTime);
-    var isOpen = open <= close ? (t >= open && t < close) : (t >= open || t < close);
+    var isOpen = isOpenNow(s);
     box.className = 'h-status' + (isOpen ? '' : ' closed');
     $('hStatusText').textContent = label(s, isOpen ? 'open' : 'closed') + ' · ' + hours;
+  }
+
+  function isOpenNow(s) {
+    var t = bizNow().minutes;
+    var open = toMinutes(s.openingTime);
+    var close = toMinutes(s.closingTime);
+    if (open === close) return true; // p.sh. 00:00 – 24:00 / 00:00
+    return open < close ? (t >= open && t < close) : (t >= open || t < close);
+  }
+
+  // Jashtë orarit (nëse admini e ka zgjedhur): ekran i zi dhe asnjë slide/video nuk luhet.
+  function updateSleep() {
+    var s = (state.content && state.content.settings) || {};
+    var sleep = !isPreview && !!s.sleepWhenClosed && !!hoursText(s) && !isOpenNow(s);
+    if (sleep === state.sleeping) return;
+    state.sleeping = sleep;
+    $('sleep').className = sleep ? '' : 'hidden';
+    if (sleep) {
+      clearTimeout(state.timer);
+      clearLayer(layers[0]);
+      clearLayer(layers[1]);
+      layers[0].className = layers[1].className = 'layer';
+    } else if (state.content) {
+      state.index = -1;
+      next();
+    }
+  }
+
+  // Njoftimi urgjent nga paneli: mbulon gjithë ekranin derisa të hiqet ose të skadojë.
+  var shownAlert = null;
+  function updateAlert() {
+    var a = !isPreview && state.content && state.content.settings && state.content.settings.alert;
+    if (a && a.expiresAt && bizNow().epoch >= a.expiresAt) a = null;
+    var key = a ? [a.title, a.text, a.color].join('\u0001') : null;
+    if (key === shownAlert) return;
+    shownAlert = key;
+    var box = $('alert');
+    if (!a) { box.className = 'hidden'; box.innerHTML = ''; return; }
+    box.innerHTML = '';
+    box.style.backgroundColor = a.color || '#c8102e';
+    box.appendChild(textEl('div', '!', 'alert-icon'));
+    if (a.title) box.appendChild(textEl('h1', a.title));
+    if (a.text) box.appendChild(textEl('p', a.text));
+    box.className = '';
   }
 
   function label(settings, key) {
@@ -675,12 +738,40 @@
   function startClock() {
     var el = $('clock');
     var tick = function () {
-      var d = new Date();
-      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+      var n = bizNow();
+      el.textContent = pad(Math.floor(n.minutes / 60)) + ':' + pad(n.minutes % 60);
       updateStatus();
+      updateAlert();
+      updateSleep();
     };
     tick();
-    setInterval(tick, 10000);
+    setInterval(tick, 5000);
+  }
+
+  // Ruan diferencën me orën e serverit dhe zonën kohore të biznesit (edhe për punën pa rrjet).
+  function syncClock(c) {
+    if (!c || !c.clock || !c.clock.serverTime) return;
+    state.clock = { skew: c.clock.serverTime - new Date().getTime(), offset: c.clock.utcOffsetMinutes || 0 };
+    if (!isPreview) store('ss_clock', JSON.stringify(state.clock));
+  }
+
+  /**
+   * Koha "tani" sipas biznesit: { epoch (ms UTC), minutes (që nga mesnata), day (0 = e diel), ymd ("yyyy-MM-dd") }.
+   * Pa të dhëna nga serveri përdoret ora e pajisjes.
+   */
+  function bizNow() {
+    var epoch = new Date().getTime();
+    var c = state.clock;
+    var d;
+    if (c && typeof c.skew === 'number') {
+      epoch += c.skew;
+      d = new Date(epoch + (c.offset || 0) * 60000);
+      return { epoch: epoch, minutes: d.getUTCHours() * 60 + d.getUTCMinutes(), day: d.getUTCDay(),
+               ymd: d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) };
+    }
+    d = new Date(epoch);
+    return { epoch: epoch, minutes: d.getHours() * 60 + d.getMinutes(), day: d.getDay(),
+             ymd: d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) };
   }
 
   // ------------------------------------------------------------------ ekranet e sistemit
@@ -689,9 +780,10 @@
     var platform = detectPlatform();
     showOverlay(
       BRAND +
-      '<div class="label">Kodi i çiftimit</div>' +
+      '<div class="label">Kodi i çiftimit &middot; Pairing code</div>' +
       '<div class="code">' + escapeHtml(code || '------') + '</div>' +
-      '<div class="hint">Hapni panelin e administrimit &rarr; <b>Ekranet</b> &rarr; <b>Shto ekran</b> dhe vendosni këtë kod.</div>' +
+      '<div class="hint">Hapni panelin e administrimit &rarr; <b>Ekranet</b> &rarr; <b>Shto ekran</b> dhe vendosni këtë kod.<br>' +
+      'Open the admin panel &rarr; <b>Screens</b> &rarr; <b>Add screen</b> and enter this code.</div>' +
       '<div class="meta">' + escapeHtml(platform) + ' &middot; ' + screenWidth() + '&times;' + screenHeight() + '</div>'
     );
   }
@@ -772,7 +864,7 @@
   function applyOfflineSchedule() {
     var base = state.pending || state.content;
     if (!base || !base.offline || isPreview) return;
-    var wantedId = resolveOfflinePlaylistId(base.offline, new Date());
+    var wantedId = resolveOfflinePlaylistId(base.offline, bizNow());
     var currentId = base.playlist ? base.playlist.id : null;
     if (wantedId === currentId) return;
 
@@ -800,11 +892,11 @@
   }
 
   function isScheduleActive(s, now) {
-    var t = now.getHours() * 60 + now.getMinutes();
+    var t = now.minutes;
     var start = toMinutes(s.startTime);
     var end = toMinutes(s.endTime);
     var dayOn = function (d) { return (s.daysOfWeek & (1 << d)) !== 0; };
-    var today = now.getDay();
+    var today = now.day;
     if (start <= end) return dayOn(today) && t >= start && t < end;
     // Kalon mesnatën (p.sh. 22:00–02:00): pjesa pas mesnate i përket ditës së mëparshme.
     if (t >= start) return dayOn(today);

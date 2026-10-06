@@ -22,3 +22,6 @@ tv-apps/android-tv/build/
 tv-apps/android-tv/app/build/
 tv-apps/android-tv/local.properties
 tv-apps/android-tv/.idea/
+
+# Çelësi JWT i krijuar automatikisht nga serveri
+jwt.key

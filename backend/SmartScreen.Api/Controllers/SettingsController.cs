@@ -27,6 +27,13 @@ public partial class SettingsController(AppDbContext db, BusinessAccess access) 
             return BadRequest(new { message = "Logo e zgjedhur nuk ekziston." });
         if (!IsTime(req.OpeningTime) || !IsTime(req.ClosingTime))
             return BadRequest(new { message = "Orari duhet të jetë në formatin HH:mm (p.sh. 10:00, 24:00)." });
+        if (string.IsNullOrWhiteSpace(req.BusinessName))
+            return BadRequest(new { message = "Vendosni emrin e biznesit." });
+        var timeZone = string.IsNullOrWhiteSpace(req.TimeZoneId) ? "Europe/Tirane" : req.TimeZoneId.Trim();
+        if (!TimeZoneInfo.TryFindSystemTimeZoneById(timeZone, out _))
+            return BadRequest(new { message = $"Zona kohore '{timeZone}' nuk njihet." });
+        if (req.SleepWhenClosed && (string.IsNullOrWhiteSpace(req.OpeningTime) || string.IsNullOrWhiteSpace(req.ClosingTime)))
+            return BadRequest(new { message = "Për të fikur ekranet jashtë orarit vendosni orën e hapjes dhe të mbylljes." });
 
         var s = await LoadAsync();
         s.BusinessName = req.BusinessName.Trim();
@@ -37,7 +44,8 @@ public partial class SettingsController(AppDbContext db, BusinessAccess access) 
         s.ShowTicker = req.ShowTicker;
         s.TickerText = req.TickerText;
         s.ShowClock = req.ShowClock;
-        s.TimeZoneId = string.IsNullOrWhiteSpace(req.TimeZoneId) ? "Europe/Tirane" : req.TimeZoneId.Trim();
+        s.TimeZoneId = timeZone;
+        s.SleepWhenClosed = req.SleepWhenClosed;
         s.Tagline = Clean(req.Tagline);
         s.Slogan = Clean(req.Slogan);
         s.OpeningTime = Clean(req.OpeningTime);
@@ -50,6 +58,41 @@ public partial class SettingsController(AppDbContext db, BusinessAccess access) 
         await db.SaveChangesAsync();
 
         return await ToDtoAsync(await LoadAsync());
+    }
+
+    /// <summary>
+    /// Njoftim urgjent në të gjitha ekranet e biznesit (mbulon gjithë ekranin). Arrin te TV-të brenda ~15 sekondave.
+    /// </summary>
+    [HttpPut("api/settings/alert")]
+    [BusinessScoped(fullAccess: true)]
+    public async Task<ActionResult<SettingsDto>> SetAlert(SaveAlertRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Title) && string.IsNullOrWhiteSpace(req.Text))
+            return BadRequest(new { message = "Shkruani titullin ose tekstin e njoftimit." });
+        if (req.Color is { Length: > 0 } c && !HexColor().IsMatch(c))
+            return BadRequest(new { message = "Ngjyrat duhet të jenë në formatin #RRGGBB." });
+        if (req.DurationMinutes is < 0 or > 60 * 24 * 365)
+            return BadRequest(new { message = "Kohëzgjatja e njoftimit nuk është e vlefshme." });
+
+        var s = await LoadAsync();
+        s.AlertTitle = Clean(req.Title);
+        s.AlertText = Clean(req.Text);
+        s.AlertColor = string.IsNullOrEmpty(req.Color) ? Mapping.DefaultAlertColor : req.Color;
+        s.AlertExpiresAt = req.DurationMinutes is > 0 ? DateTime.UtcNow.AddMinutes(req.DurationMinutes.Value) : null;
+        s.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return await ToDtoAsync(s);
+    }
+
+    [HttpDelete("api/settings/alert")]
+    [BusinessScoped(fullAccess: true)]
+    public async Task<ActionResult<SettingsDto>> ClearAlert()
+    {
+        var s = await LoadAsync();
+        (s.AlertTitle, s.AlertText, s.AlertExpiresAt) = (null, null, null);
+        s.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return await ToDtoAsync(s);
     }
 
     [HttpGet("api/dashboard")]

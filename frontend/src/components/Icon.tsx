@@ -34,6 +34,8 @@ export const iconFallbacks = {
   language: '🌐',
   eye: '👁',
   'eye-off': '⊘',
+  alert: '!',
+  calendar: '▦',
 } as const;
 
 export type IconName = keyof typeof iconFallbacks;

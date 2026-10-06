@@ -20,10 +20,14 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content, 
     public async Task<List<PlaylistSummaryDto>> GetAll()
     {
         var playlists = await Playlists.AsNoTracking().Include(p => p.Items).OrderBy(p => p.Name).ToListAsync();
-        var screenCounts = await db.Screens.Where(s => s.IsPaired && s.BusinessId == access.BusinessId && s.DefaultPlaylistId != null)
-            .GroupBy(s => s.DefaultPlaylistId!.Value)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        // Ekranet që e luajnë playlist-ën: si të parazgjedhur ose sipas një orari.
+        var usage = await db.Screens.Where(s => s.IsPaired && s.BusinessId == access.BusinessId)
+            .Select(s => new { s.Id, s.DefaultPlaylistId, Scheduled = s.Schedules.Select(x => x.PlaylistId).ToList() })
+            .ToListAsync();
+        var screenCounts = usage
+            .SelectMany(s => s.Scheduled.Append(s.DefaultPlaylistId ?? 0).Distinct().Select(pid => (pid, s.Id)))
+            .GroupBy(x => x.pid)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         return playlists.Select(p => new PlaylistSummaryDto(
             p.Id, p.Name, p.Description, p.Items.Count,
@@ -95,6 +99,7 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content, 
                 SortOrder = i.SortOrder, Type = i.Type, DurationSeconds = i.DurationSeconds, IsEnabled = i.IsEnabled,
                 Title = i.Title, Text = i.Text, Url = i.Url, BackgroundColor = i.BackgroundColor, TextColor = i.TextColor,
                 Fit = i.Fit, MediaAssetId = i.MediaAssetId, MenuCategoryId = i.MenuCategoryId, Badge = i.Badge, Price = i.Price,
+                StartDate = i.StartDate, EndDate = i.EndDate,
             }).ToList(),
         };
         db.Playlists.Add(copy);
@@ -150,6 +155,9 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content, 
                         return $"Slide {n}: çmimi nuk mund të jetë negativ.";
                     break;
             }
+            if (i.StartDate is DateOnly from && i.EndDate is DateOnly to && to < from)
+                return $"Slide {n}: data e mbarimit duhet të jetë pas datës së fillimit.";
+
             var hasMedia = i.Type is SlideType.Image or SlideType.Video or SlideType.Promo or SlideType.Combo;
             var hasOffer = i.Type is SlideType.Promo or SlideType.Combo;
 
@@ -169,6 +177,8 @@ public class PlaylistsController(AppDbContext db, PlayerContentService content, 
                 MenuCategoryId = i.Type == SlideType.Menu ? i.MenuCategoryId : null,
                 Badge = hasOffer ? i.Badge?.Trim() : null,
                 Price = hasOffer ? i.Price : null,
+                StartDate = i.StartDate,
+                EndDate = i.EndDate,
             });
         }
         return null;

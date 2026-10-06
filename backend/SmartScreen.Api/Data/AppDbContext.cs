@@ -124,6 +124,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.SocialHandle).HasMaxLength(100);
             e.Property(s => s.ScreenLanguage).HasMaxLength(5);
             e.Property(s => s.BusinessType).HasMaxLength(20);
+            e.Property(s => s.AlertTitle).HasMaxLength(200);
+            e.Property(s => s.AlertText).HasMaxLength(1000);
+            e.Property(s => s.AlertColor).HasMaxLength(7);
         });
 
         b.Entity<PlaylistItem>(e =>

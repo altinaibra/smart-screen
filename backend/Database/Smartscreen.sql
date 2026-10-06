@@ -5,16 +5,18 @@
 
     - Krijon databazën [Smartscreen] nëse nuk ekziston.
     - Krijon tabelat (të njëjta me modelin e Entity Framework në AppDbContext.cs):
-        Users (admini), BusinessSettings, MenuCategories, Products, Playlists, PlaylistItems,
+        Clients (klientët), Users (përdoruesit), UserBusinesses / UserScreens (qasjet),
+        BusinessSettings (bizneset me cilësimet e tyre), MenuCategories, Products, Playlists, PlaylistItems,
         Screens, ScreenSchedules, MediaAssets (të dhënat e fotove/videove) dhe
         MediaChunks (vetë përmbajtja e fotove/videove, e ndarë në copa 1 MB),
         Currencies (valutat) dhe PaymentMethods (mënyrat e pagesës).
-    - Të dhënat fillestare (përdoruesi admin, cilësimet, valutat, mënyrat e pagesës, menuja demo) i shton vetë aplikacioni në nisjen e parë.
+    - Përdoruesin e parë (pronarin: admin / Admin123!) e shton vetë aplikacioni në nisjen e parë.
 
     Ky skript nuk është i detyrueshëm: nëse databaza është bosh, aplikacioni i krijon tabelat vetë.
     Nëse tabelat janë krijuar me një version më të vjetër të skriptit, aplikacioni shton vetë
     tabelat që mungojnë (p.sh. MediaChunks, Currencies, PaymentMethods) në nisje.
-    Nëse ndryshon modeli (dosja Models/ ose AppDbContext.cs), ky skript duhet rigjeneruar.
+    Nëse ndryshon modeli (dosja Models/ ose AppDbContext.cs), ky skript duhet rigjeneruar
+    (db.Database.GenerateCreateScript() me UseSqlServer).
 */
 
 IF DB_ID(N'Smartscreen') IS NULL
@@ -32,65 +34,16 @@ BEGIN
 END
 GO
 
-CREATE TABLE [Currencies] (
-    [CurrencyId] int NOT NULL IDENTITY,
-    [CurrencyCode] nvarchar(10) NOT NULL,
-    [CurrencyName] nvarchar(100) NOT NULL,
-    [CurrencySymbol] nvarchar(10) NOT NULL,
-    [ExchangeRate] decimal(18,3) NOT NULL,
-    [Status] bit NOT NULL,
-    [IsMainCurrency] bit NOT NULL,
-    [EntryDate] datetime2 NOT NULL,
-    [FiscalType] int NOT NULL,
-    [RowVersion] rowversion NULL,
-    CONSTRAINT [PK_Currencies] PRIMARY KEY ([CurrencyId])
-);
-GO
-
-
-CREATE TABLE [MediaAssets] (
+CREATE TABLE [Clients] (
     [Id] int NOT NULL IDENTITY,
-    [Name] nvarchar(200) NOT NULL,
-    [Type] nvarchar(20) NOT NULL,
-    [FileName] nvarchar(200) NOT NULL,
-    [ContentType] nvarchar(2000) NOT NULL,
-    [SizeBytes] bigint NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [ContactPerson] nvarchar(150) NULL,
+    [Phone] nvarchar(50) NULL,
+    [Email] nvarchar(150) NULL,
+    [Notes] nvarchar(2000) NULL,
+    [IsActive] bit NOT NULL,
     [CreatedAt] datetime2 NOT NULL,
-    CONSTRAINT [PK_MediaAssets] PRIMARY KEY ([Id])
-);
-GO
-
-
-CREATE TABLE [MenuCategories] (
-    [Id] int NOT NULL IDENTITY,
-    [Name] nvarchar(100) NOT NULL,
-    [SortOrder] int NOT NULL,
-    CONSTRAINT [PK_MenuCategories] PRIMARY KEY ([Id])
-);
-GO
-
-
-CREATE TABLE [PaymentMethods] (
-    [PaymentMethodId] int NOT NULL IDENTITY,
-    [PaymentMethodCode] nvarchar(20) NOT NULL,
-    [PaymentMethodName] nvarchar(100) NOT NULL,
-    [Status] bit NOT NULL,
-    [IsDefault] bit NOT NULL,
-    [SortOrder] int NOT NULL,
-    [EntryDate] datetime2 NOT NULL,
-    [FiscalType] int NOT NULL,
-    [RowVersion] rowversion NULL,
-    CONSTRAINT [PK_PaymentMethods] PRIMARY KEY ([PaymentMethodId])
-);
-GO
-
-
-CREATE TABLE [Playlists] (
-    [Id] int NOT NULL IDENTITY,
-    [Name] nvarchar(100) NOT NULL,
-    [Description] nvarchar(2000) NULL,
-    [UpdatedAt] datetime2 NOT NULL,
-    CONSTRAINT [PK_Playlists] PRIMARY KEY ([Id])
+    CONSTRAINT [PK_Clients] PRIMARY KEY ([Id])
 );
 GO
 
@@ -99,15 +52,18 @@ CREATE TABLE [Users] (
     [Id] int NOT NULL IDENTITY,
     [Username] nvarchar(100) NOT NULL,
     [PasswordHash] nvarchar(2000) NOT NULL,
-    [Role] nvarchar(2000) NOT NULL,
+    [Role] nvarchar(20) NOT NULL,
+    [ClientId] int NULL,
     [CreatedAt] datetime2 NOT NULL,
-    CONSTRAINT [PK_Users] PRIMARY KEY ([Id])
+    CONSTRAINT [PK_Users] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Users_Clients_ClientId] FOREIGN KEY ([ClientId]) REFERENCES [Clients] ([Id])
 );
 GO
 
 
 CREATE TABLE [BusinessSettings] (
     [Id] int NOT NULL IDENTITY,
+    [ClientId] int NOT NULL,
     [BusinessName] nvarchar(2000) NOT NULL,
     [Tagline] nvarchar(100) NULL,
     [Slogan] nvarchar(200) NULL,
@@ -125,9 +81,97 @@ CREATE TABLE [BusinessSettings] (
     [TickerText] nvarchar(2000) NULL,
     [ShowClock] bit NOT NULL,
     [TimeZoneId] nvarchar(2000) NOT NULL,
+    [SleepWhenClosed] bit NOT NULL,
+    [AlertTitle] nvarchar(200) NULL,
+    [AlertText] nvarchar(1000) NULL,
+    [AlertColor] nvarchar(7) NULL,
+    [AlertExpiresAt] datetime2 NULL,
     [UpdatedAt] datetime2 NOT NULL,
     CONSTRAINT [PK_BusinessSettings] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_BusinessSettings_MediaAssets_LogoAssetId] FOREIGN KEY ([LogoAssetId]) REFERENCES [MediaAssets] ([Id]) ON DELETE SET NULL
+    CONSTRAINT [FK_BusinessSettings_Clients_ClientId] FOREIGN KEY ([ClientId]) REFERENCES [Clients] ([Id])
+);
+GO
+
+
+CREATE TABLE [Currencies] (
+    [CurrencyId] int NOT NULL IDENTITY,
+    [BusinessId] int NOT NULL,
+    [CurrencyCode] nvarchar(10) NOT NULL,
+    [CurrencyName] nvarchar(100) NOT NULL,
+    [CurrencySymbol] nvarchar(10) NOT NULL,
+    [ExchangeRate] decimal(18,3) NOT NULL,
+    [Status] bit NOT NULL,
+    [IsMainCurrency] bit NOT NULL,
+    [EntryDate] datetime2 NOT NULL,
+    [FiscalType] int NOT NULL,
+    [RowVersion] rowversion NULL,
+    CONSTRAINT [PK_Currencies] PRIMARY KEY ([CurrencyId]),
+    CONSTRAINT [FK_Currencies_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id])
+);
+GO
+
+
+CREATE TABLE [MediaAssets] (
+    [Id] int NOT NULL IDENTITY,
+    [BusinessId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Type] nvarchar(20) NOT NULL,
+    [FileName] nvarchar(200) NOT NULL,
+    [ContentType] nvarchar(2000) NOT NULL,
+    [SizeBytes] bigint NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_MediaAssets] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MediaAssets_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id])
+);
+GO
+
+
+CREATE TABLE [MenuCategories] (
+    [Id] int NOT NULL IDENTITY,
+    [BusinessId] int NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [SortOrder] int NOT NULL,
+    CONSTRAINT [PK_MenuCategories] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MenuCategories_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id])
+);
+GO
+
+
+CREATE TABLE [PaymentMethods] (
+    [PaymentMethodId] int NOT NULL IDENTITY,
+    [BusinessId] int NOT NULL,
+    [PaymentMethodCode] nvarchar(20) NOT NULL,
+    [PaymentMethodName] nvarchar(100) NOT NULL,
+    [Status] bit NOT NULL,
+    [IsDefault] bit NOT NULL,
+    [SortOrder] int NOT NULL,
+    [EntryDate] datetime2 NOT NULL,
+    [FiscalType] int NOT NULL,
+    [RowVersion] rowversion NULL,
+    CONSTRAINT [PK_PaymentMethods] PRIMARY KEY ([PaymentMethodId]),
+    CONSTRAINT [FK_PaymentMethods_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id])
+);
+GO
+
+
+CREATE TABLE [Playlists] (
+    [Id] int NOT NULL IDENTITY,
+    [BusinessId] int NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [UpdatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_Playlists] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Playlists_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id])
+);
+GO
+
+
+CREATE TABLE [UserBusinesses] (
+    [UserId] int NOT NULL,
+    [BusinessId] int NOT NULL,
+    CONSTRAINT [PK_UserBusinesses] PRIMARY KEY ([UserId], [BusinessId]),
+    CONSTRAINT [FK_UserBusinesses_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_UserBusinesses_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
 );
 GO
 
@@ -176,6 +220,8 @@ CREATE TABLE [PlaylistItems] (
     [Fit] nvarchar(20) NOT NULL,
     [Badge] nvarchar(100) NULL,
     [Price] decimal(12,2) NULL,
+    [StartDate] date NULL,
+    [EndDate] date NULL,
     [MediaAssetId] int NULL,
     [MenuCategoryId] int NULL,
     CONSTRAINT [PK_PlaylistItems] PRIMARY KEY ([Id]),
@@ -190,6 +236,7 @@ CREATE TABLE [Screens] (
     [Id] int NOT NULL IDENTITY,
     [Name] nvarchar(100) NOT NULL,
     [Location] nvarchar(2000) NULL,
+    [BusinessId] int NULL,
     [DeviceKey] nvarchar(64) NOT NULL,
     [PairingCode] nvarchar(10) NULL,
     [IsPaired] bit NOT NULL,
@@ -203,6 +250,7 @@ CREATE TABLE [Screens] (
     [LastSeenAt] datetime2 NULL,
     [CreatedAt] datetime2 NOT NULL,
     CONSTRAINT [PK_Screens] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Screens_BusinessSettings_BusinessId] FOREIGN KEY ([BusinessId]) REFERENCES [BusinessSettings] ([Id]),
     CONSTRAINT [FK_Screens_Playlists_DefaultPlaylistId] FOREIGN KEY ([DefaultPlaylistId]) REFERENCES [Playlists] ([Id])
 );
 GO
@@ -223,11 +271,29 @@ CREATE TABLE [ScreenSchedules] (
 GO
 
 
+CREATE TABLE [UserScreens] (
+    [UserId] int NOT NULL,
+    [ScreenId] int NOT NULL,
+    CONSTRAINT [PK_UserScreens] PRIMARY KEY ([UserId], [ScreenId]),
+    CONSTRAINT [FK_UserScreens_Screens_ScreenId] FOREIGN KEY ([ScreenId]) REFERENCES [Screens] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_UserScreens_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE INDEX [IX_BusinessSettings_ClientId] ON [BusinessSettings] ([ClientId]);
+GO
+
+
 CREATE INDEX [IX_BusinessSettings_LogoAssetId] ON [BusinessSettings] ([LogoAssetId]);
 GO
 
 
-CREATE UNIQUE INDEX [IX_Currencies_CurrencyCode] ON [Currencies] ([CurrencyCode]);
+CREATE UNIQUE INDEX [IX_Currencies_BusinessId_CurrencyCode] ON [Currencies] ([BusinessId], [CurrencyCode]);
+GO
+
+
+CREATE INDEX [IX_MediaAssets_BusinessId] ON [MediaAssets] ([BusinessId]);
 GO
 
 
@@ -235,7 +301,11 @@ CREATE UNIQUE INDEX [IX_MediaChunks_MediaAssetId_Index] ON [MediaChunks] ([Media
 GO
 
 
-CREATE UNIQUE INDEX [IX_PaymentMethods_PaymentMethodCode] ON [PaymentMethods] ([PaymentMethodCode]);
+CREATE INDEX [IX_MenuCategories_BusinessId] ON [MenuCategories] ([BusinessId]);
+GO
+
+
+CREATE UNIQUE INDEX [IX_PaymentMethods_BusinessId_PaymentMethodCode] ON [PaymentMethods] ([BusinessId], [PaymentMethodCode]);
 GO
 
 
@@ -251,11 +321,19 @@ CREATE INDEX [IX_PlaylistItems_PlaylistId] ON [PlaylistItems] ([PlaylistId]);
 GO
 
 
+CREATE INDEX [IX_Playlists_BusinessId] ON [Playlists] ([BusinessId]);
+GO
+
+
 CREATE INDEX [IX_Products_CategoryId] ON [Products] ([CategoryId]);
 GO
 
 
 CREATE INDEX [IX_Products_ImageAssetId] ON [Products] ([ImageAssetId]);
+GO
+
+
+CREATE INDEX [IX_Screens_BusinessId] ON [Screens] ([BusinessId]);
 GO
 
 
@@ -279,7 +357,23 @@ CREATE INDEX [IX_ScreenSchedules_ScreenId] ON [ScreenSchedules] ([ScreenId]);
 GO
 
 
+CREATE INDEX [IX_UserBusinesses_BusinessId] ON [UserBusinesses] ([BusinessId]);
+GO
+
+
+CREATE INDEX [IX_Users_ClientId] ON [Users] ([ClientId]);
+GO
+
+
 CREATE UNIQUE INDEX [IX_Users_Username] ON [Users] ([Username]);
+GO
+
+
+CREATE INDEX [IX_UserScreens_ScreenId] ON [UserScreens] ([ScreenId]);
+GO
+
+
+ALTER TABLE [BusinessSettings] ADD CONSTRAINT [FK_BusinessSettings_MediaAssets_LogoAssetId] FOREIGN KEY ([LogoAssetId]) REFERENCES [MediaAssets] ([Id]) ON DELETE SET NULL;
 GO
 
 SET NOEXEC OFF;

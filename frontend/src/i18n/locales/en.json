@@ -290,7 +290,15 @@
     "priceHint": "Shown in the yellow \"ONLY …\" circle",
     "removePhoto": "Remove photo",
     "brandHint": "Shows the logo, name, slogan, hours, phone and social handle from Settings.",
-    "currencyHint": "{valuta} = main currency symbol"
+    "currencyHint": "{valuta} = main currency symbol",
+    "addDates": "Show only on certain dates",
+    "startDate": "Show from",
+    "endDate": "Until (inclusive)",
+    "datesHint": "After this date the slide disappears from the TVs automatically",
+    "clearDates": "Remove dates",
+    "expired": "Expired",
+    "startsOn": "Starts {{date}}",
+    "endsOn": "Until {{date}}"
   },
   "preview": {
     "fullHd": "Full HD 1920×1080",
@@ -363,7 +371,7 @@
     "showTicker": "Show the news ticker (bottom)",
     "tickerText": "Ticker text",
     "timeZone": "Time zone",
-    "timeZoneHint": "Used for playlist schedules",
+    "timeZoneHint": "Used for the clock on the TV, OPEN/CLOSED, playlist schedules and slide dates",
     "save": "Save settings",
     "panel": "Panel",
     "languageHint": "Language of the admin panel (saved in this browser)",
@@ -391,7 +399,10 @@
     "type_restaurant": "Restaurant",
     "type_barber": "Barber",
     "type_shop": "Accessories",
-    "tickerHint": "Separate sentences with • or a new line. For the currency write {valuta}, e.g. \"Menu Classic only 6.50{valuta}\" → 6.50{{symbol}} (follows the main currency)."
+    "tickerHint": "Separate sentences with • or a new line. For the currency write {valuta}, e.g. \"Menu Classic only 6.50{valuta}\" → 6.50{{symbol}} (follows the main currency).",
+    "sleepWhenClosed": "Turn screens off outside opening hours",
+    "sleepWhenClosedHint": "Outside opening hours the TVs show a black screen and play nothing; they wake up when the business opens.",
+    "sleepNeedsHours": "Set the opening and closing time to enable this."
   },
   "currencies": {
     "title": "Currencies",
@@ -500,5 +511,26 @@
     "adminHint": "The client logs in with this account and sees only their own businesses, screens and users.",
     "activeHint": "Inactive: the client's users cannot log in (e.g. unpaid subscription).",
     "confirmDelete": "Delete client \"{{name}}\"? All their businesses, screens, playlists, photos, videos and users will be deleted."
+  },
+  "alert": {
+    "button": "Emergency message",
+    "title": "Emergency message on all screens",
+    "hint": "The message covers the whole screen on every TV of this business within ~15 seconds, until you remove it or it expires.",
+    "heading": "Title",
+    "headingPlaceholder": "e.g. CLOSED TODAY",
+    "text": "Text",
+    "textPlaceholder": "e.g. We reopen tomorrow at 08:00. Thank you!",
+    "color": "Color",
+    "duration": "Show for",
+    "untilRemoved": "Until I remove it",
+    "minutes": "{{count}} minutes",
+    "minutes_one": "1 minute",
+    "hours": "{{count}} hours",
+    "hours_one": "1 hour",
+    "send": "Show on screens",
+    "stop": "Remove message",
+    "live": "Message live on all screens",
+    "noExpiry": "No expiry – until you remove it",
+    "until": "Removed automatically at {{time}}"
   }
 }

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SmartScreen.Api.Data;
 using SmartScreen.Api.Dtos;
@@ -16,6 +17,7 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
 {
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest req)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Username == req.Username.Trim());

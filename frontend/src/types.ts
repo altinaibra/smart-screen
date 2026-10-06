@@ -68,6 +68,9 @@ export interface PlaylistItem {
   menuCategoryId?: number | null;
   badge?: string | null;
   price?: number | null;
+  /** "yyyy-MM-dd" – slide-i shfaqet vetëm brenda kësaj periudhe (data lokale e biznesit). */
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface Playlist {
@@ -118,6 +121,26 @@ export interface Settings {
   socialHandle?: string | null;
   screenLanguage: 'sq' | 'en';
   businessType: BusinessType;
+  /** Jashtë orarit të punës TV-të errësohen. */
+  sleepWhenClosed: boolean;
+  /** Njoftimi urgjent aktiv (vetëm për lexim; ndryshohet me setAlert / clearAlert). */
+  alert?: Alert | null;
+}
+
+export interface Alert {
+  title?: string | null;
+  text?: string | null;
+  color: string;
+  /** UTC; null = derisa ta heqë admini. */
+  expiresAt?: string | null;
+}
+
+export interface SaveAlertRequest {
+  title?: string | null;
+  text?: string | null;
+  color?: string | null;
+  /** null ose 0 = pa afat. */
+  durationMinutes?: number | null;
 }
 
 export interface Currency {
