@@ -125,7 +125,8 @@
     "filter_offline": "Offline",
     "colStatus": "Status",
     "colDevice": "Device",
-    "noneInFilter": "No screens in this filter."
+    "noneInFilter": "No screens in this filter.",
+    "open": "Open"
   },
   "screens": {
     "title": "Screens (TV)",

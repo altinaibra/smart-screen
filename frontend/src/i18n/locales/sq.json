@@ -125,7 +125,8 @@
     "filter_offline": "Offline",
     "colStatus": "Statusi",
     "colDevice": "Pajisja",
-    "noneInFilter": "Nuk ka ekrane në këtë filtër."
+    "noneInFilter": "Nuk ka ekrane në këtë filtër.",
+    "open": "Hap"
   },
   "screens": {
     "title": "Ekranet (TV)",

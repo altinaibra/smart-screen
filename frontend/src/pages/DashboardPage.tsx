@@ -7,6 +7,7 @@ import Icon, { type IconName } from '../components/Icon';
 import { Empty, ErrorBox } from '../components/ui';
 import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { useDashboard } from '../services/Dashboard/dashboardQueries';
+import { useScreenLink } from '../services/Screen/screenQueries';
 import { useBusinessType } from '../services/Settings/settingsQueries';
 import type { Screen } from '../types';
 
@@ -124,6 +125,7 @@ function OfflineAlert({ offline, total, troubleshoot }: { offline: Screen[]; tot
 
 function ScreenRow({ screen: s }: { screen: Screen }) {
   const { t } = useTranslation();
+  const { open } = useScreenLink();
   return (
     <tr>
       <td>
@@ -141,7 +143,12 @@ function ScreenRow({ screen: s }: { screen: Screen }) {
         <div>{t(`platform.${s.platform}`)}</div>
         <div className="mono muted small">{s.resolutionWidth} × {s.resolutionHeight}</div>
       </td>
-      <td className="right muted nowrap">{timeAgo(s.lastSeenAt)}</td>
+      <td className="right muted nowrap">
+        {timeAgo(s.lastSeenAt)}
+        <button type="button" className="btn small open-screen" title={t('screens.openHint')} onClick={() => open(s.id).catch(() => {})}>
+          <Icon name="external-link" />{t('dashboard.open')}
+        </button>
+      </td>
     </tr>
   );
 }

@@ -8,8 +8,7 @@ import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import { confirmDialog } from '../components/ConfirmDialog';
 import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { usePlaylists } from '../services/Playlist/playlistQueries';
-import { getScreenLink } from '../services/Screen/screenMethods';
-import { useDeleteScreen, usePairScreen, useReloadScreen, useReplaceDevice, useScreens, useServerInfo, useUpdateScreen } from '../services/Screen/screenQueries';
+import { useDeleteScreen, usePairScreen, useReloadScreen, useReplaceDevice, useScreenLink, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
 import type { Orientation, PlaylistSummary, Schedule, Screen } from '../types';
 
 export default function ScreensPage() {
@@ -31,26 +30,15 @@ export default function ScreensPage() {
   const [editing, setEditing] = useState<Screen | null>(null);
   const [replacing, setReplacing] = useState<Screen | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const { data: serverInfo } = useServerInfo();
-
-  /** Adresa që e arrijnë TV-të (IP-ja e serverit në rrjet), jo "localhost". */
-  async function screenUrl(s: Screen) {
-    const { path } = await getScreenLink(s.id);
-    return (serverInfo?.addresses[0] ?? location.origin) + path;
-  }
+  const screenLink = useScreenLink();
 
   async function openScreen(s: Screen) {
-    // Dritarja hapet menjëherë (para await) që shfletuesi të mos e bllokojë si pop-up.
-    const win = window.open('about:blank', '_blank');
-    try {
-      const url = await screenUrl(s);
-      if (win) win.location.href = url; else location.href = url;
-    } catch (e) { win?.close(); setError((e as Error).message); }
+    try { await screenLink.open(s.id); } catch (e) { setError((e as Error).message); }
   }
 
   async function copyLink(s: Screen) {
     try {
-      const url = await screenUrl(s);
+      const url = await screenLink.url(s.id);
       await navigator.clipboard.writeText(url).catch(() => window.prompt(t('screens.linkPrompt'), url));
       setNotice(t('screens.linkCopied', { name: s.name, url }));
     } catch (e) { setError((e as Error).message); }

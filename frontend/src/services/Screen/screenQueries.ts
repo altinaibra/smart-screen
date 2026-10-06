@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { dashboardKeys } from '../Dashboard/dashboardQueries';
 import { playlistKeys } from '../Playlist/playlistQueries';
 import { queryClient } from '../queryClient';
-import { deleteScreen, getScreens, getServerInfo, pairScreen, reloadScreen, replaceDevice, updateScreen, type PairScreenRequest, type UpdateScreenRequest } from './screenMethods';
+import { deleteScreen, getScreenLink, getScreens, getServerInfo, pairScreen, reloadScreen, replaceDevice, updateScreen, type PairScreenRequest, type UpdateScreenRequest } from './screenMethods';
 
 export const screenKeys = {
   all: ['screens'] as const,
@@ -48,4 +48,22 @@ export function useReplaceDevice() {
     mutationFn: ({ id, pairingCode }: { id: number; pairingCode: string }) => replaceDevice(id, pairingCode),
     onSuccess: invalidate,
   });
+}
+
+/**
+ * Linku i player-it për një ekran me adresën që e arrijnë TV-të (IP-ja e serverit, jo "localhost"):
+ * open() e hap në skedë të re, url() e kthen (p.sh. për ta kopjuar).
+ */
+export function useScreenLink() {
+  const { data: serverInfo } = useServerInfo();
+  const url = async (id: number) => (serverInfo?.addresses[0] ?? location.origin) + (await getScreenLink(id)).path;
+  const open = async (id: number) => {
+    // Dritarja hapet para await, që shfletuesi të mos e bllokojë si pop-up.
+    const win = window.open('about:blank', '_blank');
+    try {
+      const link = await url(id);
+      if (win) win.location.href = link; else location.href = link;
+    } catch (e) { win?.close(); throw e; }
+  };
+  return { url, open };
 }
