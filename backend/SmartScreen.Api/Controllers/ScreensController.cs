@@ -96,6 +96,44 @@ public class ScreensController(AppDbContext db, BusinessAccess access) : Control
         return (await Query().AsNoTracking().FirstAsync(s => s.Id == id)).ToDto();
     }
 
+    /// <summary>
+    /// Linku i player-it për pikërisht këtë ekran (/player/?device=...). Hapet në çdo shfletues/PC/TV dhe vazhdon
+    /// si ky ekran (me playlist-at, oraret dhe emrin e tij) pa kod të ri çiftimi.
+    /// </summary>
+    [HttpGet("{id:int}/link")]
+    public async Task<ActionResult<ScreenLinkDto>> Link(int id)
+    {
+        var key = await access.Screens(db.Screens).Where(s => s.Id == id).Select(s => s.DeviceKey).FirstOrDefaultAsync();
+        return key is null ? NotFound() : new ScreenLinkDto($"/player/?device={key}");
+    }
+
+    /// <summary>
+    /// Lidh një pajisje tjetër (TV i ri, TV i rikthyer në fabrikë, shfletues tjetër) me këtë ekran duke përdorur
+    /// kodin që shfaq ajo pajisje. Ekrani mban emrin, playlist-at dhe oraret; pajisja e vjetër shfaq kod të ri.
+    /// </summary>
+    [HttpPost("{id:int}/replace-device")]
+    [BusinessScoped(fullAccess: true)]
+    public async Task<ActionResult<ScreenDto>> ReplaceDevice(int id, ReplaceDeviceRequest req)
+    {
+        var screen = await access.Screens(db.Screens).FirstOrDefaultAsync(s => s.Id == id);
+        if (screen is null) return NotFound();
+        var code = req.PairingCode.Trim();
+        var device = await db.Screens.FirstOrDefaultAsync(s => !s.IsPaired && s.PairingCode == code);
+        if (device is null)
+            return NotFound(new { message = "Kodi nuk u gjet. Kontrolloni kodin që shfaqet në TV." });
+
+        // Pajisja e re merr vendin e ekranit; rreshti i përkohshëm i saj fshihet (DeviceKey është unik).
+        await using var tx = await db.Database.BeginTransactionAsync();
+        db.Screens.Remove(device);
+        await db.SaveChangesAsync();
+        screen.DeviceKey = device.DeviceKey;
+        (screen.Platform, screen.UserAgent, screen.ResolutionWidth, screen.ResolutionHeight, screen.LastSeenAt) =
+            (device.Platform, device.UserAgent, device.ResolutionWidth, device.ResolutionHeight, device.LastSeenAt);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return (await Query().AsNoTracking().FirstAsync(s => s.Id == id)).ToDto();
+    }
+
     /// <summary>Detyron TV-në të rifreskojë faqen (p.sh. pas një përditësimi të player-it).</summary>
     [HttpPost("{id:int}/reload")]
     public async Task<IActionResult> Reload(int id)

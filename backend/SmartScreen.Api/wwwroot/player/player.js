@@ -16,6 +16,8 @@
  * i pajisjes (Service Worker sw.js në shfletues/PC, ose cache-i në disk i aplikacionit Android).
  *
  * Parametra opsionalë në URL: ?server=http://ip:5080  ?device=<key>  ?preview=1
+ *  ?device=<key> (linku "Hap ekranin" në panel) e bën këtë faqe pikërisht atë ekran. Të dhënat e tij ruhen veç,
+ *  kështu që në të njëjtin shfletues/PC mund të hapen disa ekrane njëkohësisht (një për çdo skedë/monitor).
  */
 (function () {
   'use strict';
@@ -44,6 +46,8 @@
   var params = parseQuery(location.search);
   var isPreview = params.preview === '1';
   var SERVER = (params.server || window.SMART_SCREEN_SERVER || '').replace(/\/+$/, '');
+  // Me ?device=… çdo ekran ka hapësirën e vet në localStorage (përmbajtja, ora).
+  var NS = params.device ? ':' + params.device.slice(0, 16) : '';
 
   var root = $('root');
   var layers = [$('layerA'), $('layerB')];
@@ -60,7 +64,7 @@
     timer: null,
     online: true,
     sleeping: false,
-    clock: parseJson(store('ss_clock'))  // { skew: ms (serveri - pajisja), offset: minuta UTC e biznesit }
+    clock: parseJson(store('ss_clock' + NS))  // { skew: ms (serveri - pajisja), offset: minuta UTC e biznesit }
   };
 
   // ------------------------------------------------------------------ nisja
@@ -86,7 +90,7 @@
       return;
     }
 
-    var cached = store('ss_content');
+    var cached = store('ss_content' + NS);
     if (cached) {
       try {
         var c = JSON.parse(cached);
@@ -108,7 +112,7 @@
       if (err || !res) { setOnline(false); setTimeout(register, RETRY_MS); return; }
       setOnline(true);
       state.deviceKey = res.deviceKey;
-      store('ss_device_key', res.deviceKey);
+      if (!params.device) store('ss_device_key', res.deviceKey);
       poll();
     });
   }
@@ -119,8 +123,8 @@
       if (status === 404) {
         // Ekrani u fshi nga admini -> regjistrohu nga e para (merr kod të ri çiftimi)
         state.deviceKey = null;
-        store('ss_device_key', null);
-        store('ss_content', null);
+        if (!params.device) store('ss_device_key', null);
+        store('ss_content' + NS, null);
         stopPlayback();
         register();
         return;
@@ -136,7 +140,7 @@
 
     if (!c.paired) {
       stopPlayback();
-      store('ss_content', null);
+      store('ss_content' + NS, null);
       showPairing(c.pairingCode);
       return;
     }
@@ -150,7 +154,7 @@
 
     syncClock(c);
     if (c.version === state.version && state.content) return;
-    store('ss_content', JSON.stringify(c));
+    store('ss_content' + NS, JSON.stringify(c));
     cacheMedia(c);
 
     if (!state.content) start(c);
@@ -752,7 +756,7 @@
   function syncClock(c) {
     if (!c || !c.clock || !c.clock.serverTime) return;
     state.clock = { skew: c.clock.serverTime - new Date().getTime(), offset: c.clock.utcOffsetMinutes || 0 };
-    if (!isPreview) store('ss_clock', JSON.stringify(state.clock));
+    if (!isPreview) store('ss_clock' + NS, JSON.stringify(state.clock));
   }
 
   /**
@@ -819,7 +823,7 @@
       // Vetëm në "secure context" (HTTPS, localhost ose PC me Player-in për Windows).
       if (!('serviceWorker' in navigator) || window.isSecureContext === false) return;
       navigator.serviceWorker.register('sw.js').then(function () {
-        var cached = state.content || parseJson(store('ss_content'));
+        var cached = state.content || parseJson(store('ss_content' + NS));
         if (cached) cacheMedia(cached);
       }, function () { /* pa Service Worker: përdoret cache-i i zakonshëm i shfletuesit */ });
     } catch (e) { /* shfletues i vjetër */ }

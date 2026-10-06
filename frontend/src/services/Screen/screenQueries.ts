@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { dashboardKeys } from '../Dashboard/dashboardQueries';
 import { playlistKeys } from '../Playlist/playlistQueries';
 import { queryClient } from '../queryClient';
-import { deleteScreen, getScreens, getServerInfo, pairScreen, reloadScreen, updateScreen, type PairScreenRequest, type UpdateScreenRequest } from './screenMethods';
+import { deleteScreen, getScreens, getServerInfo, pairScreen, reloadScreen, replaceDevice, updateScreen, type PairScreenRequest, type UpdateScreenRequest } from './screenMethods';
 
 export const screenKeys = {
   all: ['screens'] as const,
@@ -41,4 +41,11 @@ export function useReloadScreen() {
 
 export function useDeleteScreen() {
   return useMutation({ mutationFn: (id: number) => deleteScreen(id), onSuccess: invalidate });
+}
+
+export function useReplaceDevice() {
+  return useMutation({
+    mutationFn: ({ id, pairingCode }: { id: number; pairingCode: string }) => replaceDevice(id, pairingCode),
+    onSuccess: invalidate,
+  });
 }

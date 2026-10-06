@@ -155,7 +155,19 @@
     "noSchedules": "No schedules. The screen always plays the main playlist.",
     "priority": "Priority",
     "addSchedule": "Add schedule",
-    "days": "Su,Mo,Tu,We,Th,Fr,Sa"
+    "days": "Su,Mo,Tu,We,Th,Fr,Sa",
+    "reconnect": "Reconnect this screen:",
+    "open": "Open screen",
+    "copyLink": "Copy link",
+    "openHint": "Open this link on a TV/PC and it continues as this screen – no new code. On one PC you can open several screens, each in its own tab/monitor.",
+    "linkCopied": "Link for “{{name}}” copied: {{url}} – open it on the TV or PC.",
+    "linkPrompt": "Copy the screen link:",
+    "replace": "Connect another device",
+    "replaceHint": "For a new TV or a TV that shows a new pairing code",
+    "replaceTitle": "Connect another device to “{{name}}”",
+    "replaceText": "Enter the code shown on the TV/device. It will play as this screen, with the same name, playlists and schedules. The previous device will show a new code.",
+    "replaceSubmit": "Connect",
+    "replaced": "Device connected to “{{name}}”. Content appears within ~15 seconds."
   },
   "tvSetup": {
     "howTo": "How to connect a new TV:",

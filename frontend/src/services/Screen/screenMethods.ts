@@ -27,4 +27,10 @@ export const reloadScreen = (id: number) => api(`/screens/${id}/reload`, { metho
 
 export const deleteScreen = (id: number) => api(`/screens/${id}`, { method: 'DELETE' });
 
+/** Rruga e player-it për pikërisht këtë ekran: "/player/?device=…". */
+export const getScreenLink = (id: number) => api<{ path: string }>(`/screens/${id}/link`);
+
+export const replaceDevice = (id: number, pairingCode: string) =>
+  api<Screen>(`/screens/${id}/replace-device`, { method: 'POST', json: { pairingCode } });
+
 export const getServerInfo = () => api<ServerInfo>('/server-info');

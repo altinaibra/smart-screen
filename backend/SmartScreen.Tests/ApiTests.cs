@@ -118,6 +118,58 @@ public class PlayerFlowTests
     }
 }
 
+public class ReconnectTests
+{
+    [Fact]
+    public async Task Screen_link_opens_the_same_screen()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme");
+        var key = await PairScreenAsync(owner, await CreatePlaylistAsync(owner, [TextSlide("Hi")]), "Popeys");
+        var id = (await owner.GetFromJsonAsync<JsonElement>("/api/screens", Json))[0].GetProperty("id").GetInt32();
+
+        var link = await owner.GetFromJsonAsync<JsonElement>($"/api/screens/{id}/link", Json);
+        Assert.Equal($"/player/?device={key}", link.GetProperty("path").GetString());
+    }
+
+    [Fact]
+    public async Task New_device_takes_over_existing_screen_with_its_playlist()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme");
+        var playlistId = await CreatePlaylistAsync(owner, [TextSlide("Menu")]);
+        var oldKey = await PairScreenAsync(owner, playlistId, "Popeys");
+        var id = (await owner.GetFromJsonAsync<JsonElement>("/api/screens", Json))[0].GetProperty("id").GetInt32();
+
+        // TV i ri shfaq kod çiftimi
+        var reg = await (await owner.PostAsJsonAsync("/api/player/register", new { width = 3840, height = 2160, userAgent = "Web0S" }))
+            .Content.ReadFromJsonAsync<JsonElement>(Json);
+        var res = await owner.PostAsJsonAsync($"/api/screens/{id}/replace-device", new { pairingCode = reg.GetProperty("pairingCode").GetString() });
+        res.EnsureSuccessStatusCode();
+
+        var newKey = reg.GetProperty("deviceKey").GetString();
+        var content = await owner.GetFromJsonAsync<JsonElement>($"/api/player/{newKey}/content", Json);
+        Assert.Equal("Popeys", content.GetProperty("screen").GetProperty("name").GetString());
+        Assert.Equal(playlistId, content.GetProperty("playlist").GetProperty("id").GetInt32());
+        Assert.Equal(HttpStatusCode.NotFound, (await owner.GetAsync($"/api/player/{oldKey}/content")).StatusCode);
+        Assert.Equal(1, (await owner.GetFromJsonAsync<JsonElement>("/api/screens", Json)).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Replace_device_with_wrong_code_fails()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme");
+        await PairScreenAsync(owner, null, "Popeys");
+        var id = (await owner.GetFromJsonAsync<JsonElement>("/api/screens", Json))[0].GetProperty("id").GetInt32();
+        var res = await owner.PostAsJsonAsync($"/api/screens/{id}/replace-device", new { pairingCode = "000000" });
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
+    }
+}
+
 public class MultiTenantTests
 {
     [Fact]

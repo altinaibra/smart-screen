@@ -8,7 +8,8 @@ import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
 import { confirmDialog } from '../components/ConfirmDialog';
 import { useCurrentBusiness } from '../services/Business/businessQueries';
 import { usePlaylists } from '../services/Playlist/playlistQueries';
-import { useDeleteScreen, usePairScreen, useReloadScreen, useScreens, useUpdateScreen } from '../services/Screen/screenQueries';
+import { getScreenLink } from '../services/Screen/screenMethods';
+import { useDeleteScreen, usePairScreen, useReloadScreen, useReplaceDevice, useScreens, useServerInfo, useUpdateScreen } from '../services/Screen/screenQueries';
 import type { Orientation, PlaylistSummary, Schedule, Screen } from '../types';
 
 export default function ScreensPage() {
@@ -28,7 +29,32 @@ export default function ScreensPage() {
     if (!open && params.has('pair')) setParams({}, { replace: true });
   };
   const [editing, setEditing] = useState<Screen | null>(null);
+  const [replacing, setReplacing] = useState<Screen | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const { data: serverInfo } = useServerInfo();
+
+  /** Adresa që e arrijnë TV-të (IP-ja e serverit në rrjet), jo "localhost". */
+  async function screenUrl(s: Screen) {
+    const { path } = await getScreenLink(s.id);
+    return (serverInfo?.addresses[0] ?? location.origin) + path;
+  }
+
+  async function openScreen(s: Screen) {
+    // Dritarja hapet menjëherë (para await) që shfletuesi të mos e bllokojë si pop-up.
+    const win = window.open('about:blank', '_blank');
+    try {
+      const url = await screenUrl(s);
+      if (win) win.location.href = url; else location.href = url;
+    } catch (e) { win?.close(); setError((e as Error).message); }
+  }
+
+  async function copyLink(s: Screen) {
+    try {
+      const url = await screenUrl(s);
+      await navigator.clipboard.writeText(url).catch(() => window.prompt(t('screens.linkPrompt'), url));
+      setNotice(t('screens.linkCopied', { name: s.name, url }));
+    } catch (e) { setError((e as Error).message); }
+  }
 
   async function reload(s: Screen) {
     try {
@@ -81,12 +107,20 @@ export default function ScreensPage() {
                 <button className="btn" onClick={() => reload(s)}>{t('screens.reloadTv')}</button>
                 {fullAccess && <button className="btn danger ghost" onClick={() => remove(s)}>{t('common.delete')}</button>}
               </div>
+              <div className="row-actions reconnect">
+                <span className="muted small">{t('screens.reconnect')}</span>
+                <button className="btn" onClick={() => openScreen(s)} title={t('screens.openHint')}><Icon name="external-link" />{t('screens.open')}</button>
+                <button className="btn" onClick={() => copyLink(s)} title={t('screens.openHint')}><Icon name="copy" />{t('screens.copyLink')}</button>
+                {fullAccess && <button className="btn" onClick={() => setReplacing(s)} title={t('screens.replaceHint')}>{t('screens.replace')}</button>}
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {pairing && fullAccess && <PairModal playlists={playlists} onClose={() => setPairing(false)} onDone={() => setPairing(false)} />}
+      {replacing && <ReplaceModal screen={replacing} onClose={() => setReplacing(null)}
+        onDone={() => { setNotice(t('screens.replaced', { name: replacing.name })); setReplacing(null); }} />}
       {editing && <EditModal screen={editing} playlists={playlists} onClose={() => setEditing(null)} onDone={() => setEditing(null)} />}
     </>
   );
@@ -221,6 +255,32 @@ function EditModal({ screen, playlists, onClose, onDone }: {
           onClick={() => setSchedules(list => [...list, { playlistId: playlists[0].id, daysOfWeek: 127, startTime: '07:00', endTime: '11:00', priority: 0 }])}>
           <Icon name="plus" />{t('screens.addSchedule')}
         </button>
+      </form>
+    </Modal>
+  );
+}
+
+/** Lidh një pajisje tjetër me ekranin ekzistues (me kodin që shfaq ajo), pa humbur playlist-at dhe oraret. */
+function ReplaceModal({ screen, onClose, onDone }: { screen: Screen; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [code, setCode] = useState('');
+  const { mutate: replaceDevice, error, isPending } = useReplaceDevice();
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    replaceDevice({ id: screen.id, pairingCode: code }, { onSuccess: onDone });
+  }
+
+  return (
+    <Modal title={t('screens.replaceTitle', { name: screen.name })} onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="replace-form" disabled={isPending}>{t('screens.replaceSubmit')}</button></>}>
+      <form id="replace-form" onSubmit={submit}>
+        <p className="muted">{t('screens.replaceText')}</p>
+        <ErrorBox error={error?.message ?? null} />
+        <Field label={t('screens.pairCode')}>
+          <input className="code-input" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="123456" inputMode="numeric" required autoFocus />
+        </Field>
       </form>
     </Modal>
   );

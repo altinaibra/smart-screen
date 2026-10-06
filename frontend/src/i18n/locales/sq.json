@@ -155,7 +155,19 @@
     "noSchedules": "Nuk ka orare. Ekrani luan gjithmonë playlist-ën kryesore.",
     "priority": "Prioriteti",
     "addSchedule": "Shto orar",
-    "days": "Di,Hë,Ma,Më,En,Pr,Sh"
+    "days": "Di,Hë,Ma,Më,En,Pr,Sh",
+    "reconnect": "Lidhe sërish këtë ekran:",
+    "open": "Hap ekranin",
+    "copyLink": "Kopjo linkun",
+    "openHint": "Hapni këtë link në TV/PC dhe ai vazhdon si ky ekran – pa kod të ri. Në një PC mund të hapni disa ekrane, secilin në skedë/monitor tjetër.",
+    "linkCopied": "Linku i ekranit „{{name}}” u kopjua: {{url}} – hapeni në TV ose PC.",
+    "linkPrompt": "Kopjoni linkun e ekranit:",
+    "replace": "Lidh pajisje tjetër",
+    "replaceHint": "Për TV të ri ose TV që shfaq kod të ri çiftimi",
+    "replaceTitle": "Lidh pajisje tjetër me „{{name}}”",
+    "replaceText": "Vendosni kodin që shfaq TV-ja/pajisja. Ajo do të luajë si ky ekran, me të njëjtin emër, playlist-a dhe orare. Pajisja e mëparshme do të shfaqë kod të ri.",
+    "replaceSubmit": "Lidhe",
+    "replaced": "Pajisja u lidh me „{{name}}”. Përmbajtja shfaqet brenda ~15 sekondave."
   },
   "tvSetup": {
     "howTo": "Si të lidhni një TV të ri:",

@@ -423,3 +423,6 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
 .date-tag { background: #eef2ff; color: #3730a3; }
 .date-tag.expired { background: #fef2f2; color: #b91c1c; }
 .date-tag.upcoming { background: #fffbeb; color: #92400e; }
+
+.row-actions.reconnect { flex-wrap: wrap; align-items: center; margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.row-actions.reconnect .muted { width: 100%; }
