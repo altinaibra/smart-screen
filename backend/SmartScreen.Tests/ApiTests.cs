@@ -244,6 +244,20 @@ public class MultiTenantTests
     }
 
     [Fact]
+    public async Task Owner_can_change_only_the_client_password()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme", "acme");
+        var clientId = int.Parse(owner.DefaultRequestHeaders.GetValues("X-Client-Id").First());
+
+        // Vetëm fjalëkalimi (përdoruesi bosh) – ndryshohet llogaria ekzistuese e klientit.
+        (await owner.PutAsJsonAsync($"/api/clients/{clientId}", new { name = "Acme", isActive = true, adminPassword = "newpass1" }))
+            .EnsureSuccessStatusCode();
+        (await app.CreateClient().PostAsJsonAsync("/api/auth/login", new { username = "acme", password = "newpass1" })).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task User_can_change_own_username()
     {
         using var app = new TestApp();

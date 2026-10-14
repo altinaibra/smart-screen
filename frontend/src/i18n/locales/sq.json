@@ -527,7 +527,8 @@
     "confirmDelete": "Të fshihet klienti \"{{name}}\"? Do të fshihen të gjitha bizneset, ekranet, playlistat, fotot, videot dhe përdoruesit e tij.",
     "loginAs": "Hyn si: {{username}}",
     "loginUser": "Përdoruesi me të cilin hyn klienti",
-    "passwordKeepHint": "Bosh = fjalëkalimi mbetet i njëjtë"
+    "passwordKeepHint": "Bosh = fjalëkalimi mbetet i njëjtë",
+    "serverOutdated": "Serveri nuk e ruajti përdoruesin/fjalëkalimin – po punon me versionin e vjetër. Rinisni (ose ripublikoni) serverin dhe provoni sërish."
   },
   "alert": {
     "button": "Njoftim urgjent",

@@ -174,18 +174,27 @@ function EditModal({ client, onClose }: { client: Client; onClose: () => void })
     notes: client.notes, isActive: client.isActive, adminUsername: client.adminUsername ?? '', adminPassword: '',
   });
   const update = useUpdateClient();
+  const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<SaveClientRequest>) => setForm(f => ({ ...f, ...patch }));
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    update.mutate({ id: client.id, ...form }, { onSuccess: onClose });
+    setError(null);
+    const username = form.adminUsername?.trim();
+    update.mutate({ id: client.id, ...form, adminUsername: username }, {
+      onSuccess: saved => {
+        // Serveri i vjetër (pa përditësim) i injoron fushat e llogarisë – mos e mbyll si të ruajtur.
+        if ((username || form.adminPassword) && saved.adminUsername === undefined) setError(t('clients.serverOutdated'));
+        else onClose();
+      },
+    });
   }
 
   return (
     <Modal title={t('clients.edit')} onClose={onClose}
       footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="client-form">{t('common.save')}</button></>}>
       <form id="client-form" onSubmit={submit}>
-        <ErrorBox error={update.error?.message ?? null} />
+        <ErrorBox error={error ?? update.error?.message ?? null} />
         <ContactFields form={form} set={set} />
         <label className="inline-check"><input type="checkbox" checked={form.isActive} onChange={e => set({ isActive: e.target.checked })} /> {t('common.active')}</label>
         <span className="field-hint">{t('clients.activeHint')}</span>

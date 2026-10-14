@@ -34,10 +34,11 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
             .GroupBy(s => s.Business!.ClientId)
             .Select(g => new { g.Key, Count = g.Count(), Online = g.Count(s => s.LastSeenAt > onlineSince) })
             .ToDictionaryAsync(x => x.Key);
-        // Llogaria kryesore e klientit (administratori i parë) – me të cilën hyn klienti.
-        var admins = (await db.Users.Where(u => u.ClientId != null && u.Role == AppUser.AdminRole)
-                .OrderBy(u => u.Id).Select(u => new { ClientId = u.ClientId!.Value, u.Username }).ToListAsync())
-            .GroupBy(u => u.ClientId).ToDictionary(g => g.Key, g => g.First().Username);
+        // Llogaria kryesore e klientit (administratori i parë, ose përdoruesi i parë) – me të cilën hyn klienti.
+        var admins = (await db.Users.Where(u => u.ClientId != null)
+                .Select(u => new { ClientId = u.ClientId!.Value, u.Id, u.Username, IsAdmin = u.Role == AppUser.AdminRole }).ToListAsync())
+            .GroupBy(u => u.ClientId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(u => u.IsAdmin).ThenBy(u => u.Id).First().Username);
 
         return clients.Select(c => new ClientDto(
             c.Id, c.Name, c.ContactPerson, c.Phone, c.Email, c.Notes, c.IsActive, c.CreatedAt,
@@ -101,7 +102,7 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
 
     /// <summary>
     /// Ndryshon emrin e përdoruesit dhe/ose fjalëkalimin e administratorit kryesor të klientit
-    /// (krijohet nëse klienti nuk ka asnjë administrator). Vlerat bosh nuk ndryshohen.
+    /// (ose të përdoruesit të parë; krijohet nëse klienti nuk ka asnjë). Vlerat bosh nuk ndryshohen.
     /// </summary>
     private async Task<string?> SaveAdminAsync(int clientId, string? newUsername, string? newPassword)
     {
@@ -111,7 +112,8 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
         if (password.Length > 0 && password.Length < MinPasswordLength)
             return $"Fjalëkalimi duhet të ketë të paktën {MinPasswordLength} karaktere.";
 
-        var admin = await db.Users.Where(u => u.ClientId == clientId && u.Role == AppUser.AdminRole).OrderBy(u => u.Id).FirstOrDefaultAsync();
+        var admin = await db.Users.Where(u => u.ClientId == clientId)
+            .OrderByDescending(u => u.Role == AppUser.AdminRole).ThenBy(u => u.Id).FirstOrDefaultAsync();
         if (admin is null)
         {
             if (username.Length == 0 || password.Length == 0)
@@ -119,6 +121,8 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
             admin = new AppUser { Role = AppUser.AdminRole, ClientId = clientId };
             db.Users.Add(admin);
         }
+        // Llogaria kryesore e klientit menaxhon bizneset e tij.
+        admin.Role = AppUser.AdminRole;
 
         if (username.Length > 0 && username != admin.Username)
         {

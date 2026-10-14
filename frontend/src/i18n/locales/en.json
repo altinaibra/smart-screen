@@ -527,7 +527,8 @@
     "confirmDelete": "Delete client \"{{name}}\"? All their businesses, screens, playlists, photos, videos and users will be deleted.",
     "loginAs": "Signs in as: {{username}}",
     "loginUser": "The username the client signs in with",
-    "passwordKeepHint": "Leave empty to keep the current password"
+    "passwordKeepHint": "Leave empty to keep the current password",
+    "serverOutdated": "The server did not save the username/password – it is running an old version. Restart (or republish) the server and try again."
   },
   "alert": {
     "button": "Emergency message",
