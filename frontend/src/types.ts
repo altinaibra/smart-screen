@@ -221,6 +221,8 @@ export interface Client {
   userCount: number;
   screenCount: number;
   screensOnline: number;
+  /** Përdoruesi me të cilin hyn klienti (administratori i tij kryesor). */
+  adminUsername?: string | null;
 }
 
 /** businessIds = qasje e plotë; screenIds = ekrane të veçanta në biznese të tjera. */

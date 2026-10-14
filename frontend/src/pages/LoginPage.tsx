@@ -9,7 +9,7 @@ import { useLogin } from '../services/Auth/authQueries';
 export default function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { mutate: login, isPending: busy, error } = useLogin();
 
@@ -26,7 +26,7 @@ export default function LoginPage() {
         <p className="muted login-sub">{t('login.subtitle')}</p>
         <ErrorBox error={error?.message ?? null} />
         <Field label={t('login.username')}>
-          <input value={username} onChange={e => setUsername(e.target.value)} autoFocus required />
+          <input value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" autoFocus required />
         </Field>
         <Field label={t('login.password')}>
           <PasswordInput value={password} onChange={e => setPassword(e.target.value)} required />

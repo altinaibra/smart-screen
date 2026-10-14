@@ -58,7 +58,10 @@ export default function ClientsPage() {
             <tbody>
               {visible.map(c => (
                 <tr key={c.id} className={c.isActive ? '' : 'faded'}>
-                  <td className="strong">{c.name}</td>
+                  <td>
+                    <div className="strong">{c.name}</div>
+                    {c.adminUsername && <div className="muted" title={t('clients.loginUser')}>{t('clients.loginAs', { username: c.adminUsername })}</div>}
+                  </td>
                   <td>
                     {c.contactPerson && <div>{c.contactPerson}</div>}
                     <div className="muted">{[c.phone, c.email].filter(Boolean).join(' · ') || '—'}</div>
@@ -168,7 +171,7 @@ function EditModal({ client, onClose }: { client: Client; onClose: () => void })
   const { t } = useTranslation();
   const [form, setForm] = useState<SaveClientRequest>({
     name: client.name, contactPerson: client.contactPerson, phone: client.phone, email: client.email,
-    notes: client.notes, isActive: client.isActive,
+    notes: client.notes, isActive: client.isActive, adminUsername: client.adminUsername ?? '', adminPassword: '',
   });
   const update = useUpdateClient();
   const set = (patch: Partial<SaveClientRequest>) => setForm(f => ({ ...f, ...patch }));
@@ -186,6 +189,17 @@ function EditModal({ client, onClose }: { client: Client; onClose: () => void })
         <ContactFields form={form} set={set} />
         <label className="inline-check"><input type="checkbox" checked={form.isActive} onChange={e => set({ isActive: e.target.checked })} /> {t('common.active')}</label>
         <span className="field-hint">{t('clients.activeHint')}</span>
+
+        <h4 className="form-section">{t('clients.adminAccount')}</h4>
+        <div className="grid-2">
+          <Field label={t('users.username')}>
+            <input value={form.adminUsername ?? ''} maxLength={100} onChange={e => set({ adminUsername: e.target.value })} required={!client.adminUsername && !!form.adminPassword} autoComplete="off" />
+          </Field>
+          <Field label={t('settings.newPassword')} hint={t('clients.passwordKeepHint')}>
+            <PasswordInput value={form.adminPassword ?? ''} minLength={6} onChange={e => set({ adminPassword: e.target.value })} autoComplete="new-password" />
+          </Field>
+        </div>
+        <p className="muted">{t('clients.adminHint')}</p>
       </form>
     </Modal>
   );

@@ -211,6 +211,51 @@ public class MultiTenantTests
     }
 
     [Fact]
+    public async Task Owner_can_change_client_login_and_client_lands_in_own_business()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme", "acme");
+        var clientId = int.Parse(owner.DefaultRequestHeaders.GetValues("X-Client-Id").First());
+
+        var list = await owner.GetFromJsonAsync<JsonElement>("/api/clients", Json);
+        Assert.Equal("acme", list[0].GetProperty("adminUsername").GetString());
+
+        (await owner.PutAsJsonAsync($"/api/clients/{clientId}",
+            new { name = "Acme", isActive = true, adminUsername = "acme-new", adminPassword = "newpass1" })).EnsureSuccessStatusCode();
+
+        var anon = app.CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await anon.PostAsJsonAsync("/api/auth/login", new { username = "acme", password = "secret123" })).StatusCode);
+        var login = await (await anon.PostAsJsonAsync("/api/auth/login", new { username = "acme-new", password = "newpass1" }))
+            .EnsureSuccessStatusCode().Content.ReadFromJsonAsync<JsonElement>(Json);
+
+        var client = app.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new("Bearer", login.GetProperty("token").GetString());
+        var me = await client.GetFromJsonAsync<JsonElement>("/api/auth/me", Json);
+        Assert.False(me.GetProperty("isOwner").GetBoolean());
+        Assert.Equal("Acme", me.GetProperty("client").GetProperty("name").GetString());
+        Assert.Equal("Acme Business", me.GetProperty("businesses")[0].GetProperty("name").GetString());
+
+        // Emri i zënë nuk lejohet.
+        await CreateClientAsync(owner, "Beta", "beta");
+        var res = await owner.PutAsJsonAsync($"/api/clients/{clientId}", new { name = "Acme", isActive = true, adminUsername = "beta" });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task User_can_change_own_username()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await owner.PutAsJsonAsync("/api/auth/username", new { currentPassword = "wrong", newUsername = "boss" })).StatusCode);
+        (await owner.PutAsJsonAsync("/api/auth/username", new { currentPassword = "Admin123!", newUsername = "boss" })).EnsureSuccessStatusCode();
+        var res = await app.CreateClient().PostAsJsonAsync("/api/auth/login", new { username = "boss", password = "Admin123!" });
+        res.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task User_with_one_screen_only_sees_that_screen()
     {
         using var app = new TestApp();

@@ -12,7 +12,7 @@ import MediaPage from './pages/MediaPage';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistEditorPage from './pages/PlaylistEditorPage';
 import MenuPage from './pages/MenuPage';
-import SettingsPage from './pages/SettingsPage';
+import SettingsPage, { AccountPage } from './pages/SettingsPage';
 import CurrenciesPage from './pages/CurrenciesPage';
 import PaymentMethodsPage from './pages/PaymentMethodsPage';
 import BusinessesPage from './pages/BusinessesPage';
@@ -45,6 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="businesses" element={<BusinessesPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="clients" element={<ClientsPage />} />
+            <Route path="account" element={<AccountPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

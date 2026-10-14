@@ -32,6 +32,7 @@ const adminLinks: NavItem[] = [
 // Vetëm për pronarin e aplikacionit.
 const ownerLinks: NavItem[] = [
   { to: '/clients', label: 'nav.clients', icon: 'clients' },
+  { to: '/account', label: 'nav.account', icon: 'settings' },
 ];
 
 export default function Layout() {
@@ -49,7 +50,7 @@ export default function Layout() {
   // Faqet ngarkohen vetëm pasi dihet biznesi, që kërkesat të shkojnë te biznesi i duhur.
   let page = <Outlet />;
   if (!me) page = <ErrorBox error={error?.message ?? null} />;
-  else if (ownerHome && location.pathname !== '/clients') page = <Navigate to="/clients" replace />;
+  else if (ownerHome && !ownerLinks.some(l => location.pathname === l.to)) page = <Navigate to="/clients" replace />;
   else if (ownerHome) page = <Outlet />;
   else if (!business && !me.isAdmin) page = <div className="empty">{t('businesses.noAccess')}</div>;
   else if (isBlocked(location.pathname, me, business?.fullAccess ?? false)) page = <Navigate to="/" replace />;

@@ -5,8 +5,8 @@ import Icon from '../components/Icon';
 import LanguageSelect from '../components/LanguageSelect';
 import MediaPicker from '../components/MediaPicker';
 import { ErrorBox, Field, PageHeader, PasswordInput } from '../components/ui';
-import { useChangePassword } from '../services/Auth/authQueries';
-import { useCurrentBusiness } from '../services/Business/businessQueries';
+import { useChangePassword, useChangeUsername } from '../services/Auth/authQueries';
+import { useCurrentBusiness, useMe } from '../services/Business/businessQueries';
 import { useCurrencies, useSetMainCurrency } from '../services/Currency/currencyQueries';
 import { useSettings, useUpdateSettings } from '../services/Settings/settingsQueries';
 import type { BusinessType, Settings } from '../types';
@@ -39,7 +39,7 @@ export default function SettingsPage() {
     return (
       <>
         <PageHeader title={t('settings.title')} />
-        <div className="settings-side narrow"><LanguageCard /><PasswordCard /></div>
+        <div className="settings-side narrow"><LanguageCard /><UsernameCard /><PasswordCard /></div>
       </>
     );
   }
@@ -182,6 +182,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
 
         <div className="settings-side">
           <LanguageCard />
+          <UsernameCard />
           <PasswordCard />
         </div>
       </div>
@@ -202,6 +203,46 @@ function LanguageCard() {
         <span className="field-hint">{t('settings.languageHint')}</span>
       </div>
     </div>
+  );
+}
+
+/** Llogaria e pronarit (pa klient të zgjedhur): gjuha, emri i përdoruesit dhe fjalëkalimi. */
+export function AccountPage() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} />
+      <div className="settings-side narrow"><LanguageCard /><UsernameCard /><PasswordCard /></div>
+    </>
+  );
+}
+
+/** Emri me të cilin hyn përdoruesi (kërkon fjalëkalimin aktual). */
+function UsernameCard() {
+  const { t } = useTranslation();
+  const { data: me } = useMe();
+  const [username, setUsername] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const { mutate: changeUsername, isPending } = useChangeUsername();
+  const value = username ?? me?.username ?? '';
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    changeUsername({ currentPassword: password, newUsername: value }, {
+      onSuccess: () => { setMsg({ ok: true, text: t('account.usernameChanged') }); setPassword(''); setUsername(null); },
+      onError: err => setMsg({ ok: false, text: err.message }),
+    });
+  }
+
+  return (
+    <form className="card" onSubmit={submit}>
+      <h2>{t('account.changeUsername')}</h2>
+      {msg && <div className={`alert ${msg.ok ? 'info' : 'error'}`}>{msg.text}</div>}
+      <Field label={t('login.username')}><input value={value} maxLength={100} onChange={e => setUsername(e.target.value)} autoComplete="username" required /></Field>
+      <Field label={t('settings.currentPassword')}><PasswordInput value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required /></Field>
+      <div className="form-actions"><button className="btn" disabled={isPending}>{t('settings.change')}</button></div>
+    </form>
   );
 }
 

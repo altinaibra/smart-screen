@@ -59,4 +59,27 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    /// <summary>Ndryshon emrin me të cilin hyn përdoruesi aktual (kërkon fjalëkalimin aktual).</summary>
+    [HttpPut("username")]
+    [Authorize]
+    public async Task<ActionResult<LoginResponse>> ChangeUsername(ChangeUsernameRequest req)
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await db.Users.FindAsync(id);
+        if (user is null) return Unauthorized();
+
+        if (hasher.VerifyHashedPassword(user, user.PasswordHash, req.CurrentPassword) == PasswordVerificationResult.Failed)
+            return BadRequest(new { message = "Fjalëkalimi aktual është i gabuar." });
+        var username = req.NewUsername.Trim();
+        if (username.Length == 0) return BadRequest(new { message = "Vendosni emrin e përdoruesit." });
+        if (await db.Users.AnyAsync(u => u.Username == username && u.Id != id))
+            return BadRequest(new { message = $"Përdoruesi '{username}' ekziston tashmë." });
+
+        user.Username = username;
+        await db.SaveChangesAsync();
+        // Token i ri, që emri në token të përputhet me emrin e ri.
+        var (token, expires) = tokens.CreateToken(user);
+        return new LoginResponse(token, user.Username, expires, user.Role);
+    }
 }

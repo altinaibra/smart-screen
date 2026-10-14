@@ -8,10 +8,13 @@ export interface SaveClientRequest {
   email?: string | null;
   notes?: string | null;
   isActive: boolean;
+  /** Opsionale: ndryshon llogarinë me të cilën hyn klienti (bosh = pa ndryshim). */
+  adminUsername?: string;
+  adminPassword?: string;
 }
 
 /** Klienti i ri krijohet bashkë me biznesin e parë dhe administratorin e tij. */
-export interface CreateClientRequest extends Omit<SaveClientRequest, 'isActive'> {
+export interface CreateClientRequest extends Omit<SaveClientRequest, 'isActive' | 'adminUsername' | 'adminPassword'> {
   businessName: string;
   businessType: BusinessType;
   adminUsername: string;

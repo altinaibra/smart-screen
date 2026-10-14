@@ -34,11 +34,16 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
             .GroupBy(s => s.Business!.ClientId)
             .Select(g => new { g.Key, Count = g.Count(), Online = g.Count(s => s.LastSeenAt > onlineSince) })
             .ToDictionaryAsync(x => x.Key);
+        // Llogaria kryesore e klientit (administratori i parë) – me të cilën hyn klienti.
+        var admins = (await db.Users.Where(u => u.ClientId != null && u.Role == AppUser.AdminRole)
+                .OrderBy(u => u.Id).Select(u => new { ClientId = u.ClientId!.Value, u.Username }).ToListAsync())
+            .GroupBy(u => u.ClientId).ToDictionary(g => g.Key, g => g.First().Username);
 
         return clients.Select(c => new ClientDto(
             c.Id, c.Name, c.ContactPerson, c.Phone, c.Email, c.Notes, c.IsActive, c.CreatedAt,
             businesses.GetValueOrDefault(c.Id), users.GetValueOrDefault(c.Id),
-            screens.GetValueOrDefault(c.Id)?.Count ?? 0, screens.GetValueOrDefault(c.Id)?.Online ?? 0)).ToList();
+            screens.GetValueOrDefault(c.Id)?.Count ?? 0, screens.GetValueOrDefault(c.Id)?.Online ?? 0,
+            admins.GetValueOrDefault(c.Id))).ToList();
     }
 
     /// <summary>Krijon klientin, biznesin e tij të parë dhe administratorin që do të hyjë në panel.</summary>
@@ -74,6 +79,7 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
         var client = await db.Clients.FindAsync(id);
         if (client is null) return NotFound();
         Apply(client, req);
+        if (await SaveAdminAsync(id, req.AdminUsername, req.AdminPassword) is { } error) return BadRequest(new { message = error });
         await db.SaveChangesAsync();
         return (await GetAll()).First(c => c.Id == id);
     }
@@ -91,6 +97,37 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
         await db.Clients.Where(c => c.Id == id).ExecuteDeleteAsync();
         await tx.CommitAsync();
         return NoContent();
+    }
+
+    /// <summary>
+    /// Ndryshon emrin e përdoruesit dhe/ose fjalëkalimin e administratorit kryesor të klientit
+    /// (krijohet nëse klienti nuk ka asnjë administrator). Vlerat bosh nuk ndryshohen.
+    /// </summary>
+    private async Task<string?> SaveAdminAsync(int clientId, string? newUsername, string? newPassword)
+    {
+        var username = newUsername?.Trim() ?? "";
+        var password = newPassword ?? "";
+        if (username.Length == 0 && password.Length == 0) return null;
+        if (password.Length > 0 && password.Length < MinPasswordLength)
+            return $"Fjalëkalimi duhet të ketë të paktën {MinPasswordLength} karaktere.";
+
+        var admin = await db.Users.Where(u => u.ClientId == clientId && u.Role == AppUser.AdminRole).OrderBy(u => u.Id).FirstOrDefaultAsync();
+        if (admin is null)
+        {
+            if (username.Length == 0 || password.Length == 0)
+                return "Klienti nuk ka llogari. Vendosni përdoruesin dhe fjalëkalimin.";
+            admin = new AppUser { Role = AppUser.AdminRole, ClientId = clientId };
+            db.Users.Add(admin);
+        }
+
+        if (username.Length > 0 && username != admin.Username)
+        {
+            if (await db.Users.AnyAsync(u => u.Username == username && u.Id != admin.Id))
+                return $"Përdoruesi '{username}' ekziston tashmë.";
+            admin.Username = username;
+        }
+        if (password.Length > 0) admin.PasswordHash = hasher.HashPassword(admin, password);
+        return null;
     }
 
     private static void Apply(Client c, SaveClientRequest req)

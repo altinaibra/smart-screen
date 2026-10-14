@@ -77,7 +77,8 @@
     "businesses": "Businesses",
     "users": "Users",
     "administration": "Administration",
-    "clients": "Clients"
+    "clients": "Clients",
+    "account": "My account"
   },
   "login": {
     "subtitle": "Manage your screens and ads",
@@ -523,7 +524,10 @@
     "adminAccount": "Client administrator account",
     "adminHint": "The client logs in with this account and sees only their own businesses, screens and users.",
     "activeHint": "Inactive: the client's users cannot log in (e.g. unpaid subscription).",
-    "confirmDelete": "Delete client \"{{name}}\"? All their businesses, screens, playlists, photos, videos and users will be deleted."
+    "confirmDelete": "Delete client \"{{name}}\"? All their businesses, screens, playlists, photos, videos and users will be deleted.",
+    "loginAs": "Signs in as: {{username}}",
+    "loginUser": "The username the client signs in with",
+    "passwordKeepHint": "Leave empty to keep the current password"
   },
   "alert": {
     "button": "Emergency message",
@@ -545,5 +549,11 @@
     "live": "Message live on all screens",
     "noExpiry": "No expiry – until you remove it",
     "until": "Removed automatically at {{time}}"
+  },
+  "account": {
+    "title": "My account",
+    "subtitle": "The username and password you sign in with as the app owner.",
+    "changeUsername": "Username",
+    "usernameChanged": "Username changed."
   }
 }
