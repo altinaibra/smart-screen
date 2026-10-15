@@ -25,3 +25,5 @@ tv-apps/android-tv/.idea/
 
 # Çelësi JWT i krijuar automatikisht nga serveri
 jwt.key
+# Çelësat që enkriptojnë fjalëkalimet e klientëve
+backend/SmartScreen.Api/keys/

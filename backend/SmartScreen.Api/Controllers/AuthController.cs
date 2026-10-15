@@ -13,7 +13,7 @@ namespace SmartScreen.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, TokenService tokens) : ControllerBase
+public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, PasswordVault passwords, TokenService tokens) : ControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
@@ -55,7 +55,7 @@ public class AuthController(AppDbContext db, IPasswordHasher<AppUser> hasher, To
         if (hasher.VerifyHashedPassword(user, user.PasswordHash, req.CurrentPassword) == PasswordVerificationResult.Failed)
             return BadRequest(new { message = "Fjalëkalimi aktual është i gabuar." });
 
-        user.PasswordHash = hasher.HashPassword(user, req.NewPassword);
+        passwords.Set(user, req.NewPassword);
         await db.SaveChangesAsync();
         return NoContent();
     }

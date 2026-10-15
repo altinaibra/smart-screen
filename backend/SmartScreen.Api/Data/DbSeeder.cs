@@ -139,6 +139,7 @@ public static class DbSeeder
     /// <summary>Kolonat e shtuara më vonë në tabelat ekzistuese (tabela, kolona, tipi SQL Server, tipi SQLite).</summary>
     private static readonly (string Table, string Column, string SqlServer, string Sqlite)[] AddedColumns =
     [
+        ("Users", "PasswordEncrypted", "nvarchar(max) NULL", "TEXT NULL"),
         ("BusinessSettings", "Tagline", "nvarchar(100) NULL", "TEXT NULL"),
         ("BusinessSettings", "Slogan", "nvarchar(200) NULL", "TEXT NULL"),
         ("BusinessSettings", "OpeningTime", "nvarchar(5) NULL", "TEXT NULL"),

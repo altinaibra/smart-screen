@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartScreen.Api.Data;
@@ -17,7 +16,7 @@ namespace SmartScreen.Api.Controllers;
 [Route("api/clients")]
 [Authorize]
 [OwnerOnly]
-public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher) : ControllerBase
+public class ClientsController(AppDbContext db, PasswordVault passwords) : ControllerBase
 {
     private const int MinPasswordLength = 6;
 
@@ -66,7 +65,7 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
 
         db.BusinessSettings.Add(BusinessesController.NewBusiness(client.Id, req.BusinessName, req.BusinessType));
         var admin = new AppUser { Username = username, Role = AppUser.AdminRole, ClientId = client.Id };
-        admin.PasswordHash = hasher.HashPassword(admin, req.AdminPassword);
+        passwords.Set(admin, req.AdminPassword);
         db.Users.Add(admin);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
@@ -83,6 +82,19 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
         if (await SaveAdminAsync(id, req.AdminUsername, req.AdminPassword) is { } error) return BadRequest(new { message = error });
         await db.SaveChangesAsync();
         return (await GetAll()).First(c => c.Id == id);
+    }
+
+    /// <summary>
+    /// Llogaritë e klientit me fjalëkalimet e tyre (për pronarin). Password = null: fjalëkalimi u vendos
+    /// para se të ruheshin fjalëkalimet – vendoseni sërish te "Ndrysho" që të shfaqet.
+    /// </summary>
+    [HttpGet("{id:int}/logins")]
+    public async Task<ActionResult<List<ClientLoginDto>>> Logins(int id)
+    {
+        if (!await db.Clients.AnyAsync(c => c.Id == id)) return NotFound();
+        var users = await db.Users.AsNoTracking().Where(u => u.ClientId == id)
+            .OrderByDescending(u => u.Role == AppUser.AdminRole).ThenBy(u => u.Id).ToListAsync();
+        return users.Select(u => new ClientLoginDto(u.Id, u.Username, u.Role, passwords.Reveal(u))).ToList();
     }
 
     /// <summary>Fshin klientin me gjithë bizneset, ekranet, reklamat dhe përdoruesit e tij.</summary>
@@ -130,7 +142,7 @@ public class ClientsController(AppDbContext db, IPasswordHasher<AppUser> hasher)
                 return $"Përdoruesi '{username}' ekziston tashmë.";
             admin.Username = username;
         }
-        if (password.Length > 0) admin.PasswordHash = hasher.HashPassword(admin, password);
+        if (password.Length > 0) passwords.Set(admin, password);
         return null;
     }
 

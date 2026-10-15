@@ -6,7 +6,7 @@ import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader, PasswordInput } from '../components/ui';
 import { enterClient } from '../services/Business/businessQueries';
 import type { CreateClientRequest, SaveClientRequest } from '../services/Client/clientMethods';
-import { useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
+import { useClientLogins, useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
 import type { BusinessType, Client } from '../types';
 
 const businessTypes: BusinessType[] = ['restaurant', 'barber', 'shop'];
@@ -60,7 +60,7 @@ export default function ClientsPage() {
                 <tr key={c.id} className={c.isActive ? '' : 'faded'}>
                   <td>
                     <div className="strong">{c.name}</div>
-                    {c.adminUsername && <div className="muted" title={t('clients.loginUser')}>{t('clients.loginAs', { username: c.adminUsername })}</div>}
+                    {c.adminUsername && <ClientLogins client={c} />}
                   </td>
                   <td>
                     {c.contactPerson && <div>{c.contactPerson}</div>}
@@ -86,6 +86,29 @@ export default function ClientsPage() {
       {creating && <CreateModal onClose={() => setCreating(false)} />}
       {editing && <EditModal client={editing} onClose={() => setEditing(null)} />}
     </>
+  );
+}
+
+/** "Hyn si: përdoruesi" dhe, me klik, fjalëkalimet e llogarive të klientit. */
+function ClientLogins({ client }: { client: Client }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const { data: logins, error } = useClientLogins(client.id, open);
+  return (
+    <div className="muted">
+      {t('clients.loginAs', { username: client.adminUsername })}{' '}
+      <button type="button" className="link" onClick={() => setOpen(o => !o)}>
+        <Icon name={open ? 'eye-off' : 'eye'} /> {open ? t('clients.hidePassword') : t('clients.showPassword')}
+      </button>
+      {open && error && <div className="alert error">{error.message}</div>}
+      {open && logins?.map(l => (
+        <div key={l.id} className="nowrap">
+          <strong>{l.username}</strong> · {l.password != null
+            ? <><code>{l.password}</code> <button type="button" className="link" title={t('common.copy')} onClick={() => navigator.clipboard?.writeText(l.password!)}><Icon name="copy" /></button></>
+            : <em>{t('clients.passwordUnknown')}</em>}
+        </div>
+      ))}
+    </div>
   );
 }
 

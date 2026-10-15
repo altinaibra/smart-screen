@@ -528,7 +528,10 @@
     "loginAs": "Hyn si: {{username}}",
     "loginUser": "Përdoruesi me të cilin hyn klienti",
     "passwordKeepHint": "Bosh = fjalëkalimi mbetet i njëjtë",
-    "serverOutdated": "Serveri nuk e ruajti përdoruesin/fjalëkalimin – po punon me versionin e vjetër. Rinisni (ose ripublikoni) serverin dhe provoni sërish."
+    "serverOutdated": "Serveri nuk e ruajti përdoruesin/fjalëkalimin – po punon me versionin e vjetër. Rinisni (ose ripublikoni) serverin dhe provoni sërish.",
+    "showPassword": "Shfaq fjalëkalimin",
+    "hidePassword": "Fshih",
+    "passwordUnknown": "i panjohur – vendoseni sërish te \"Ndrysho\""
   },
   "alert": {
     "button": "Njoftim urgjent",

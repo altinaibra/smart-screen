@@ -27,4 +27,9 @@ export const createClient = (req: CreateClientRequest) => api<Client>('/clients'
 
 export const updateClient = (id: number, req: SaveClientRequest) => api<Client>(`/clients/${id}`, { method: 'PUT', json: req });
 
+/** Llogaritë e klientit; password = null kur fjalëkalimi nuk dihet (vendosur para këtij versioni). */
+export interface ClientLogin { id: number; username: string; role: string; password: string | null }
+
+export const getClientLogins = (id: number) => api<ClientLogin[]>(`/clients/${id}/logins`);
+
 export const deleteClient = (id: number) => api(`/clients/${id}`, { method: 'DELETE' });

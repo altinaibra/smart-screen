@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +88,11 @@ builder.Services.AddScoped<BusinessAccess>();
 builder.Services.AddScoped<BusinessAccessFilter>();
 builder.Services.AddScoped<PlayerContentService>();
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
+builder.Services.AddScoped<PasswordVault>();
+// Çelësat për fjalëkalimet e klientëve ruhen pranë databazës, që të mbeten pas rinisjes së serverit.
+builder.Services.AddDataProtection()
+    .SetApplicationName("SmartScreen")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "keys")));
 
 const long maxUpload = 1L * 1024 * 1024 * 1024;
 builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxUpload);

@@ -258,6 +258,28 @@ public class MultiTenantTests
     }
 
     [Fact]
+    public async Task Owner_sees_client_passwords_but_clients_do_not()
+    {
+        using var app = new TestApp();
+        var owner = await app.OwnerAsync();
+        await CreateClientAsync(owner, "Acme", "acme");
+        var clientId = int.Parse(owner.DefaultRequestHeaders.GetValues("X-Client-Id").First());
+
+        var logins = await owner.GetFromJsonAsync<JsonElement>($"/api/clients/{clientId}/logins", Json);
+        Assert.Equal("acme", logins[0].GetProperty("username").GetString());
+        Assert.Equal("secret123", logins[0].GetProperty("password").GetString());
+
+        // Klienti e ndryshon vetë fjalëkalimin – pronari sheh të riun.
+        var client = app.CreateClient();
+        await TestApp.LoginAsync(client, "acme", "secret123");
+        (await client.PutAsJsonAsync("/api/auth/password", new { currentPassword = "secret123", newPassword = "changed1" })).EnsureSuccessStatusCode();
+        logins = await owner.GetFromJsonAsync<JsonElement>($"/api/clients/{clientId}/logins", Json);
+        Assert.Equal("changed1", logins[0].GetProperty("password").GetString());
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/clients/{clientId}/logins")).StatusCode);
+    }
+
+    [Fact]
     public async Task User_can_change_own_username()
     {
         using var app = new TestApp();

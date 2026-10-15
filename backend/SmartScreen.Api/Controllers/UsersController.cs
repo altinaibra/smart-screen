@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartScreen.Api.Data;
@@ -17,7 +16,7 @@ namespace SmartScreen.Api.Controllers;
 [Route("api/users")]
 [Authorize]
 [AdminOnly]
-public class UsersController(AppDbContext db, IPasswordHasher<AppUser> hasher) : ControllerBase
+public class UsersController(AppDbContext db, PasswordVault passwords) : ControllerBase
 {
     private const int MinPasswordLength = 6;
 
@@ -114,7 +113,7 @@ public class UsersController(AppDbContext db, IPasswordHasher<AppUser> hasher) :
         user.Username = username;
         user.Role = req.Role;
         if (!string.IsNullOrEmpty(req.Password))
-            user.PasswordHash = hasher.HashPassword(user, req.Password);
+            passwords.Set(user, req.Password);
 
         // Administratori sheh gjithë klientin, nuk i duhen qasje të veçanta.
         var isAdmin = req.Role == AppUser.AdminRole;

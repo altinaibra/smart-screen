@@ -18,3 +18,5 @@ public record CreateClientRequest(
     [Required, MaxLength(100)] string AdminUsername, [Required] string AdminPassword);
 
 public record ClientRefDto(int Id, string Name);
+
+public record ClientLoginDto(int Id, string Username, string Role, string? Password);

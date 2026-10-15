@@ -12,6 +12,8 @@ public class AppUser
     public int Id { get; set; }
     public string Username { get; set; } = "";
     public string PasswordHash { get; set; } = "";
+    /// <summary>Kopja e enkriptuar e fjalëkalimit (vetëm për përdoruesit e klientëve), që pronari ta shohë.</summary>
+    public string? PasswordEncrypted { get; set; }
     public string Role { get; set; } = UserRole;
     /// <summary>Klienti i përdoruesit; null vetëm për pronarin (Owner).</summary>
     public int? ClientId { get; set; }
