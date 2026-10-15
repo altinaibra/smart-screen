@@ -5,8 +5,8 @@ import { locale } from '../i18n';
 import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader, PasswordInput } from '../components/ui';
 import { enterClient } from '../services/Business/businessQueries';
-import type { CreateClientRequest, SaveClientRequest } from '../services/Client/clientMethods';
-import { useClientBusinesses, useClientLogins, useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
+import type { ClientLogin, CreateClientRequest, SaveClientRequest } from '../services/Client/clientMethods';
+import { useClientBusinesses, useClientLogins, useUpdateClientLogin, useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
 import type { BusinessType, Client } from '../types';
 
 const businessTypes: BusinessType[] = ['restaurant', 'barber', 'shop'];
@@ -101,6 +101,7 @@ function DetailsModal({ client: c, onClose, onEnter, onEdit }: { client: Client;
   const { data: logins, error: loginsError } = useClientLogins(c.id);
   const { data: businesses, error: businessesError } = useClientBusinesses(c.id);
   const [shown, setShown] = useState(false);
+  const [editingLogin, setEditingLogin] = useState<number | null>(null);
   const copy = (text: string) => navigator.clipboard?.writeText(text);
   const outdated = (e: Error | null) => e && (/404/.test(e.message) ? t('clients.serverOutdatedPasswords') : e.message);
 
@@ -126,20 +127,23 @@ function DetailsModal({ client: c, onClose, onEnter, onEdit }: { client: Client;
         </button>
       </h4>
       <table className="table">
-        <thead><tr><th>{t('users.username')}</th><th>{t('users.role')}</th><th>{t('login.password')}</th></tr></thead>
+        <thead><tr><th>{t('users.username')}</th><th>{t('users.role')}</th><th>{t('login.password')}</th><th /></tr></thead>
         <tbody>
-          {logins?.map(l => (
-            <tr key={l.id}>
-              <td className="strong nowrap">{l.username} <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.username)}><Icon name="copy" /></button></td>
-              <td>{t(`users.role_${l.role}`)}</td>
-              <td className="nowrap">
-                {l.password == null ? <em className="muted">{t('clients.passwordUnknown')}</em> : <>
-                  <code>{shown ? l.password : '••••••'}</code>{' '}
-                  <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.password!)}><Icon name="copy" /></button>
-                </>}
-              </td>
-            </tr>
-          ))}
+          {logins?.map(l => editingLogin === l.id
+            ? <LoginEditRow key={l.id} clientId={c.id} login={l} onDone={() => setEditingLogin(null)} />
+            : (
+              <tr key={l.id}>
+                <td className="strong nowrap">{l.username} <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.username)}><Icon name="copy" /></button></td>
+                <td>{t(`users.role_${l.role}`)}</td>
+                <td className="nowrap">
+                  {l.password == null ? <em className="muted">{t('clients.passwordUnknown')}</em> : <>
+                    <code>{shown ? l.password : '••••••'}</code>{' '}
+                    <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.password!)}><Icon name="copy" /></button>
+                  </>}
+                </td>
+                <td className="right"><button type="button" className="btn" onClick={() => setEditingLogin(l.id)}>{t('common.edit')}</button></td>
+              </tr>
+            ))}
         </tbody>
       </table>
 
@@ -157,6 +161,41 @@ function DetailsModal({ client: c, onClose, onEnter, onEdit }: { client: Client;
         </tbody>
       </table>
     </Modal>
+  );
+}
+
+/** Ndryshimi i një llogarie direkt te tabela e llogarive (përdoruesi dhe/ose fjalëkalimi). */
+function LoginEditRow({ clientId, login, onDone }: { clientId: number; login: ClientLogin; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [username, setUsername] = useState(login.username);
+  const [password, setPassword] = useState(login.password ?? '');
+  const update = useUpdateClientLogin(clientId);
+
+  function save(e: FormEvent) {
+    e.preventDefault();
+    update.mutate({ userId: login.id, username: username.trim(), password: password === login.password ? '' : password }, { onSuccess: onDone });
+  }
+
+  return (
+    <tr>
+      <td colSpan={4}>
+        <form className="login-edit" onSubmit={save}>
+          <ErrorBox error={update.error?.message ?? null} />
+          <div className="grid-2">
+            <Field label={t('users.username')}>
+              <input value={username} maxLength={100} onChange={e => setUsername(e.target.value)} required autoFocus autoComplete="off" />
+            </Field>
+            <Field label={t('login.password')} hint={t('settings.newPasswordHint')}>
+              <PasswordInput value={password} minLength={6} onChange={e => setPassword(e.target.value)} required={login.password == null} autoComplete="new-password" />
+            </Field>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn" onClick={onDone}>{t('common.cancel')}</button>
+            <button className="btn primary" disabled={update.isPending}>{t('common.save')}</button>
+          </div>
+        </form>
+      </td>
+    </tr>
   );
 }
 

@@ -435,3 +435,5 @@ input[type=color] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
 .details dt { color: var(--muted); font-size: 13px; }
 .details dd { margin: 0; }
 .form-section .link { float: right; font-size: 13px; font-weight: 500; }
+.login-edit { padding: 6px 0; }
+.login-edit .form-actions { justify-content: flex-end; }

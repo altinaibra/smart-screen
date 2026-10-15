@@ -22,3 +22,6 @@ public record ClientRefDto(int Id, string Name);
 public record ClientBusinessDto(int Id, string Name, string BusinessType, int ScreenCount, int ScreensOnline);
 
 public record ClientLoginDto(int Id, string Username, string Role, string? Password);
+
+/// <summary>Vlerat bosh nuk ndryshohen.</summary>
+public record UpdateClientLoginRequest([MaxLength(100)] string? Username, string? Password);

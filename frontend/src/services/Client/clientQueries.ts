@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../queryClient';
-import { createClient, deleteClient, getClientBusinesses, getClientLogins, getClients, updateClient, type CreateClientRequest, type SaveClientRequest } from './clientMethods';
+import { createClient, deleteClient, getClientBusinesses, getClientLogins, getClients, updateClient, updateClientLogin, type CreateClientRequest, type SaveClientRequest } from './clientMethods';
 
 export const clientKeys = {
   all: ['clients'] as const,
@@ -19,6 +19,13 @@ export function useClientLogins(id: number) {
 
 export function useClientBusinesses(id: number) {
   return useQuery({ queryKey: [...clientKeys.all, id, 'businesses'], queryFn: () => getClientBusinesses(id) });
+}
+
+export function useUpdateClientLogin(clientId: number) {
+  return useMutation({
+    mutationFn: ({ userId, ...req }: { userId: number; username?: string; password?: string }) => updateClientLogin(clientId, userId, req),
+    onSuccess: invalidate,
+  });
 }
 
 export function useCreateClient() {

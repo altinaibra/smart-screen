@@ -36,4 +36,8 @@ export const getClientBusinesses = (id: number) => api<ClientBusiness[]>(`/clien
 
 export const getClientLogins = (id: number) => api<ClientLogin[]>(`/clients/${id}/logins`);
 
+/** Ndryshon një llogari të klientit; vlerat bosh nuk ndryshohen. */
+export const updateClientLogin = (clientId: number, userId: number, req: { username?: string; password?: string }) =>
+  api<ClientLogin>(`/clients/${clientId}/logins/${userId}`, { method: 'PUT', json: req });
+
 export const deleteClient = (id: number) => api(`/clients/${id}`, { method: 'DELETE' });

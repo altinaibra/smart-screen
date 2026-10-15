@@ -280,6 +280,13 @@ public class MultiTenantTests
         Assert.Equal("changed1", logins[0].GetProperty("password").GetString());
 
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/clients/{clientId}/logins")).StatusCode);
+
+        // Pronari ndryshon një llogari të veçantë nga detajet e klientit.
+        var userId = logins[0].GetProperty("id").GetInt32();
+        (await owner.PutAsJsonAsync($"/api/clients/{clientId}/logins/{userId}", new { username = "acme2", password = "fresh12" })).EnsureSuccessStatusCode();
+        (await app.CreateClient().PostAsJsonAsync("/api/auth/login", new { username = "acme2", password = "fresh12" })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await owner.PutAsJsonAsync($"/api/clients/{clientId + 99}/logins/{userId}", new { password = "fresh12" })).StatusCode);
     }
 
     [Fact]

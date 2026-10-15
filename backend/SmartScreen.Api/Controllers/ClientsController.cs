@@ -97,6 +97,18 @@ public class ClientsController(AppDbContext db, PasswordVault passwords) : Contr
         return users.Select(u => new ClientLoginDto(u.Id, u.Username, u.Role, passwords.Reveal(u))).ToList();
     }
 
+    /// <summary>Ndryshon përdoruesin dhe/ose fjalëkalimin e një llogarie të klientit (nga detajet e klientit).</summary>
+    [HttpPut("{id:int}/logins/{userId:int}")]
+    public async Task<ActionResult<ClientLoginDto>> UpdateLogin(int id, int userId, UpdateClientLoginRequest req)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.ClientId == id);
+        if (user is null) return NotFound();
+        if (await ApplyLoginAsync(user, req.Username?.Trim() ?? "", req.Password ?? "") is { } error)
+            return BadRequest(new { message = error });
+        await db.SaveChangesAsync();
+        return new ClientLoginDto(user.Id, user.Username, user.Role, passwords.Reveal(user));
+    }
+
     /// <summary>Bizneset e klientit me numrin e ekraneve (për detajet e klientit te pronari).</summary>
     [HttpGet("{id:int}/businesses")]
     public async Task<ActionResult<List<ClientBusinessDto>>> Businesses(int id)
@@ -148,14 +160,21 @@ public class ClientsController(AppDbContext db, PasswordVault passwords) : Contr
         }
         // Llogaria kryesore e klientit menaxhon bizneset e tij.
         admin.Role = AppUser.AdminRole;
+        return await ApplyLoginAsync(admin, username, password);
+    }
 
-        if (username.Length > 0 && username != admin.Username)
+    /// <summary>Vendos emrin dhe/ose fjalëkalimin e një llogarie (vlerat bosh nuk ndryshohen).</summary>
+    private async Task<string?> ApplyLoginAsync(AppUser user, string username, string password)
+    {
+        if (password.Length > 0 && password.Length < MinPasswordLength)
+            return $"Fjalëkalimi duhet të ketë të paktën {MinPasswordLength} karaktere.";
+        if (username.Length > 0 && username != user.Username)
         {
-            if (await db.Users.AnyAsync(u => u.Username == username && u.Id != admin.Id))
+            if (await db.Users.AnyAsync(u => u.Username == username && u.Id != user.Id))
                 return $"Përdoruesi '{username}' ekziston tashmë.";
-            admin.Username = username;
+            user.Username = username;
         }
-        if (password.Length > 0) passwords.Set(admin, password);
+        if (password.Length > 0) passwords.Set(user, password);
         return null;
     }
 
