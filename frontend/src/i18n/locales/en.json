@@ -437,7 +437,12 @@
     "main": "Main",
     "isMain": "Main currency (isMainCurrency)",
     "makeMain": "Make main",
-    "confirmDelete": "Delete currency {{code}}?"
+    "confirmDelete": "Delete currency {{code}}?",
+    "subtitlePick": "Choose the currencies you use. The main currency is shown with prices in the panel and on the TV.",
+    "used": "In use",
+    "editRate": "Edit rate",
+    "mainCannotDisable": "The main currency cannot be removed – make another one main first.",
+    "pickHint": "The first currency you choose becomes the main one. Rate = how many units of this currency equal 1 unit of the main currency."
   },
   "paymentMethods": {
     "title": "Payment methods",

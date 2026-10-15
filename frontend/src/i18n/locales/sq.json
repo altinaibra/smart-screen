@@ -437,7 +437,12 @@
     "main": "Kryesore",
     "isMain": "Valuta kryesore (isMainCurrency)",
     "makeMain": "Bëje kryesore",
-    "confirmDelete": "Të fshihet valuta {{code}}?"
+    "confirmDelete": "Të fshihet valuta {{code}}?",
+    "subtitlePick": "Zgjidhni valutat që përdorni. Valuta kryesore shfaqet te çmimet në panel dhe në TV.",
+    "used": "Përdoret",
+    "editRate": "Ndrysho kursin",
+    "mainCannotDisable": "Valuta kryesore nuk mund të hiqet – bëni fillimisht një tjetër kryesore.",
+    "pickHint": "Valuta e parë që zgjidhni bëhet kryesore. Kursi = sa njësi të kësaj valute bëjnë 1 njësi të valutës kryesore."
   },
   "paymentMethods": {
     "title": "Mënyrat e pagesës",

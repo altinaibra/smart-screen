@@ -2,126 +2,132 @@ import { FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { locale } from '../i18n';
 import Icon from '../components/Icon';
-import { Empty, ErrorBox, Field, Modal, PageHeader } from '../components/ui';
-import { confirmDialog } from '../components/ConfirmDialog';
-import type { SaveCurrencyRequest } from '../services/Currency/currencyMethods';
-import { useCreateCurrency, useCurrencies, useDeleteCurrency, useSetMainCurrency, useUpdateCurrency } from '../services/Currency/currencyQueries';
+import { ErrorBox, Field, Modal, PageHeader } from '../components/ui';
+import { useCreateCurrency, useCurrencies, useSetMainCurrency, useUpdateCurrency } from '../services/Currency/currencyQueries';
 import type { Currency } from '../types';
 
-type CurrencyForm = SaveCurrencyRequest & { currencyId?: number };
+/** Valutat që përdoren zakonisht; përdoruesi vetëm zgjedh cilat i përdor (nuk i shkruan me dorë). */
+const catalog = [
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'ALL', symbol: 'L', name: 'Leku shqiptar', aliases: ['LEK'] },
+  { code: 'USD', symbol: '$', name: 'Dollari amerikan' },
+  { code: 'CHF', symbol: 'CHF', name: 'Franga zvicerane' },
+  { code: 'GBP', symbol: '£', name: 'Paundi britanik' },
+  { code: 'MKD', symbol: 'ден', name: 'Denari maqedonas' },
+  { code: 'RSD', symbol: 'дин', name: 'Dinari serb' },
+  { code: 'TRY', symbol: '₺', name: 'Lira turke' },
+  { code: 'BAM', symbol: 'KM', name: 'Marka boshnjake' },
+];
 
-const emptyForm = (first: boolean): CurrencyForm => ({
-  currencyCode: '', currencyName: '', currencySymbol: '', exchangeRate: 1,
-  status: true, isMainCurrency: first, fiscalType: -1, rowVersion: null,
-});
+type Row = { code: string; symbol: string; name: string; currency?: Currency };
 
 export default function CurrenciesPage() {
   const { t } = useTranslation();
-  const { data: currencies = [], isLoading, error: loadError } = useCurrencies();
+  const { data: currencies = [], error: loadError } = useCurrencies();
   const { mutateAsync: setMainCurrency } = useSetMainCurrency();
-  const { mutateAsync: deleteCurrency } = useDeleteCurrency();
-  const [form, setForm] = useState<CurrencyForm | null>(null);
+  const { mutateAsync: createCurrency } = useCreateCurrency();
+  const { mutateAsync: updateCurrency } = useUpdateCurrency();
+  const [editing, setEditing] = useState<Currency | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function makeMain(c: Currency) {
+  // Lista e plotë: valutat e katalogut + ato të shtuara më parë me dorë që nuk janë në katalog.
+  const matches = (c: Currency, code: string, aliases: string[] = []) => [code, ...aliases].includes(c.currencyCode);
+  const rows: Row[] = [
+    ...catalog.map(k => ({ code: k.code, symbol: k.symbol, name: k.name, currency: currencies.find(c => matches(c, k.code, k.aliases)) })),
+    ...currencies.filter(c => !catalog.some(k => matches(c, k.code, k.aliases)))
+      .map(c => ({ code: c.currencyCode, symbol: c.currencySymbol, name: c.currencyName, currency: c })),
+  ];
+
+  async function run(code: string, action: () => Promise<unknown>) {
     setError(null);
-    await setMainCurrency(c.currencyId).catch(e => setError(e.message));
+    setBusy(code);
+    await action().catch(e => setError(e.message));
+    setBusy(null);
   }
 
-  async function remove(c: Currency) {
-    if (!(await confirmDialog(t('currencies.confirmDelete', { code: c.currencyCode })))) return;
-    setError(null);
-    await deleteCurrency(c.currencyId).catch(e => setError(e.message));
+  /** Aktivizon/çaktivizon valutën. E para që zgjidhet bëhet kryesore. */
+  function toggle(row: Row, used: boolean) {
+    const c = row.currency;
+    const hasMain = currencies.some(x => x.isMainCurrency && x.status);
+    return run(row.code, () => c
+      ? updateCurrency({ ...c, status: used, isMainCurrency: c.isMainCurrency || (used && !hasMain) })
+      : createCurrency({
+        currencyCode: row.code, currencyName: row.name, currencySymbol: row.symbol, exchangeRate: 1,
+        status: true, isMainCurrency: !hasMain, fiscalType: -1, rowVersion: null,
+      }));
   }
 
   return (
     <>
-      <PageHeader
-        title={t('currencies.title')}
-        subtitle={t('currencies.subtitle')}
-        actions={<button className="btn primary" onClick={() => setForm(emptyForm(currencies.length === 0))}><Icon name="plus" />{t('currencies.add')}</button>}
-      />
+      <PageHeader title={t('currencies.title')} subtitle={t('currencies.subtitlePick')} />
       <ErrorBox error={error ?? loadError?.message ?? null} />
 
-      {!isLoading && currencies.length === 0 ? <Empty>{t('currencies.empty')}</Empty> : (
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>ID</th><th>{t('currencies.code')}</th><th>{t('common.name')}</th><th>{t('currencies.symbol')}</th>
-                <th className="right">{t('currencies.exchangeRate')}</th><th>{t('currencies.fiscalType')}</th>
-                <th>{t('currencies.status')}</th><th>{t('currencies.entryDate')}</th><th />
-              </tr>
-            </thead>
-            <tbody>
-              {currencies.map(c => (
-                <tr key={c.currencyId} className={c.status ? '' : 'faded'}>
-                  <td className="muted">{c.currencyId}</td>
-                  <td className="strong">{c.currencyCode} {c.isMainCurrency && <span className="tag yellow"><Icon name="star" />{t('currencies.main')}</span>}</td>
-                  <td>{c.currencyName}</td>
-                  <td>{c.currencySymbol}</td>
-                  <td className="right">{c.exchangeRate.toLocaleString(locale(), { minimumFractionDigits: 3, maximumFractionDigits: 6 })}</td>
-                  <td>{c.fiscalType}</td>
-                  <td>{c.status ? <span className="tag green">{t('common.active')}</span> : <span className="tag gray">{t('common.inactive')}</span>}</td>
-                  <td className="muted nowrap">{new Date(c.entryDate).toLocaleString(locale())}</td>
+      <div className="card">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t('currencies.used')}</th><th>{t('currencies.code')}</th><th>{t('common.name')}</th><th>{t('currencies.symbol')}</th>
+              <th className="right">{t('currencies.exchangeRate')}</th><th />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(row => {
+              const c = row.currency;
+              const used = !!c?.status;
+              return (
+                <tr key={row.code} className={used ? '' : 'faded'}>
+                  <td>
+                    <input type="checkbox" checked={used} disabled={busy === row.code || !!c?.isMainCurrency}
+                      title={c?.isMainCurrency ? t('currencies.mainCannotDisable') : undefined}
+                      onChange={e => toggle(row, e.target.checked)} />
+                  </td>
+                  <td className="strong">{row.code} {c?.isMainCurrency && <span className="tag yellow"><Icon name="star" />{t('currencies.main')}</span>}</td>
+                  <td>{row.name}</td>
+                  <td>{row.symbol}</td>
+                  <td className="right">{used ? c!.exchangeRate.toLocaleString(locale(), { minimumFractionDigits: 3, maximumFractionDigits: 6 }) : '—'}</td>
                   <td className="right nowrap">
-                    {!c.isMainCurrency && c.status && <><button className="btn" onClick={() => makeMain(c)}>{t('currencies.makeMain')}</button>{' '}</>}
-                    <button className="btn" onClick={() => setForm({ ...c })}>{t('common.edit')}</button>{' '}
-                    <button className="btn danger ghost" onClick={() => remove(c)} disabled={c.isMainCurrency}>{t('common.delete')}</button>
+                    {used && !c!.isMainCurrency && <><button className="btn" disabled={busy === row.code} onClick={() => run(row.code, () => setMainCurrency(c!.currencyId))}>{t('currencies.makeMain')}</button>{' '}</>}
+                    {used && <button className="btn" onClick={() => setEditing(c!)}>{t('currencies.editRate')}</button>}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="muted">{t('currencies.pickHint')}</p>
+      </div>
 
-      {form && <CurrencyModal initial={form} onClose={() => setForm(null)} />}
+      {editing && <RateModal currency={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
 
-function CurrencyModal({ initial, onClose }: { initial: CurrencyForm; onClose: () => void }) {
+/** Vetëm kursi dhe lloji fiskal ndryshohen; kodi, emri dhe simboli vijnë nga lista. */
+function RateModal({ currency, onClose }: { currency: Currency; onClose: () => void }) {
   const { t } = useTranslation();
-  const [form, setForm] = useState(initial);
-  const create = useCreateCurrency();
+  const [rate, setRate] = useState(currency.exchangeRate);
+  const [fiscalType, setFiscalType] = useState(currency.fiscalType);
   const update = useUpdateCurrency();
-  const error = create.error ?? update.error;
-  const set = (patch: Partial<CurrencyForm>) => setForm(f => ({ ...f, ...patch }));
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    const { currencyId, ...req } = form;
-    if (currencyId) update.mutate({ currencyId, ...req }, { onSuccess: onClose });
-    else create.mutate(req, { onSuccess: onClose });
+    update.mutate({ ...currency, exchangeRate: rate, fiscalType }, { onSuccess: onClose });
   }
 
   return (
-    <Modal title={form.currencyId ? t('currencies.edit') : t('currencies.new')} onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="currency-form">{t('common.save')}</button></>}>
+    <Modal title={`${currency.currencyCode} – ${currency.currencyName}`} onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>{t('common.cancel')}</button><button className="btn primary" form="currency-form" disabled={update.isPending}>{t('common.save')}</button></>}>
       <form id="currency-form" onSubmit={submit}>
-        <ErrorBox error={error?.message ?? null} />
-        <div className="grid-2">
-          <Field label={t('currencies.code')} hint={t('currencies.codeHint')}>
-            <input value={form.currencyCode} maxLength={10} onChange={e => set({ currencyCode: e.target.value.toUpperCase() })} required autoFocus />
-          </Field>
-          <Field label={t('currencies.symbol')}>
-            <input value={form.currencySymbol} maxLength={10} onChange={e => set({ currencySymbol: e.target.value })} placeholder="€, L, $" required />
-          </Field>
-        </div>
-        <Field label={t('common.name')}>
-          <input value={form.currencyName} maxLength={100} onChange={e => set({ currencyName: e.target.value })} placeholder="Euro" required />
-        </Field>
+        <ErrorBox error={update.error?.message ?? null} />
         <div className="grid-2">
           <Field label={t('currencies.exchangeRate')} hint={t('currencies.exchangeRateHint')}>
-            <input type="number" step="any" min="0" value={form.exchangeRate} onChange={e => set({ exchangeRate: Number(e.target.value) })} required />
+            <input type="number" step="any" min="0" value={rate} onChange={e => setRate(Number(e.target.value))} required autoFocus />
           </Field>
           <Field label={t('currencies.fiscalType')} hint={t('currencies.fiscalTypeHint')}>
-            <input type="number" step="1" value={form.fiscalType} onChange={e => set({ fiscalType: Number(e.target.value) })} required />
+            <input type="number" step="1" value={fiscalType} onChange={e => setFiscalType(Number(e.target.value))} required />
           </Field>
         </div>
-        <label className="inline-check"><input type="checkbox" checked={form.status} onChange={e => set({ status: e.target.checked })} /> {t('common.active')}</label>
-        <label className="inline-check"><input type="checkbox" checked={form.isMainCurrency} onChange={e => set({ isMainCurrency: e.target.checked })} /> {t('currencies.isMain')}</label>
       </form>
     </Modal>
   );
