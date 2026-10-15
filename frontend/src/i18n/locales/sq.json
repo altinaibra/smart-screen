@@ -459,7 +459,11 @@
     "entryDate": "Regjistruar",
     "default": "E parazgjedhur",
     "isDefault": "E parazgjedhur (isDefault)",
-    "confirmDelete": "Të fshihet \"{{name}}\"?"
+    "confirmDelete": "Të fshihet \"{{name}}\"?",
+    "subtitlePick": "Zgjidhni mënyrat e pagesës që përdorni, ose shtoni një tjetër me \"Mënyrë pagese\".",
+    "used": "Përdoret",
+    "makeDefault": "Bëje të parazgjedhur",
+    "pickHint": "E para që zgjidhni bëhet e parazgjedhur. Mënyrat e shtuara nga ju mund të fshihen; të gatshmet vetëm hiqen nga përdorimi."
   },
   "businesses": {
     "title": "Bizneset",

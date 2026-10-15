@@ -459,7 +459,11 @@
     "entryDate": "Entry date",
     "default": "Default",
     "isDefault": "Default (isDefault)",
-    "confirmDelete": "Delete \"{{name}}\"?"
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "subtitlePick": "Choose the payment methods you use, or add another with \"Payment method\".",
+    "used": "In use",
+    "makeDefault": "Make default",
+    "pickHint": "The first one you choose becomes the default. Methods you added can be deleted; the built-in ones are just switched off."
   },
   "businesses": {
     "title": "Businesses",
