@@ -89,7 +89,7 @@ builder.Services.AddScoped<BusinessAccessFilter>();
 builder.Services.AddScoped<PlayerContentService>();
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.AddScoped<PasswordVault>();
-// Çelësat për fjalëkalimet e klientëve ruhen pranë databazës, që të mbeten pas rinisjes së serverit.
+// Vetëm për të lexuar fjalëkalimet e ruajtura nga versioni i mëparshëm (çelësat e rinj janë në databazë).
 builder.Services.AddDataProtection()
     .SetApplicationName("SmartScreen")
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "keys")));

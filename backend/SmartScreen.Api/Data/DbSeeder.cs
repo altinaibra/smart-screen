@@ -171,6 +171,20 @@ public static class DbSeeder
 
     private static readonly (string Table, string SqlServer, string Sqlite)[] AddedTables =
     [
+        ("AppSecrets",
+            """
+            CREATE TABLE [AppSecrets] (
+                [Name] nvarchar(100) NOT NULL,
+                [Value] nvarchar(2000) NOT NULL,
+                CONSTRAINT [PK_AppSecrets] PRIMARY KEY ([Name])
+            );
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS "AppSecrets" (
+                "Name" TEXT NOT NULL CONSTRAINT "PK_AppSecrets" PRIMARY KEY,
+                "Value" TEXT NOT NULL
+            );
+            """),
         ("MediaChunks",
             """
             CREATE TABLE [MediaChunks] (

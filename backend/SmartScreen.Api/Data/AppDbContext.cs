@@ -21,6 +21,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<UserBusiness> UserBusinesses => Set<UserBusiness>();
     public DbSet<UserScreen> UserScreens => Set<UserScreen>();
+    public DbSet<AppSecret> AppSecrets => Set<AppSecret>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -103,6 +104,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(m => m.Name).HasMaxLength(200);
             e.Property(m => m.FileName).HasMaxLength(200);
             e.Ignore(m => m.Url);
+        });
+
+        b.Entity<AppSecret>(e =>
+        {
+            e.HasKey(s => s.Name);
+            e.Property(s => s.Name).HasMaxLength(100);
         });
 
         b.Entity<MediaChunk>(e =>
