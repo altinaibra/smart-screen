@@ -100,7 +100,8 @@ function ClientLogins({ client }: { client: Client }) {
       <button type="button" className="link" onClick={() => setOpen(o => !o)}>
         <Icon name={open ? 'eye-off' : 'eye'} /> {open ? t('clients.hidePassword') : t('clients.showPassword')}
       </button>
-      {open && error && <div className="alert error">{error.message}</div>}
+      {/* 404 pa mesazh = serveri i vjetër nuk e ka ende këtë funksion. */}
+      {open && error && <div className="alert error">{/404/.test(error.message) ? t('clients.serverOutdatedPasswords') : error.message}</div>}
       {open && logins?.map(l => (
         <div key={l.id} className="nowrap">
           <strong>{l.username}</strong> · {l.password != null

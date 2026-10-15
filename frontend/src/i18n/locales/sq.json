@@ -531,7 +531,8 @@
     "serverOutdated": "Serveri nuk e ruajti përdoruesin/fjalëkalimin – po punon me versionin e vjetër. Rinisni (ose ripublikoni) serverin dhe provoni sërish.",
     "showPassword": "Shfaq fjalëkalimin",
     "hidePassword": "Fshih",
-    "passwordUnknown": "i panjohur – vendoseni sërish te \"Ndrysho\""
+    "passwordUnknown": "i panjohur – vendoseni sërish te \"Ndrysho\"",
+    "serverOutdatedPasswords": "Serveri po punon me versionin e vjetër. Ndaleni dhe riniseni serverin (backend-in), pastaj provoni sërish."
   },
   "alert": {
     "button": "Njoftim urgjent",

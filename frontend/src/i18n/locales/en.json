@@ -531,7 +531,8 @@
     "serverOutdated": "The server did not save the username/password – it is running an old version. Restart (or republish) the server and try again.",
     "showPassword": "Show password",
     "hidePassword": "Hide",
-    "passwordUnknown": "unknown – set it again under \"Edit\""
+    "passwordUnknown": "unknown – set it again under \"Edit\"",
+    "serverOutdatedPasswords": "The server is running an old version. Stop and restart the server (backend), then try again."
   },
   "alert": {
     "button": "Emergency message",
