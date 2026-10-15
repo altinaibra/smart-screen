@@ -19,4 +19,6 @@ public record CreateClientRequest(
 
 public record ClientRefDto(int Id, string Name);
 
+public record ClientBusinessDto(int Id, string Name, string BusinessType, int ScreenCount, int ScreensOnline);
+
 public record ClientLoginDto(int Id, string Username, string Role, string? Password);

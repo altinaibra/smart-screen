@@ -532,7 +532,9 @@
     "showPassword": "Show password",
     "hidePassword": "Hide",
     "passwordUnknown": "unknown – set it again under \"Edit\"",
-    "serverOutdatedPasswords": "The server is running an old version. Stop and restart the server (backend), then try again."
+    "serverOutdatedPasswords": "The server is running an old version. Stop and restart the server (backend), then try again.",
+    "details": "Click for all details",
+    "logins": "Accounts (username and password)"
   },
   "alert": {
     "button": "Emergency message",

@@ -269,6 +269,9 @@ public class MultiTenantTests
         Assert.Equal("acme", logins[0].GetProperty("username").GetString());
         Assert.Equal("secret123", logins[0].GetProperty("password").GetString());
 
+        var businesses = await owner.GetFromJsonAsync<JsonElement>($"/api/clients/{clientId}/businesses", Json);
+        Assert.Equal("Acme Business", businesses[0].GetProperty("name").GetString());
+
         // Klienti e ndryshon vetë fjalëkalimin – pronari sheh të riun.
         var client = app.CreateClient();
         await TestApp.LoginAsync(client, "acme", "secret123");

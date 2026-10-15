@@ -6,7 +6,7 @@ import Icon from '../components/Icon';
 import { Empty, ErrorBox, Field, Modal, PageHeader, PasswordInput } from '../components/ui';
 import { enterClient } from '../services/Business/businessQueries';
 import type { CreateClientRequest, SaveClientRequest } from '../services/Client/clientMethods';
-import { useClientLogins, useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
+import { useClientBusinesses, useClientLogins, useClients, useCreateClient, useDeleteClient, useUpdateClient } from '../services/Client/clientQueries';
 import type { BusinessType, Client } from '../types';
 
 const businessTypes: BusinessType[] = ['restaurant', 'barber', 'shop'];
@@ -19,6 +19,7 @@ export default function ClientsPage() {
   const { mutateAsync: deleteClient } = useDeleteClient();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
+  const [viewing, setViewing] = useState<Client | null>(null);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -57,10 +58,11 @@ export default function ClientsPage() {
             </thead>
             <tbody>
               {visible.map(c => (
-                <tr key={c.id} className={c.isActive ? '' : 'faded'}>
+                <tr key={c.id} className={`clickable ${c.isActive ? '' : 'faded'}`} title={t('clients.details')}
+                  onClick={e => !(e.target as HTMLElement).closest('button') && setViewing(c)}>
                   <td>
                     <div className="strong">{c.name}</div>
-                    {c.adminUsername && <ClientLogins client={c} />}
+                    {c.adminUsername && <div className="muted">{t('clients.loginAs', { username: c.adminUsername })}</div>}
                   </td>
                   <td>
                     {c.contactPerson && <div>{c.contactPerson}</div>}
@@ -84,32 +86,77 @@ export default function ClientsPage() {
       )}
 
       {creating && <CreateModal onClose={() => setCreating(false)} />}
+      {viewing && (
+        <DetailsModal client={clients.find(c => c.id === viewing.id) ?? viewing} onClose={() => setViewing(null)}
+          onEnter={() => enter(viewing)} onEdit={() => { setEditing(viewing); setViewing(null); }} />
+      )}
       {editing && <EditModal client={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
 
-/** "Hyn si: përdoruesi" dhe, me klik, fjalëkalimet e llogarive të klientit. */
-function ClientLogins({ client }: { client: Client }) {
+/** Të gjitha të dhënat e klientit: kontakti, bizneset, llogaritë me fjalëkalimet. Hapet me klik te rreshti. */
+function DetailsModal({ client: c, onClose, onEnter, onEdit }: { client: Client; onClose: () => void; onEnter: () => void; onEdit: () => void }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const { data: logins, error } = useClientLogins(client.id, open);
+  const { data: logins, error: loginsError } = useClientLogins(c.id);
+  const { data: businesses, error: businessesError } = useClientBusinesses(c.id);
+  const [shown, setShown] = useState(false);
+  const copy = (text: string) => navigator.clipboard?.writeText(text);
+  const outdated = (e: Error | null) => e && (/404/.test(e.message) ? t('clients.serverOutdatedPasswords') : e.message);
+
   return (
-    <div className="muted">
-      {t('clients.loginAs', { username: client.adminUsername })}{' '}
-      <button type="button" className="link" onClick={() => setOpen(o => !o)}>
-        <Icon name={open ? 'eye-off' : 'eye'} /> {open ? t('clients.hidePassword') : t('clients.showPassword')}
-      </button>
-      {/* 404 pa mesazh = serveri i vjetër nuk e ka ende këtë funksion. */}
-      {open && error && <div className="alert error">{/404/.test(error.message) ? t('clients.serverOutdatedPasswords') : error.message}</div>}
-      {open && logins?.map(l => (
-        <div key={l.id} className="nowrap">
-          <strong>{l.username}</strong> · {l.password != null
-            ? <><code>{l.password}</code> <button type="button" className="link" title={t('common.copy')} onClick={() => navigator.clipboard?.writeText(l.password!)}><Icon name="copy" /></button></>
-            : <em>{t('clients.passwordUnknown')}</em>}
-        </div>
-      ))}
-    </div>
+    <Modal wide title={c.name} onClose={onClose}
+      footer={<><button className="btn" onClick={onEdit}>{t('common.edit')}</button><button className="btn primary" onClick={onEnter}>{t('clients.enter')}</button></>}>
+      <ErrorBox error={outdated(loginsError) ?? outdated(businessesError) ?? null} />
+
+      <dl className="details">
+        <dt>{t('clients.status')}</dt>
+        <dd>{c.isActive ? <span className="tag green">{t('common.active')}</span> : <span className="tag gray">{t('common.inactive')}</span>}</dd>
+        <dt>{t('clients.contactPerson')}</dt><dd>{c.contactPerson || '—'}</dd>
+        <dt>{t('clients.phone')}</dt><dd>{c.phone || '—'}</dd>
+        <dt>{t('clients.email')}</dt><dd>{c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : '—'}</dd>
+        <dt>{t('clients.since')}</dt><dd>{new Date(c.createdAt).toLocaleDateString(locale())}</dd>
+        {c.notes && <><dt>{t('clients.notes')}</dt><dd className="pre-line">{c.notes}</dd></>}
+      </dl>
+
+      <h4 className="form-section">
+        {t('clients.logins')}
+        <button type="button" className="link" onClick={() => setShown(v => !v)}>
+          <Icon name={shown ? 'eye-off' : 'eye'} />{shown ? t('clients.hidePassword') : t('clients.showPassword')}
+        </button>
+      </h4>
+      <table className="table">
+        <thead><tr><th>{t('users.username')}</th><th>{t('users.role')}</th><th>{t('login.password')}</th></tr></thead>
+        <tbody>
+          {logins?.map(l => (
+            <tr key={l.id}>
+              <td className="strong nowrap">{l.username} <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.username)}><Icon name="copy" /></button></td>
+              <td>{t(`users.role_${l.role}`)}</td>
+              <td className="nowrap">
+                {l.password == null ? <em className="muted">{t('clients.passwordUnknown')}</em> : <>
+                  <code>{shown ? l.password : '••••••'}</code>{' '}
+                  <button type="button" className="link" title={t('common.copy')} onClick={() => copy(l.password!)}><Icon name="copy" /></button>
+                </>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h4 className="form-section">{t('clients.businesses')}</h4>
+      <table className="table">
+        <thead><tr><th>{t('settings.businessName')}</th><th>{t('settings.businessType')}</th><th>{t('clients.screens')}</th></tr></thead>
+        <tbody>
+          {businesses?.map(b => (
+            <tr key={b.id}>
+              <td className="strong">{b.name}</td>
+              <td>{t(`settings.type_${b.businessType}`)}</td>
+              <td>{b.screenCount} <span className="muted">({t('clients.online', { count: b.screensOnline })})</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Modal>
   );
 }
 

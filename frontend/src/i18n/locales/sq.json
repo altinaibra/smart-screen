@@ -532,7 +532,9 @@
     "showPassword": "Shfaq fjalëkalimin",
     "hidePassword": "Fshih",
     "passwordUnknown": "i panjohur – vendoseni sërish te \"Ndrysho\"",
-    "serverOutdatedPasswords": "Serveri po punon me versionin e vjetër. Ndaleni dhe riniseni serverin (backend-in), pastaj provoni sërish."
+    "serverOutdatedPasswords": "Serveri po punon me versionin e vjetër. Ndaleni dhe riniseni serverin (backend-in), pastaj provoni sërish.",
+    "details": "Kliko për të gjitha të dhënat",
+    "logins": "Llogaritë (përdoruesi dhe fjalëkalimi)"
   },
   "alert": {
     "button": "Njoftim urgjent",

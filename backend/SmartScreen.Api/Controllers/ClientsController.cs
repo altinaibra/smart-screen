@@ -97,6 +97,19 @@ public class ClientsController(AppDbContext db, PasswordVault passwords) : Contr
         return users.Select(u => new ClientLoginDto(u.Id, u.Username, u.Role, passwords.Reveal(u))).ToList();
     }
 
+    /// <summary>Bizneset e klientit me numrin e ekraneve (për detajet e klientit te pronari).</summary>
+    [HttpGet("{id:int}/businesses")]
+    public async Task<ActionResult<List<ClientBusinessDto>>> Businesses(int id)
+    {
+        if (!await db.Clients.AnyAsync(c => c.Id == id)) return NotFound();
+        var onlineSince = DateTime.UtcNow - Mapping.OnlineWindow;
+        return await db.BusinessSettings.AsNoTracking().Where(b => b.ClientId == id).OrderBy(b => b.BusinessName)
+            .Select(b => new ClientBusinessDto(b.Id, b.BusinessName, b.BusinessType,
+                db.Screens.Count(s => s.IsPaired && s.BusinessId == b.Id),
+                db.Screens.Count(s => s.IsPaired && s.BusinessId == b.Id && s.LastSeenAt > onlineSince)))
+            .ToListAsync();
+    }
+
     /// <summary>Fshin klientin me gjithë bizneset, ekranet, reklamat dhe përdoruesit e tij.</summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

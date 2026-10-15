@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../queryClient';
-import { createClient, deleteClient, getClientLogins, getClients, updateClient, type CreateClientRequest, type SaveClientRequest } from './clientMethods';
+import { createClient, deleteClient, getClientBusinesses, getClientLogins, getClients, updateClient, type CreateClientRequest, type SaveClientRequest } from './clientMethods';
 
 export const clientKeys = {
   all: ['clients'] as const,
@@ -12,9 +12,13 @@ export function useClients() {
   return useQuery({ queryKey: clientKeys.all, queryFn: getClients });
 }
 
-/** Përdoruesit dhe fjalëkalimet e klientit – ngarkohen vetëm kur pronari i kërkon. */
-export function useClientLogins(id: number, enabled: boolean) {
-  return useQuery({ queryKey: [...clientKeys.all, id, 'logins'], queryFn: () => getClientLogins(id), enabled });
+/** Përdoruesit dhe fjalëkalimet e klientit (detajet e klientit te pronari). */
+export function useClientLogins(id: number) {
+  return useQuery({ queryKey: [...clientKeys.all, id, 'logins'], queryFn: () => getClientLogins(id) });
+}
+
+export function useClientBusinesses(id: number) {
+  return useQuery({ queryKey: [...clientKeys.all, id, 'businesses'], queryFn: () => getClientBusinesses(id) });
 }
 
 export function useCreateClient() {

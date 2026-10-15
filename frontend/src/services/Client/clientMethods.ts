@@ -30,6 +30,10 @@ export const updateClient = (id: number, req: SaveClientRequest) => api<Client>(
 /** Llogaritë e klientit; password = null kur fjalëkalimi nuk dihet (vendosur para këtij versioni). */
 export interface ClientLogin { id: number; username: string; role: string; password: string | null }
 
+export interface ClientBusiness { id: number; name: string; businessType: BusinessType; screenCount: number; screensOnline: number }
+
+export const getClientBusinesses = (id: number) => api<ClientBusiness[]>(`/clients/${id}/businesses`);
+
 export const getClientLogins = (id: number) => api<ClientLogin[]>(`/clients/${id}/logins`);
 
 export const deleteClient = (id: number) => api(`/clients/${id}`, { method: 'DELETE' });
