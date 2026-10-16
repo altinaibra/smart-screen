@@ -462,16 +462,16 @@
     return right;
   }
 
-  /** Çmimi me simbolin e vogël majtas dhe decimalet sipër: €5.90 */
+  /** Çmimi me dy decimale dhe simbolin e valutës kryesore pas tij: 2.30€ */
   function priceEl(value, currency, oldValue) {
     var box = div('price');
     if (oldValue) box.appendChild(textEl('span', formatPrice(oldValue, currency), 'old'));
     var total = Math.round(Number(value) * 100); // në cent, që 5.999 të mos dalë "5.100"
     var whole = Math.floor(total / 100);
     var cents = total % 100;
-    if (currency) box.appendChild(textEl('span', currency, 'cur'));
     box.appendChild(textEl('span', String(whole), 'int'));
-    if (cents > 0) box.appendChild(textEl('span', '.' + (cents < 10 ? '0' : '') + cents, 'dec'));
+    box.appendChild(textEl('span', '.' + (cents < 10 ? '0' : '') + cents, 'dec'));
+    if (currency) box.appendChild(textEl('span', currency, 'cur'));
     return box;
   }
 
@@ -969,9 +969,7 @@
   }
 
   function formatPrice(value, currency) {
-    var n = Number(value);
-    var s = n % 1 === 0 ? String(n) : n.toFixed(2);
-    return s + ' ' + (currency || '');
+    return Number(value).toFixed(2) + (currency || '');
   }
 
   function parseQuery(q) {

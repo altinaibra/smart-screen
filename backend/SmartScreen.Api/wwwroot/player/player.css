@@ -159,7 +159,7 @@ html, body {
 .price-bubble .only { font-family: 'SS Mono', monospace; font-weight: 700; font-size: 2vmin; letter-spacing: .25em; text-transform: uppercase; }
 .price { font-family: 'SS Display', Impact, sans-serif; font-weight: 400; line-height: 1; white-space: nowrap;
   display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: start; -webkit-align-items: flex-start; align-items: flex-start; }
-.price .cur { font-size: .42em; margin-top: .32em; margin-right: .06em; }
+.price .cur { font-size: .42em; margin-top: .08em; margin-left: .08em; }
 .price .dec { font-size: .45em; margin-top: .08em; }
 .price-bubble .price { font-size: 11vmin; }
 .price .old { font-family: 'SS Text', sans-serif; font-size: .3em; text-decoration: line-through; opacity: .5; margin: .3em .5em 0 0; }

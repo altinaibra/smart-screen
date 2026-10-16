@@ -72,7 +72,8 @@ public partial class PlayerContentService(AppDbContext db)
         Screen? entity = null, List<ScreenSchedule>? schedules = null)
     {
         var main = await MainCurrency.GetAsync(db, s.Id);
-        var currency = main?.Symbol ?? s.Currency;
+        // Valuta kryesore; pa valuta të zgjedhura: monedha e vjetër e cilësimeve, ose euro.
+        var currency = main?.Symbol ?? (string.IsNullOrWhiteSpace(s.Currency) ? "€" : s.Currency);
         var alert = s.ActiveAlert();
         var settings = new PlayerSettingsDto(
             s.BusinessName, s.LogoAsset?.Url, s.PrimaryColor, s.AccentColor, currency, s.ShowTicker, WithCurrency(s.TickerText, currency), s.ShowClock,
